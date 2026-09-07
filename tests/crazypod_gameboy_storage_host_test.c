@@ -167,7 +167,7 @@ int core_free(int handle)
 int main(void)
 {
     int save_index, i;
-    uint32_t clock[8] = { 4, 0, 0, 3, 0, 0, 0, 0 };
+    uint32_t clock[8] = { 4, 0, 0, 3, 0, 0, 0, 12345 };
     uint8_t saved[80 + 8192];
 
     strcpy(files[0].path, "/MiniApps/Games/clock.gbc");
@@ -209,6 +209,7 @@ int main(void)
     assert(allocation[32768] == 0x42);
     crazypod_gameboy_core_clock_export(clock);
     assert(clock[0] == 4 && clock[2] == 2 && clock[3] == 3);
+    assert(clock[7] == 12345);
     max_write = 37;
     assert(crazypod_gameboy_save());
     crazypod_gameboy_close();

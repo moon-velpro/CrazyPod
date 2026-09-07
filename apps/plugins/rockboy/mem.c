@@ -4,6 +4,7 @@
 
 #include "defs.h"
 #include "hw.h"
+#include "cpu-gb.h"
 #include "regs.h"
 #include "mem.h"
 #include "rtc-gb.h"
@@ -41,6 +42,41 @@ static int ram_address(int address)
 }
 #endif
 
+static int lower_rom_bank(void)
+{
+#ifdef CRAZYPOD_GAMEBOY_CORE
+    return mbc.rombank0;
+#else
+    return 0;
+#endif
+}
+
+#ifdef CRAZYPOD_GAMEBOY_CORE
+static int normalize_bank(int bank, int count)
+{
+    return count > 0 ? bank % count : 0;
+}
+
+static void mbc1_update_banks(void)
+{
+    int high = mbc.rombank_high & 0x03;
+    int low = mbc.rombank_low & 0x1f;
+    int shift = mbc.mbc1_multicart ? 4 : 5;
+
+    /* The 00 -> 01 translation examines the full five-bit register. */
+    if(low == 0)
+        low = 1;
+    if(mbc.mbc1_multicart)
+        low &= 0x0f;
+    mbc.rombank0 = mbc.model ? high << shift : 0;
+    mbc.rombank = (high << shift) | low;
+    mbc.rambank = mbc.model ? high : 0;
+    mbc.rombank0 = normalize_bank(mbc.rombank0, mbc.romsize);
+    mbc.rombank = normalize_bank(mbc.rombank, mbc.romsize);
+    mbc.rambank = normalize_bank(mbc.rambank, mbc.ramsize);
+}
+#endif
+
 
 /*
  * In order to make reads and writes efficient, we keep tables
@@ -62,10 +98,15 @@ void mem_updatemap(void)
     static byte **map;
 
     map = mbc.rmap;
-    map[0x0] = rom.bank[0];
-    map[0x1] = rom.bank[0];
-    map[0x2] = rom.bank[0];
-    map[0x3] = rom.bank[0];
+    n = lower_rom_bank();
+    if (n < mbc.romsize)
+    {
+        map[0x0] = rom.bank[n];
+        map[0x1] = rom.bank[n];
+        map[0x2] = rom.bank[n];
+        map[0x3] = rom.bank[n];
+    }
+    else map[0x0] = map[0x1] = map[0x2] = map[0x3] = NULL;
     if (mbc.rombank < mbc.romsize)
     {
         map[0x4] = rom.bank[mbc.rombank] - 0x4000;
@@ -191,6 +232,10 @@ static void ioreg_write(byte r, byte b)
         break;
     case RI_DIV:
         REG(r) = 0;
+#ifdef CRAZYPOD_GAMEBOY_CORE
+        cpu.div = 0;
+        cpu.tim = 0;
+#endif
         break;
     case RI_LCDC:
         lcdc_change(b);
@@ -219,11 +264,13 @@ static void ioreg_write(byte r, byte b)
         R_BCPD = b;
         pal_write(R_BCPS & 0x3F, b);
         if (R_BCPS & 0x80) R_BCPS = (R_BCPS+1) & 0xBF;
+        R_BCPD = lcd.pal[R_BCPS & 0x3F];
         break;
     case RI_OCPD:
         R_OCPD = b;
         pal_write(64 + (R_OCPS & 0x3F), b);
         if (R_OCPS & 0x80) R_OCPS = (R_OCPS+1) & 0xBF;
+        R_OCPD = lcd.pal[64 + (R_OCPS & 0x3F)];
         break;
     case RI_SVBK:
         REG(r) = b & 0x07;
@@ -267,9 +314,7 @@ static byte ioreg_read(byte r)
     case RI_DIV:
     case RI_TIMA:
     case RI_TMA:
-    case RI_TAC:
     case RI_LCDC:
-    case RI_STAT:
     case RI_SCY:
     case RI_SCX:
     case RI_LY:
@@ -279,23 +324,79 @@ static byte ioreg_read(byte r)
     case RI_OBP1:
     case RI_WY:
     case RI_WX:
-    case RI_IE:
+        return REG(r);
+    case RI_TAC:
+#ifdef CRAZYPOD_GAMEBOY_CORE
+        return REG(r) | 0xF8;
+#else
+        return REG(r);
+#endif
+    case RI_STAT:
+#ifdef CRAZYPOD_GAMEBOY_CORE
+        return REG(r) | 0x80;
+#else
+        return REG(r);
+#endif
     case RI_IF:
+#ifdef CRAZYPOD_GAMEBOY_CORE
+        return REG(r) | 0xE0;
+#else
+        return REG(r);
+#endif
+    case RI_IE:
         return REG(r);
     case RI_VBK:
     case RI_BCPS:
     case RI_OCPS:
+        if (hw.cgb) return REG(r);
+        /* Intentional fallthrough */
+        return 0xff;
+    case RI_SVBK:
+        if (hw.cgb)
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            return REG(r) | 0xF8;
+#else
+            return REG(r);
+#endif
+        /* Intentional fallthrough */
+        return 0xff;
+    case RI_KEY1:
+        if (hw.cgb)
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            return REG(r) | 0x7E;
+#else
+            return REG(r);
+#endif
+        /* Intentional fallthrough */
+        return 0xff;
     case RI_BCPD:
     case RI_OCPD:
-    case RI_SVBK:
-    case RI_KEY1:
+        if (hw.cgb) {
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            return r == RI_BCPD ? lcd.pal[R_BCPS & 0x3F] :
+                lcd.pal[64 + (R_OCPS & 0x3F)];
+#else
+            return REG(r);
+#endif
+        }
+        /* Intentional fallthrough */
+        return 0xff;
     case RI_HDMA1:
     case RI_HDMA2:
     case RI_HDMA3:
     case RI_HDMA4:
+        if (hw.cgb)
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            return 0xff;
+#else
+            return REG(r);
+#endif
+        /* Intentional fallthrough */
+        return 0xff;
     case RI_HDMA5:
         if (hw.cgb) return REG(r);
         /* Intentional fallthrough */
+        return 0xff;
     default:
         return 0xff;
     }
@@ -327,35 +428,46 @@ static void mbc_write(int a, byte b)
             mbc.enableram = ((b & 0x0F) == 0x0A);
             break;
         case 0x2:
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            mbc.rombank_low = b & 0x1f;
+            mbc1_update_banks();
+#else
             if ((b & 0x1F) == 0) b = 0x01;
             mbc.rombank = (mbc.rombank & 0x60) | (b & 0x1F);
+#endif
             break;
         case 0x4:
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            mbc.rombank_high = b & 0x03;
+            mbc1_update_banks();
+#else
             if (mbc.model)
             {
                 mbc.rambank = b & 0x03;
                 break;
             }
             mbc.rombank = (mbc.rombank & 0x1F) | ((int)(b&3)<<5);
+#endif
             break;
         case 0x6:
             mbc.model = b & 0x1;
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            mbc1_update_banks();
+#endif
             break;
         }
         break;
-    case MBC_MBC2: /* is this at all right? */
+    case MBC_MBC2:
+        if(a >= 0x4000)
+            break;
         if ((a & 0x0100) == 0x0000)
         {
             mbc.enableram = ((b & 0x0F) == 0x0A);
             break;
         }
-        if ((a & 0xE100) == 0x2100)
-        {
-            mbc.rombank = b & 0x0F;
-            if(mbc.rombank == 0)
-                mbc.rombank = 1;
-            break;
-        }
+        mbc.rombank = b & 0x0F;
+        if(mbc.rombank == 0)
+            mbc.rombank = 1;
         break;
     case MBC_MBC3:
         switch (ha & 0xE)
@@ -364,12 +476,21 @@ static void mbc_write(int a, byte b)
             mbc.enableram = ((b & 0x0F) == 0x0A);
             break;
         case 0x2:
-            if ((b & 0x7F) == 0) b = 0x01;
-            mbc.rombank = b & 0x7F;
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            b &= mbc.mbc30 ? 0xff : 0x7f;
+#else
+            b &= 0x7f;
+#endif
+            if (b == 0) b = 0x01;
+            mbc.rombank = b;
             break;
         case 0x4:
             rtc.sel = b & 0x0f;
+#ifdef CRAZYPOD_GAMEBOY_CORE
+            mbc.rambank = b & (mbc.mbc30 ? 0x07 : 0x03);
+#else
             mbc.rambank = b & 0x03;
+#endif
             break;
         case 0x6:
             rtc_latch(b);
@@ -395,7 +516,6 @@ static void mbc_write(int a, byte b)
             mbc.enableram = ((b & 0x0F) == 0x0A);
             break;
         case 0x2:
-            if ((b & 0xFF) == 0) b = 0x01;
             mbc.rombank = (mbc.rombank & 0x100) | (b & 0xFF);
             break;
         case 0x3:
@@ -551,7 +671,7 @@ byte mem_read(int a)
     {
     case 0x0:
     case 0x2:
-        return rom.bank[0][a];
+        return rom.bank[lower_rom_bank()][a & 0x3FFF];
     case 0x4:
     case 0x6:
         return rom.bank[mbc.rombank][a & 0x3FFF];
@@ -597,8 +717,18 @@ byte mem_read(int a)
 
 void mbc_reset(void)
 {
+#ifdef CRAZYPOD_GAMEBOY_CORE
+    mbc.rombank0 = 0;
+    mbc.rombank_low = 0;
+    mbc.rombank_high = 0;
+    mbc.model = 0;
+#endif
     mbc.rombank = 1;
     mbc.rambank = 0;
     mbc.enableram = 0;
+#ifdef CRAZYPOD_GAMEBOY_CORE
+    if(mbc.type == MBC_MBC1)
+        mbc1_update_banks();
+#endif
     mem_updatemap();
 }

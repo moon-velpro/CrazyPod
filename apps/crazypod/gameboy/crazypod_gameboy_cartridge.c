@@ -2,6 +2,50 @@
 
 #include <string.h>
 
+static bool cartridge_layout_supported(
+    unsigned type, unsigned ram_code,
+    struct crazypod_gameboy_cartridge *cart)
+{
+    const size_t rom = cart->rom_size;
+    const size_t ram = cart->ram_size;
+
+    switch(type) {
+    case 0x00:
+        return rom == 32u * 1024u && ram == 0;
+    case 0x08: case 0x09:
+        return rom == 32u * 1024u && ram > 0 && ram <= 8u * 1024u;
+    case 0x01: case 0x02: case 0x03:
+        if(rom > 2u * 1024u * 1024u || ram > 32u * 1024u ||
+           (rom > 512u * 1024u && ram > 8u * 1024u))
+            return false;
+        return type == 0x01 ? ram == 0 : ram > 0;
+    case 0x05: case 0x06:
+        return rom <= 256u * 1024u && ram_code == 0;
+    case 0x0f: case 0x11:
+        if(ram != 0 || rom > 4u * 1024u * 1024u)
+            return false;
+        cart->mbc30 = rom > 2u * 1024u * 1024u;
+        return true;
+    case 0x10: case 0x12: case 0x13:
+        if(ram == 0 || rom > 4u * 1024u * 1024u ||
+           ram > 64u * 1024u)
+            return false;
+        cart->mbc30 = rom > 2u * 1024u * 1024u ||
+            ram > 32u * 1024u;
+        return true;
+    case 0x19: case 0x1c:
+        return rom <= 8u * 1024u * 1024u && ram == 0;
+    case 0x1a: case 0x1b:
+        return rom <= 8u * 1024u * 1024u &&
+            ram > 0 && ram <= 128u * 1024u;
+    case 0x1d: case 0x1e:
+        return rom <= 8u * 1024u * 1024u &&
+            ram > 0 && ram <= 64u * 1024u;
+    default:
+        return false;
+    }
+}
+
 bool crazypod_gameboy_path_supported(const char *path)
 {
     const char *ext = path != NULL ? strrchr(path, '.') : NULL;
@@ -78,5 +122,5 @@ bool crazypod_gameboy_cartridge_probe(
     cart->battery = type == 0x03 || type == 0x06 || type == 0x09 ||
         type == 0x0f || type == 0x10 || type == 0x13 || type == 0x1b ||
         type == 0x1e;
-    return true;
+    return cartridge_layout_supported(type, header[0x149], cart);
 }

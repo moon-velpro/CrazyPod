@@ -12,7 +12,10 @@
 #include "usb.h"
 #include "ui/features/miniapps/crazypod_gameboy_screen.h"
 
-enum scenario { USB, HOLD, RETRY_SAVE, BAD_ROM, CORE_ERROR, POWER, REBOOT };
+enum scenario {
+    USB, HOLD, RETRY_SAVE, BAD_ROM, CORE_ERROR, CORE_AND_SAVE_ERROR,
+    POWER, REBOOT
+};
 static enum scenario scenario;
 long current_tick;
 static long posted_event;
@@ -130,7 +133,7 @@ bool crazypod_gameboy_core_frame(uint8_t buttons, bool render)
     ++frames;
     received_buttons |= buttons;
     submit_audio(samples, 2048);
-    return scenario != CORE_ERROR;
+    return scenario != CORE_ERROR && scenario != CORE_AND_SAVE_ERROR;
 }
 const uint16_t *crazypod_gameboy_core_pixels(void) { return pixels; }
 void crazypod_gameboy_core_clock_advance(uint32_t seconds) { (void)seconds; }
@@ -138,6 +141,8 @@ bool crazypod_gameboy_save(void)
 {
     assert(opened);
     ++saves;
+    if(scenario == CORE_AND_SAVE_ERROR)
+        return false;
     return scenario != RETRY_SAVE || saves > 1;
 }
 void crazypod_gameboy_close(void) { opened = false; ++closed; }
@@ -163,7 +168,8 @@ int main(void)
             assert(frames > 0 && restored == 0);
             assert(received_buttons & CRAZYPOD_GB_UP); /* wheel at zero */
             assert(saves == (scenario == RETRY_SAVE ? 2u : 1u));
-            assert(result == (scenario == CORE_ERROR ?
+            assert(result == (scenario == CORE_ERROR ||
+                scenario == CORE_AND_SAVE_ERROR ?
                 CRAZYPOD_GAMEBOY_CORE_ERROR : CRAZYPOD_GAMEBOY_OK));
         }
         if(scenario == USB || scenario == POWER || scenario == REBOOT) {

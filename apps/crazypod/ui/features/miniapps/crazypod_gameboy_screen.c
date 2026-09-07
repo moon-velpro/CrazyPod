@@ -312,7 +312,8 @@ enum crazypod_gameboy_result crazypod_gameboy_screen_run(int index)
     if(paused && !saved)
         crazypod_gameboy_core_clock_advance(
             (uint32_t)(current_tick - pause_tick) / HZ);
-    if(!saved && !crazypod_gameboy_save())
+    if(!saved && !crazypod_gameboy_save() &&
+       result == CRAZYPOD_GAMEBOY_OK)
         result = CRAZYPOD_GAMEBOY_IO_ERROR;
 
 cleanup:
