@@ -850,5 +850,7 @@
   "Not enough memory for this game": "게임 실행 메모리 부족",
   "Game save is damaged; original preserved": "게임 저장 손상, 원본 파일 유지",
   "Game emulation stopped": "게임 실행 중지됨",
-  "Game file or save could not be written/read": "게임 또는 저장 파일 읽기/쓰기 실패"
+  "Game Boy ROM could not be read": "Game Boy ROM을 읽을 수 없음",
+  "Game save could not be read or written": "게임 저장 파일을 읽거나 쓸 수 없음",
+  "Game file error": "게임 파일 오류"
 }

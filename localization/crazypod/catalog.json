@@ -4563,10 +4563,19 @@
         "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
       ]
     },
-    "Game file or save could not be written/read": {
+    "Game Boy ROM could not be read": {
       "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c"
+      ]
+    },
+    "Game save could not be read or written": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c"
+      ]
+    },
+    "Game file error": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c"
       ]
     },
     "Game Boy": {

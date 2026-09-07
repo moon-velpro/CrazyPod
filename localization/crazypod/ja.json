@@ -850,5 +850,7 @@
   "Not enough memory for this game": "ゲームを実行するメモリが不足",
   "Game save is damaged; original preserved": "セーブデータが破損しています。元のファイルは保持されます",
   "Game emulation stopped": "ゲームの実行が停止しました",
-  "Game file or save could not be written/read": "ゲームまたはセーブの読み書きに失敗"
+  "Game Boy ROM could not be read": "Game Boy ROMを読み込めません",
+  "Game save could not be read or written": "セーブデータを読み書きできません",
+  "Game file error": "ゲームファイルエラー"
 }

@@ -850,5 +850,7 @@
   "Not enough memory for this game": "内存不足，无法运行游戏",
   "Game save is damaged; original preserved": "游戏存档损坏，已保留原文件",
   "Game emulation stopped": "游戏运行已停止",
-  "Game file or save could not be written/read": "游戏或存档文件读写失败"
+  "Game Boy ROM could not be read": "无法读取 Game Boy 游戏文件",
+  "Game save could not be read or written": "无法读取或写入游戏存档",
+  "Game file error": "游戏文件错误"
 }

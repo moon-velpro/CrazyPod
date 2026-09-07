@@ -850,5 +850,7 @@
   "Not enough memory for this game": "Memoria insuficiente para este juego",
   "Game save is damaged; original preserved": "Partida dañada; se conserva el original",
   "Game emulation stopped": "Emulación detenida",
-  "Game file or save could not be written/read": "Error al leer/escribir el juego o la partida"
+  "Game Boy ROM could not be read": "No se pudo leer la ROM de Game Boy",
+  "Game save could not be read or written": "No se pudo leer o escribir la partida",
+  "Game file error": "Error del archivo del juego"
 }
