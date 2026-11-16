@@ -83,6 +83,7 @@ jobs:
 
   simulator:
     name: macOS simulator
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: macos-latest
     steps:
       - name: Check out source
