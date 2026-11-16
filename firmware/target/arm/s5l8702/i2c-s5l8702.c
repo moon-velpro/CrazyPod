@@ -25,6 +25,7 @@
 #include "i2c-s5l8702.h"
 #include "clocking-s5l8702.h"
 #include <stdint.h>
+#include <stddef.h>
 
 /*  Driver for the s5l8702 built-in I2C controller in master mode
 

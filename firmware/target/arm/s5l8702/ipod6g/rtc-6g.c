@@ -32,9 +32,10 @@ void rtc_init(void)
 int rtc_read_datetime(struct tm *tm)
 {
     unsigned int i;
-    unsigned char buf[7];
+    unsigned char buf[7] = {0};
 
-    pmu_read_rtc(buf);
+    if (pmu_read_rtc(buf) != 0)
+        return -1;
 
     for (i = 0; i < sizeof(buf); i++)
         buf[i] = BCD2DEC(buf[i]);
@@ -66,10 +67,8 @@ int rtc_write_datetime(const struct tm *tm)
     buf[6] = tm->tm_year - 100;
 
     for (i = 0; i < sizeof(buf); i++)
-         buf[i] = DEC2BCD(buf[i]);
+        buf[i] = DEC2BCD(buf[i]);
 
-    pmu_write_rtc(buf);
-
-    return 0;
+    return pmu_write_rtc(buf);
 }
 

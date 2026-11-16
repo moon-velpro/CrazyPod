@@ -90,6 +90,7 @@ struct pmu_adc_channel
 
 void pmu_preinit(void);
 void pmu_init(void);
+int pmu_read_checked(int address, unsigned char *value);
 unsigned char pmu_read(int address);
 int pmu_write(int address, unsigned char val);
 int pmu_read_multiple(int address, int count, unsigned char* buffer);
@@ -113,8 +114,8 @@ void pmu_hdd_power(bool on);
 void pmu_set_cpu_voltage(bool high);
 #endif 
 #if (CONFIG_RTC == RTC_NANO2G)
-void pmu_read_rtc(unsigned char* buffer);
-void pmu_write_rtc(unsigned char* buffer);
+int pmu_read_rtc(unsigned char* buffer);
+int pmu_write_rtc(unsigned char* buffer);
 #endif
 
 unsigned short pmu_read_adc(const struct pmu_adc_channel *ch);

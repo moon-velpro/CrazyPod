@@ -22,6 +22,7 @@
 #include "config.h"
 #include "system.h"
 #include <stdint.h>
+#include <stddef.h>
 #include "kernel.h"
 #include "thread.h"
 
@@ -41,12 +42,19 @@ int pmu_write_multiple(int address, int count, unsigned char* buffer)
     return i2c_write(0, 0xe6, address, count, buffer);
 }
 
+int pmu_read_checked(int address, unsigned char *value)
+{
+    if (value == NULL)
+        return -1;
+
+    *value = 0;
+    return pmu_read_multiple(address, 1, value);
+}
+
 unsigned char pmu_read(int address)
 {
     unsigned char tmp = 0;
-
-    /* Keep the legacy value-returning API deterministic on an I2C error. */
-    (void)pmu_read_multiple(address, 1, &tmp);
+    (void)pmu_read_checked(address, &tmp);
     return tmp;
 }
 
@@ -113,14 +121,14 @@ void pmu_set_cpu_voltage(bool high)
 #endif
 
 #if (CONFIG_RTC == RTC_NANO2G)
-void pmu_read_rtc(unsigned char* buffer)
+int pmu_read_rtc(unsigned char* buffer)
 {
-    pmu_read_multiple(0x59, 7, buffer);
+    return pmu_read_multiple(0x59, 7, buffer);
 }
 
-void pmu_write_rtc(unsigned char* buffer)
+int pmu_write_rtc(unsigned char* buffer)
 {
-    pmu_write_multiple(0x59, 7, buffer);
+    return pmu_write_multiple(0x59, 7, buffer);
 }
 #endif
 
@@ -266,20 +274,34 @@ int pmu_firewire_present(void)
 
 static void pmu_read_inputs_mbcs(void)
 {
-    pmu_input_firewire = !!(pmu_read(PCF5063X_REG_MBCS1)
-                                & PCF5063X_MBCS1_ADAPTPRES);
+    unsigned char mbcs1;
+
+    if (pmu_read_checked(PCF5063X_REG_MBCS1, &mbcs1) != 0)
+        return;
+
+    pmu_input_firewire = !!(mbcs1 & PCF5063X_MBCS1_ADAPTPRES);
 }
 #endif
 
 static void pmu_read_inputs_gpio(void)
 {
-    pmu_input_holdswitch = !(pmu_read(PCF50635_REG_GPIOSTAT)
-                                & PCF50635_GPIOSTAT_GPIO2);
+    unsigned char gpiostat;
+
+    if (pmu_read_checked(PCF50635_REG_GPIOSTAT, &gpiostat) != 0)
+        return;
+
+    pmu_input_holdswitch = !(gpiostat & PCF50635_GPIOSTAT_GPIO2);
 }
 
 static void pmu_read_inputs_ooc(void)
 {
-    unsigned char oocstat = pmu_read(PCF5063X_REG_OOCSTAT);
+    unsigned char oocstat;
+
+    /* A failed PMU read is not evidence that USB or an accessory was removed.
+     * Preserve the last known state until the input can be sampled again. */
+    if (pmu_read_checked(PCF5063X_REG_OOCSTAT, &oocstat) != 0)
+        return;
+
 #ifdef IPOD_ACCESSORY_PROTOCOL
     /* Publish EXTON3 before notifying USB about EXTON2. A Universal Dock
      * changes both inputs together, and the USB policy must see the new
@@ -309,16 +331,18 @@ static void NORETURN_ATTR pmu_thread(void)
         switch (ev.id)
         {
             case Q_EINT:
-                /* read (clear) PMU interrupts, this will also
-                   raise the PMU IRQ pin */
-                pmu_read_multiple(PCF5063X_REG_INT1, 2, ints);
-                ints[5] = pmu_read(PCF50635_REG_INT6);
-
+                /* Only publish a new input state after all interrupt status
+                 * reads succeeded. Always re-arm the EINT path so one failed
+                 * bus transaction cannot permanently disable PMU monitoring. */
+                if (pmu_read_multiple(PCF5063X_REG_INT1, 2, ints) == 0 &&
+                    pmu_read_checked(PCF50635_REG_INT6, &ints[5]) == 0)
+                {
 #if CONFIG_CHARGING
-                if (ints[0] & ~ints_msk[0]) pmu_read_inputs_mbcs();
+                    if (ints[0] & ~ints_msk[0]) pmu_read_inputs_mbcs();
 #endif
-                if (ints[1] & ~ints_msk[1]) pmu_read_inputs_ooc();
-                if (ints[5] & ~ints_msk[5]) pmu_read_inputs_gpio();
+                    if (ints[1] & ~ints_msk[1]) pmu_read_inputs_ooc();
+                    if (ints[5] & ~ints_msk[5]) pmu_read_inputs_gpio();
+                }
 
                 eint_register(&pmu_eint);
                 break;
@@ -359,9 +383,9 @@ void pmu_init(void)
     pmu_write(PCF50635_REG_INT6M, ints_msk[5]);
 
     /* clear all */
-    unsigned char ints[5];
-    pmu_read_multiple(PCF5063X_REG_INT1, 5, ints);
-    pmu_read(PCF50635_REG_INT6);
+    unsigned char ints[5] = {0};
+    (void)pmu_read_multiple(PCF5063X_REG_INT1, 5, ints);
+    (void)pmu_read(PCF50635_REG_INT6);
 
     /* get initial values */
 #if CONFIG_CHARGING
