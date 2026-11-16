@@ -1,0 +1,10 @@
+#ifndef TEST_S5L8702_CONFIG_H
+#define TEST_S5L8702_CONFIG_H
+
+#define CONFIG_CPU 8702
+#define S5L8702 8702
+#define S5L8720 8720
+#define IPOD_6G 1
+#define INIT_ATTR
+
+#endif
