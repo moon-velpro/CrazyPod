@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+      - "codex/**"
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -16,6 +20,9 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v5
+
+      - name: Run S5L8702 I2C timeout host test
+        run: tests/run-s5l8702-i2c-host-test.sh
 
       - name: Install build dependencies
         run: |

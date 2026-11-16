@@ -77,6 +77,8 @@ enum pcf50635_reg_gpiostat {
  */
 
 
+#define PMU_ADC_READ_ERROR ((unsigned short)0xffff)
+
 struct pmu_adc_channel
 {
     const char *name;

@@ -20,6 +20,8 @@
  ****************************************************************************/
 
 #include "config.h"
+#include "system.h"
+#include <stdint.h>
 #include "kernel.h"
 #include "thread.h"
 
@@ -41,10 +43,10 @@ int pmu_write_multiple(int address, int count, unsigned char* buffer)
 
 unsigned char pmu_read(int address)
 {
-    unsigned char tmp;
+    unsigned char tmp = 0;
 
-    pmu_read_multiple(address, 1, &tmp);
-
+    /* Keep the legacy value-returning API deterministic on an I2C error. */
+    (void)pmu_read_multiple(address, 1, &tmp);
     return tmp;
 }
 
@@ -167,27 +169,56 @@ unsigned short pmu_adc_raw2mv(
 /* returns raw value, 8 or 10-bit resolution */
 unsigned short pmu_read_adc(const struct pmu_adc_channel *ch)
 {
+    unsigned char adcs3 = 0;
+    unsigned char adcs1 = 0;
+    unsigned short raw;
+    uint64_t start;
+
+    if (ch == NULL)
+        return PMU_ADC_READ_ERROR;
+
     mutex_lock(&pmu_adc_mutex);
 
-    pmu_write(PCF5063X_REG_ADCC3, ch->adcc3);
+    if (pmu_write(PCF5063X_REG_ADCC3, ch->adcc3) != 0)
+        goto error;
+
     if (ch->bias_dly)
         sleep(ch->bias_dly);
-    uint8_t buf[2] = { ch->adcc2, ch->adcc1 | PCF5063X_ADCC1_ADCSTART };
-    pmu_write_multiple(PCF5063X_REG_ADCC2, 2, buf);
 
-    int adcs3 = 0;
+    uint8_t buf[2] = {
+        ch->adcc2,
+        ch->adcc1 | PCF5063X_ADCC1_ADCSTART
+    };
+
+    if (pmu_write_multiple(PCF5063X_REG_ADCC2, 2, buf) != 0)
+        goto error;
+
+    start = USEC_TIMER;
     while (!(adcs3 & PCF5063X_ADCS3_ADCRDY))
     {
+        if ((uint64_t)(USEC_TIMER - start) >= 100000)
+            goto error;
+
         yield();
-        adcs3 = pmu_read(PCF5063X_REG_ADCS3);
+
+        if (pmu_read_multiple(PCF5063X_REG_ADCS3, 1, &adcs3) != 0)
+            goto error;
     }
 
-    int raw = pmu_read(PCF5063X_REG_ADCS1);
-    if ((ch->adcc1 & PCF5063X_ADCC1_RES_MASK) == PCF5063X_ADCC1_RES_10BIT)
+    if (pmu_read_multiple(PCF5063X_REG_ADCS1, 1, &adcs1) != 0)
+        goto error;
+
+    raw = adcs1;
+    if ((ch->adcc1 & PCF5063X_ADCC1_RES_MASK) ==
+        PCF5063X_ADCC1_RES_10BIT)
         raw = (raw << 2) | (adcs3 & PCF5063X_ADCS3_ADCDAT1L_MASK);
 
     mutex_unlock(&pmu_adc_mutex);
     return raw;
+
+error:
+    mutex_unlock(&pmu_adc_mutex);
+    return PMU_ADC_READ_ERROR;
 }
 
 /*
@@ -270,7 +301,7 @@ static void pmu_eint_isr(struct eic_handler *h)
 static void NORETURN_ATTR pmu_thread(void)
 {
     struct queue_event ev;
-    unsigned char ints[6];
+    unsigned char ints[6] = {0};
 
     while (true)
     {
@@ -357,8 +388,8 @@ int pmu_wr_multiple(int address, int count, unsigned char* buffer)
 
 unsigned char pmu_rd(int address)
 {
-    unsigned char val;
-    pmu_rd_multiple(address, 1, &val);
+    unsigned char val = 0;
+    (void)pmu_rd_multiple(address, 1, &val);
     return val;
 }
 

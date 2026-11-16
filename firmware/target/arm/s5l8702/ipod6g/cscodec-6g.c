@@ -37,8 +37,10 @@ void audiohw_init(void)
 
 unsigned char cscodec_read(int reg)
 {
-    unsigned char data;
-    i2c_read(0, 0x94, reg, 1, &data);
+    unsigned char data = 0;
+
+    /* Do not expose an indeterminate byte when the codec NAKs the bus. */
+    (void)i2c_read(0, 0x94, reg, 1, &data);
     return data;
 }
 

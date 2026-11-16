@@ -76,7 +76,14 @@ const char *adc_name(int channel)
 unsigned short adc_read_millivolts(int channel)
 {
     const struct pmu_adc_channel *ch = &adc_channels[channel];
-    return pmu_adc_raw2mv(ch, pmu_read_adc(ch));
+    unsigned short raw = pmu_read_adc(ch);
+
+    /* A failed conversion must never be interpreted as an uninitialized
+     * ADC value. Zero millivolts is the conservative power-management value. */
+    if (raw == PMU_ADC_READ_ERROR)
+        return 0;
+
+    return pmu_adc_raw2mv(ch, raw);
 }
 
 /* Returns battery voltage [millivolts] */
@@ -101,6 +108,10 @@ unsigned int adc_read_usbdata_voltage(bool dp)
 int adc_read_accessory_resistor(void)
 {
     int raw = pmu_read_adc(&adc_channels[ADC_ACCESSORY]);
+
+    if (raw == PMU_ADC_READ_ERROR)
+        return -1;
+
     return (1023-raw) ? raw * IAP_DEVICE_RESISTOR / (1023-raw)
                       : -1 /* open circuit */;
 }
@@ -109,7 +120,8 @@ int adc_read_accessory_resistor(void)
 /* API functions */
 unsigned short adc_read(int channel)
 {
-    return pmu_read_adc(&adc_channels[channel]);
+    unsigned short raw = pmu_read_adc(&adc_channels[channel]);
+    return raw == PMU_ADC_READ_ERROR ? 0 : raw;
 }
 
 void adc_init(void)
