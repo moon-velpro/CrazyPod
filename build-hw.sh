@@ -226,14 +226,15 @@ fi
 verify_stack_alignment
 verify_removed_runtime_absent
 verify_retired_video_absent
+# Report actual linked ELF sections; never infer BSS from source arrays.
+if command -v "${CROSS_COMPILE}size" >/dev/null 2>&1; then
+    echo "CrazyPod: linked ELF text/data/bss (bytes)"
+    "${CROSS_COMPILE}size" -B rockbox.elf
+fi
 # MiniApps/CPK packages are retired from the music-only distribution.
 # The native audio firmware is still built using the existing SDK build.
 PACKAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "$PACKAGE_DIR"' EXIT HUP INT TERM
-if [ ! -d ../assets/crazypod-icons ]; then
-    echo "Error: missing generated CrazyPod icon assets." >&2
-    exit 1
-fi
 if [ ! -f ../assets/crazypod/default-home.bmp ]; then
     echo "Error: missing generated CrazyPod default wallpaper." >&2
     exit 1
@@ -241,7 +242,7 @@ fi
 mkdir -p "$PACKAGE_DIR/.rockbox/codecs"
 mkdir -p "$PACKAGE_DIR/.rockbox/codepages"
 mkdir -p "$PACKAGE_DIR/.rockbox/fonts"
-mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/icons"
+mkdir -p "$PACKAGE_DIR/.rockbox/crazypod"
 for content_directory in Music Podcasts; do
     mkdir -p "$PACKAGE_DIR/$content_directory"
 done
@@ -268,8 +269,6 @@ python3 ../tools/crazypod_runtime_font_audit.py \
     --font-dir "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot"
 cp rockbox.ipod "$PACKAGE_DIR/.rockbox/rockbox.ipod"
 [ ! -f rockbox-info.txt ] || cp rockbox-info.txt "$PACKAGE_DIR/.rockbox/rockbox-info.txt"
-cp -R ../assets/crazypod-icons/. \
-    "$PACKAGE_DIR/.rockbox/crazypod/icons/"
 cp ../assets/crazypod/default-home.bmp \
     "$PACKAGE_DIR/.rockbox/crazypod/default-home.bmp"
 for codec in lib/rbcodec/codecs/*.codec; do

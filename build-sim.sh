@@ -167,18 +167,12 @@ for codec in "$codec_dir"/*.codec; do
     esac
     cp "$codec" "$sim_codec_dir/"
 done
-icon_dir="simdisk/.rockbox/crazypod/icons"
-if [ ! -d ../assets/crazypod-icons ]; then
-    echo "Error: missing generated CrazyPod icon assets." >&2
-    exit 1
-fi
 if [ ! -f ../assets/crazypod/default-home.bmp ]; then
     echo "Error: missing generated CrazyPod default wallpaper." >&2
     exit 1
 fi
-rm -rf "$icon_dir"
-mkdir -p "$icon_dir"
-cp -R ../assets/crazypod-icons/. "$icon_dir/"
+mkdir -p simdisk/.rockbox/crazypod
+# Do not stage retired BMP icon themes, or delete local simulator data.
 cp ../assets/crazypod/default-home.bmp \
    simdisk/.rockbox/crazypod/default-home.bmp
 # Do not build or bundle retired CPK miniapp packages.

@@ -328,6 +328,14 @@ def verify() -> None:
     assert "MiniApps/Games" not in hw
     assert "MiniApps/Games" not in sim
     assert "Music Podcasts" in hw
+    # The music-only firmware must not distribute retired 160px BMP art.
+    assert "assets/crazypod-icons" not in hw
+    assert "assets/crazypod-icons" not in sim
+    assert ".rockbox/crazypod/icons" not in hw
+    assert 'cp -R ../assets/crazypod-icons' not in sim
+    assert 'cp ../assets/crazypod/default-home.bmp' in hw
+    assert 'cp ../assets/crazypod/default-home.bmp' in sim
+    assert 'CrazyPod: linked ELF text/data/bss (bytes)' in hw
     assert "CrazyPod-6G.zip" in hw
     assert not list((ROOT / "dist" / "miniapps").glob("*.cpk")), (
         "Retired CPK apps should not be checked into the product tree"
