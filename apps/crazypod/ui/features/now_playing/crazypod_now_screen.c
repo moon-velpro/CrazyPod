@@ -539,7 +539,7 @@ void crazypod_now_screen_render(
     view->wave_tick = current_tick;
     view->progress_marker = make_box(
         view->wave_surface, 0, 1, 7, 6,
-        LV_RADIUS_CIRCLE, COLOR_WHITE, LV_OPA_COVER);
+        LV_RADIUS_CIRCLE, content_color, LV_OPA_COVER);
     lv_obj_set_style_shadow_width(view->progress_marker, 3, 0);
     lv_obj_set_style_shadow_color(
         view->progress_marker, lv_color_hex(context->primary_color), 0);
@@ -551,10 +551,10 @@ void crazypod_now_screen_render(
     {
         lv_obj_t *previous = make_label(
             context->parent, LV_SYMBOL_PREV,
-            &lv_font_montserrat_16, COLOR_WHITE, 220);
+            &lv_font_montserrat_16, content_color, 220);
         lv_obj_t *next = make_label(
             context->parent, LV_SYMBOL_NEXT,
-            &lv_font_montserrat_16, COLOR_WHITE, 220);
+            &lv_font_montserrat_16, content_color, 220);
 
         lv_obj_set_pos(previous, 104, 194);
         lv_obj_set_pos(next, 204, 194);
@@ -563,7 +563,7 @@ void crazypod_now_screen_render(
             (audio_status() & AUDIO_STATUS_PLAY) != 0 &&
             (audio_status() & AUDIO_STATUS_PAUSE) == 0
                 ? LV_SYMBOL_PAUSE : LV_SYMBOL_PLAY,
-            &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
+            &lv_font_montserrat_16, content_color, LV_OPA_COVER);
         lv_obj_set_pos(view->transport_status, 154, 194);
         lv_obj_remove_flag(previous, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_remove_flag(next, LV_OBJ_FLAG_CLICKABLE);
@@ -572,11 +572,11 @@ void crazypod_now_screen_render(
     }
     view->elapsed = make_label(context->parent, "0:00",
                              &lv_font_montserrat_8,
-                             COLOR_WHITE, 180);
+                             content_color, 180);
     lv_obj_set_pos(view->elapsed, 30, 218);
     view->remaining = make_label(context->parent, "-0:00",
                                &lv_font_montserrat_8,
-                               COLOR_WHITE, 180);
+                               content_color, 180);
     lv_obj_set_width(view->remaining, 60);
     lv_obj_set_style_text_align(view->remaining, LV_TEXT_ALIGN_RIGHT, 0);
     lv_obj_set_pos(view->remaining, 230, 218);
