@@ -797,8 +797,7 @@ void crazypod_ui_run(void)
     crazypod_videos_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
-    crazypod_miniapps_feature_initialize_runtime();
-    crazypod_miniapps_feature_initialize();
+    /* No CPK verification, MiniApp registry or theme runtime at boot. */
 
     {
         const struct crazypod_platform_display_host display_host = {
