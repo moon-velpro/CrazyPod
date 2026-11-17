@@ -28,11 +28,11 @@
 #define COLOR_WHITE 0xFFFFFF
 #define HOME_INK CRAZYPOD_LM_CANVAS
 #define HOME_GLASS CRAZYPOD_LM_GLASS
-#define HOME_ROW_X 12
-#define HOME_ROW_TOP 36
+#define HOME_ROW_X 13
+#define HOME_ROW_TOP 65
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
-#define HOME_ROW_HEIGHT 30
-#define HOME_ROW_GAP 4
+#define HOME_ROW_HEIGHT 25
+#define HOME_ROW_GAP 2
 #define HOME_POSITION_ONE (1L << 16)
 #define HOME_WHEEL_POSITIONS 96
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
@@ -43,6 +43,8 @@ static struct crazypod_desktop_host desktop_host;
 static lv_obj_t *screen;
 static lv_obj_t *wallpaper;
 static lv_obj_t *wallpaper_dim;
+static lv_obj_t *home_headline;
+static lv_obj_t *home_chevrons[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_rows[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_labels[CRAZYPOD_HOME_DESTINATION_COUNT];
 static int selected_app;
@@ -122,6 +124,9 @@ static void update_selection_chrome(void)
             lv_color_hex(selected ? COLOR_WHITE : 0xD7DCE4), 0);
         lv_obj_set_style_opa(
             home_labels[index], selected ? 255 : 222, 0);
+        if(home_chevrons[index] != NULL)
+            lv_obj_set_style_opa(
+                home_chevrons[index], selected ? 230 : 105, 0);
     }
 }
 
@@ -266,6 +271,13 @@ lv_obj_t *crazypod_desktop_create(
     lv_obj_remove_flag(wallpaper_dim, LV_OBJ_FLAG_CLICKABLE);
     crazypod_status_bar_create(0, screen);
 
+    /* A new iPod: type-first identity, not a miniature iPhone launcher. */
+    home_headline = crazypod_ui_widget_label(
+        screen, "iPod", &lv_font_montserrat_24,
+        CRAZYPOD_LM_TEXT, LV_OPA_COVER);
+    lv_obj_set_pos(home_headline, HOME_ROW_X + 7, 32);
+    lv_obj_remove_flag(home_headline, LV_OBJ_FLAG_CLICKABLE);
+
     /* Four legible destinations, with no app-carousel icon decoding. */
     for(i = 0; i < CRAZYPOD_HOME_DESTINATION_COUNT; ++i) {
         home_rows[i] = crazypod_ui_widget_box(
@@ -276,9 +288,15 @@ lv_obj_t *crazypod_desktop_create(
         home_labels[i] = crazypod_ui_widget_label(
             home_rows[i], home_entry_title(i),
             body_font, COLOR_WHITE, LV_OPA_COVER);
-        lv_obj_set_pos(home_labels[i], 15, 5);
-        lv_obj_set_width(home_labels[i], HOME_ROW_WIDTH - 30);
+        lv_obj_set_pos(home_labels[i], 15, 3);
+        lv_obj_set_width(home_labels[i], HOME_ROW_WIDTH - 61);
         lv_label_set_long_mode(home_labels[i], LV_LABEL_LONG_MODE_DOTS);
+        home_chevrons[i] = crazypod_ui_widget_label(
+            home_rows[i], LV_SYMBOL_RIGHT, &lv_font_montserrat_12,
+            COLOR_WHITE, 150);
+        lv_obj_set_pos(home_chevrons[i], HOME_ROW_WIDTH - 27, 6);
+        lv_obj_remove_flag(
+            home_chevrons[i], LV_OBJ_FLAG_CLICKABLE);
     }
     crazypod_now_capsule_create(screen, metadata_font);
     selected_app = 0;
