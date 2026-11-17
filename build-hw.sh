@@ -17,7 +17,7 @@ detect_jobs() {
 
 require_tools() {
     missing=0
-    for tool in make perl python3 zip node npm gcc "${CROSS_COMPILE}gcc" \
+    for tool in make perl python3 zip gcc "${CROSS_COMPILE}gcc" \
         "${CROSS_COMPILE}objcopy" "${CROSS_COMPILE}nm"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             echo "Error: missing required tool '$tool' on PATH." >&2
@@ -37,9 +37,6 @@ prepare_generated_headers() {
         -j1 "$builddir_unix/apps/core_asmdefs.h"
     make EXTRA_DEFINES="$CRAZYPOD_BUILD_DEFINES" \
         -j1 "$builddir_unix/ram.link"
-    mkdir -p "$builddir_unix/miniapps"
-    make EXTRA_DEFINES="$CRAZYPOD_BUILD_DEFINES" \
-        -j1 "$builddir_unix/miniapps/miniapp.link"
 }
 
 verify_stack_alignment() {
@@ -60,12 +57,7 @@ verify_stack_alignment() {
 
 verify_removed_runtime_absent() {
     forbidden='quickjs|mquickjs|crazypod_js|crazypod_script|solid_renderer|ui_command_batch'
-    for binary in rockbox.elf \
-        miniapps/apps/native-reference/app.arm \
-        miniapps/apps/capability-lab/app.arm \
-        miniapps/apps/game2048/app.arm \
-        miniapps/themes/atelier-hifi/app.arm \
-        miniapps/themes/signal-one/app.arm; do
+    for binary in rockbox.elf; do
         matches=$("${CROSS_COMPILE}nm" -a "$binary" 2>/dev/null |
             awk '{ print $3 }' |
             grep -E -i "$forbidden" || true)
@@ -147,22 +139,7 @@ if [ "$repro_enabled" -eq 1 ]; then
 fi
 require_tools
 python3 tests/test-crazypod-lvgl-layer-budget.py
-npm ci --ignore-scripts --no-audit --no-fund \
-    --prefix tools/miniapp-builder
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/native-reference \
-    --out miniapps/apps/native-reference/generated/app.c
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/capability-lab \
-    --out miniapps/apps/capability-lab/generated/app.c
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/game2048 \
-    --out miniapps/apps/game2048/generated/app.c
-# The ABI 1.5 theme intrinsics come from the standalone Devtool. Keep its
-# generated artifact in sync with the TSX source.
-test -f miniapps/themes/atelier-hifi/generated/app.c
-test -f miniapps/themes/signal-one/generated/app.c
-
+# No CPKs or plugin payloads are generated for the music-only build.
 if [ "$CRAZYPOD_BUILD_VARIANT" = "repro" ]; then
     BUILDDIR="build-hw-ipod6g-repro"
     STAMP="crazypod hardware ipod6g lvgl repro"

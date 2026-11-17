@@ -17,7 +17,7 @@ detect_jobs() {
 
 require_tools() {
     missing=0
-    for tool in make gcc perl python3 node npm sdl2-config pkg-config; do
+    for tool in make gcc perl python3 sdl2-config pkg-config; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             echo "Error: missing required simulator tool '$tool' on PATH." >&2
             missing=1
@@ -74,22 +74,7 @@ done
 
 require_tools
 python3 tests/test-crazypod-lvgl-layer-budget.py
-npm ci --ignore-scripts --no-audit --no-fund \
-    --prefix tools/miniapp-builder
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/native-reference \
-    --out miniapps/apps/native-reference/generated/app.c
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/capability-lab \
-    --out miniapps/apps/capability-lab/generated/app.c
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/game2048 \
-    --out miniapps/apps/game2048/generated/app.c
-# The ABI 1.5 theme intrinsics come from the standalone Devtool. Keep its
-# generated artifact in sync with the TSX source.
-test -f miniapps/themes/atelier-hifi/generated/app.c
-test -f miniapps/themes/signal-one/generated/app.c
-
+# The retired native MiniApps toolchain is not part of this firmware.
 builddir="build-sim"
 configure_stamp="crazypod simulator ipod6g lvgl sdl-threads"
 

@@ -68,13 +68,6 @@ jobs:
             python3 \
             zip
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: tools/miniapp-builder/package-lock.json
-
       - name: Build host font converter
         shell: bash
         run: make -C tools convttf
@@ -121,13 +114,6 @@ jobs:
         run: |
           brew untap aws/tap || true
           HOMEBREW_NO_AUTO_UPDATE=1 brew install freetype sdl2 ffmpeg pkg-config
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: tools/miniapp-builder/package-lock.json
 
       - name: Build host font converter
         shell: bash
