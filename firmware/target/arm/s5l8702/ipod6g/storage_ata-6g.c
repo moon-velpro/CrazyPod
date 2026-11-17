@@ -1494,8 +1494,7 @@ int ata_event(long id, intptr_t data)
              * management support, and user-selected SSD mode alone are
              * insufficient to authorize removing the power rail. */
             if (ata_ssd_mode && ata_platform_power_cut_capable &&
-                ssd_flush_succeeded
-                && ata_clock_gated && !ata_powered
+                ssd_flush_succeeded && ata_clock_gated && !ata_powered
                 && !ssd_deep_asleep
                 && !ata_deep_poweroff_inhibited()
                 && TIME_AFTER(current_tick,
@@ -1505,8 +1504,7 @@ int ata_event(long id, intptr_t data)
                 ssd_deep_timeout =
                     is_backlight_on(true) ? 30 * HZ : 10 * HZ;
                 if (ata_ssd_mode && ata_platform_power_cut_capable &&
-                ssd_flush_succeeded
-                    && ata_clock_gated && !ata_powered
+                    ssd_flush_succeeded && ata_clock_gated && !ata_powered
                     && !ssd_deep_asleep
                     && !ata_deep_poweroff_inhibited()
                     && TIME_AFTER(current_tick,
