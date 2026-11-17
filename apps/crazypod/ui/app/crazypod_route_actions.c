@@ -479,6 +479,20 @@ static void reset_open_note_reader(uint32_t id)
     open_note_reader(id);
 }
 
+/* Reuse the already validated async Shuffle app path.  A Music menu
+ * action does not reopen the retired 17-app Home or add a new route. */
+static void shuffle_all_from_music(void)
+{
+    if(crazypod_music_library_loaded() &&
+       crazypod_music_track_count() == 0) {
+        crazypod_notification_show(
+            CRAZYPOD_NOTIFICATION_ERROR,
+            CP_TR("No track available"));
+        return;
+    }
+    crazypod_app_launcher_open(CRAZYPOD_APP_SHUFFLE);
+}
+
 static bool activate_music(
     struct route_state *state, long now)
 {
@@ -501,6 +515,7 @@ static bool activate_music(
                 crazypod_route_actions_request_now_playing,
             .show_now_actions =
                 crazypod_now_playing_overlay_show_actions,
+            .shuffle_all = shuffle_all_from_music,
         };
 
         return crazypod_music_feature_activate(
