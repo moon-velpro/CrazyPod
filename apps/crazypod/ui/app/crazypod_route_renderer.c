@@ -14,6 +14,7 @@
 #include "../navigation/crazypod_route_registry.h"
 #include "../presentation/crazypod_alpha_jump_hud.h"
 #include "../presentation/crazypod_glass_slots.h"
+#include "../presentation/crazypod_liquid_music.h"
 #include "../presentation/crazypod_menu_list.h"
 #include "../presentation/crazypod_menu_screen.h"
 #include "../presentation/crazypod_preview_motion.h"
@@ -131,7 +132,11 @@ static void render_menu(const struct route_state *state)
         .item_is_current = host.item_is_current,
     };
 
-    create_panel_backgrounds();
+    /* Native Apple-style root lists fill the entire canvas. Do not
+     * waste CPU sampling the retired split-pane glass decorations. */
+    if(state->route != MUSIC_ROUTE_MENU &&
+       state->route != SETTINGS_ROUTE_MENU)
+        create_panel_backgrounds();
     if(item_count <= 0)
         crazypod_menu_preview_render(state, false);
     crazypod_menu_screen_render(state, &context);
@@ -219,9 +224,14 @@ void crazypod_route_renderer_render(
         state->route, CRAZYPOD_ROUTE_FLAG_SOLID_BLACK);
     bool hide_status = crazypod_route_registry_has_flag(
         state->route, CRAZYPOD_ROUTE_FLAG_HIDE_STATUS);
-    uint32_t background = solid_black
-        ? 0x000000 : crazypod_appearance_menu_color();
-    uint32_t foreground = COLOR_WHITE;
+    bool native_root =
+        state->route == MUSIC_ROUTE_MENU ||
+        state->route == SETTINGS_ROUTE_MENU;
+    uint32_t background = native_root
+        ? CRAZYPOD_LM_NATIVE_BG :
+        solid_black ? 0x000000 : crazypod_appearance_menu_color();
+    uint32_t foreground = native_root
+        ? CRAZYPOD_LM_NATIVE_INK : COLOR_WHITE;
     lv_obj_t *content = crazypod_shell_product_content();
 
     (void)now; /* No retired app needs a per-frame render timestamp. */
@@ -238,7 +248,7 @@ void crazypod_route_renderer_render(
         content,
         0, 0, LCD_WIDTH, LCD_HEIGHT, 0,
         background, LV_OPA_COVER);
-    menu_wallpaper = solid_black || fullscreen
+    menu_wallpaper = native_root || solid_black || fullscreen
         ? NULL : crazypod_custom_menu_wallpaper();
     if(menu_wallpaper != NULL) {
         lv_obj_t *image =
