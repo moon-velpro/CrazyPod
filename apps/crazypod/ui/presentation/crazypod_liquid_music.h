@@ -57,10 +57,11 @@
     0x756E66u, 0x728396u, 0x8B7277u, 0x667C83u  \
 }
 
-/* Audio waveform and timer sit below the artwork; do not cover the cover. */
+/* Compact waveform/scrubber sits above physical-button playback glyphs.
+ * No new audio visualization thread or touch controls are introduced. */
 #define CRAZYPOD_LM_WAVE_X                 16
 #define CRAZYPOD_LM_WAVE_Y                 181
 #define CRAZYPOD_LM_WAVE_WIDTH             288
-#define CRAZYPOD_LM_WAVE_HEIGHT            34
+#define CRAZYPOD_LM_WAVE_HEIGHT             8
 
 #endif
