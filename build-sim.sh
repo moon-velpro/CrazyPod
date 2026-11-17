@@ -121,10 +121,20 @@ else
 fi
 
 if [ -z "${ROCKPOD_SKIP_DEP:-}" ] || [ ! -f make.dep ]; then
-    make EXTRA_DEFINES="$private_icon_defines" dep
+    if [ "$private_icons_enabled" -eq 1 ]; then
+        make EXTRA_DEFINES="$private_icon_defines" dep
+    else
+        # Preserve the historically passing macOS public simulator build:
+        # Make 3.81 can differ when an explicit empty override is passed.
+        make dep
+    fi
 fi
 
-make EXTRA_DEFINES="$private_icon_defines" -j"$(detect_jobs)"
+if [ "$private_icons_enabled" -eq 1 ]; then
+    make EXTRA_DEFINES="$private_icon_defines" -j"$(detect_jobs)"
+else
+    make -j"$(detect_jobs)"
+fi
 
 codec_dir="lib/rbcodec/codecs"
 sim_codec_dir="simdisk/.rockbox/codecs"
