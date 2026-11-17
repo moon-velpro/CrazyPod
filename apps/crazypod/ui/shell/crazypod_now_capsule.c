@@ -15,6 +15,7 @@
 #include "../../crazypod_artwork_palette.h"
 #include "../../crazypod_soundwave.h"
 #include "../../crazypod_state.h"
+#include "../../crazypod_product_geometry.h"
 #include "../../crazypod_wallpaper.h"
 #include "../presentation/crazypod_glass_sampler.h"
 #include "../presentation/crazypod_marquee.h"
@@ -26,10 +27,10 @@
 #define CAPSULE_TINT_COLOR 0x111319
 #define CAPSULE_TINT_OPA 96
 #define CAPSULE_FALLBACK_OPA 53
-#define CAPSULE_SIDE_MARGIN 12
-#define CAPSULE_BOTTOM_MARGIN 8
+#define CAPSULE_SIDE_MARGIN CRAZYPOD_PRODUCT_MINIPLAYER_MARGIN
+#define CAPSULE_BOTTOM_MARGIN CRAZYPOD_PRODUCT_MINIPLAYER_BOTTOM
 #define CAPSULE_X CAPSULE_SIDE_MARGIN
-#define CAPSULE_Y 181
+#define CAPSULE_Y CRAZYPOD_PRODUCT_MINIPLAYER_Y
 #define CAPSULE_WIDTH (LCD_WIDTH - CAPSULE_SIDE_MARGIN * 2)
 #define CAPSULE_HEIGHT \
     (LCD_HEIGHT - CAPSULE_Y - CAPSULE_BOTTOM_MARGIN)
