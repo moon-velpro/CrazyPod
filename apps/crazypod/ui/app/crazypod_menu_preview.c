@@ -175,6 +175,14 @@ void crazypod_menu_preview_render(
     preview.defer_media = animate;
     *crazypod_preview_motion_media_deferred_flag() = false;
     crazypod_preview_motion_reset_root(preview.host.parent);
+    if(state->route == MUSIC_ROUTE_MENU ||
+       state->route == SETTINGS_ROUTE_MENU) {
+        /* Full-width native root lists do not need album cards
+         * or expensive right-hand preview animation on wheel ticks. */
+        preview.defer_media = false;
+        preview.motion_ready = true;
+        return;
+    }
     if(state->route == MUSIC_ROUTE_SEARCH) {
         render_editor(
             crazypod_music_search_query(), CP_TR("Any track"),
@@ -279,15 +287,9 @@ void crazypod_menu_preview_prefetch(
         crazypod_photos_feature_prefetch_preview(state);
         return;
     }
-    if(state->route == MUSIC_ROUTE_MENU) {
-        /* New Music order: Albums(0), Artists, Songs, Playlists,
-         * Cover Flow(4), Search. Only cover-bearing pages prefetch. */
-        if((state->selected == 0 || state->selected == 4) &&
-           crazypod_music_album_count() > 0 &&
-           crazypod_music_copy_album_track(0, 0, &track))
-            (void)crazypod_artwork_load_priority(
-                CRAZYPOD_PREVIEW_ARTWORK_SLOT, &track,
-                MUSIC_ROOT_ARTWORK_SIZE, ARTWORK_PRIORITY);
+    if(state->route == MUSIC_ROUTE_MENU ||
+       state->route == SETTINGS_ROUTE_MENU) {
+        /* No preview pane exists in these native full-width lists. */
         return;
     }
     if(state->route == MUSIC_ROUTE_ALBUMS)
