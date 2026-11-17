@@ -85,6 +85,35 @@ def verify() -> None:
                    "CRAZYPOD_APP_LOCK"):
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
+
+    # The hardware package must not include all 47 x 4 CJK faces needed by
+    # retired CPK apps. Simulator/font fixtures keep their original manifest.
+    full_font_specs = {
+        line.strip() for line in source(
+            "tools/crazypod-runtime-font-specs.txt").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    music_font_specs = {
+        line.strip() for line in source(
+            "tools/crazypod-runtime-font-music-only.txt").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    assert len(music_font_specs) == 9, music_font_specs
+    assert music_font_specs <= full_font_specs
+    assert all(spec.startswith("system:") for spec in music_font_specs)
+    for size in (8, 10, 12, 15, 16, 18):
+        assert f"system:400:{size}" in music_font_specs
+    for size in (8, 10, 16):
+        assert f"system:700:{size}" in music_font_specs
+        assert f"system:400:{size}" in music_font_specs, "SC Noto fallback"
+    font_builder = source("tools/build-crazypod-runtime-fonts.sh")
+    font_runtime = source("apps/crazypod/crazypod_runtime_font.c")
+    assert 'CRAZYPOD_RUNTIME_FONT_SPECS:-' in font_builder
+    assert 'CRAZYPOD_RUNTIME_FONT_SPECS="$CRAZYPOD_FONT_SPEC"' in hw
+    assert '--spec-file "$CRAZYPOD_FONT_SPEC"' in hw
+    assert 'tools/build-crazypod-runtime-fonts.sh' in sim
+    assert 'CRAZYPOD_RUNTIME_FONT_MAX 24' in font_runtime
+    assert 'CRAZYPOD_RUNTIME_FONT_MAX 48' in font_runtime
     usb_prompts = source("apps/crazypod/ui/shell/crazypod_system_prompts.c")
     for retired_usb in ("crazypod_books_", "crazypod_photos_",
                         "crazypod_miniapps_", "crazypod_organizer_",

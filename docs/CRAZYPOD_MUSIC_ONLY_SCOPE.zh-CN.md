@@ -158,3 +158,11 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - 原 `test-crazypod-photo-cache-policy.py` 默认实体机仍运行 Photos，在 USB 连接时必然使相册目录失效。这与已在 `apps/SOURCES` 隔离相册引擎的音乐专用产品矛盾。
 - 现在测试仍严格校验旧相册目录刷新不清空已验证来源的解码缓存、缓存命中必须匹配大小/时间戳/键；若启用了音乐专用守卫，还额外要求 Photos 仅存在于 `SIMULATOR` 构建块，实体机 USB 不得调用旧相册目录。
 - 音乐版原有 USB 互斥、目录重新验证、封面暂停/恢复、字体描述符管理等回归仍单独由 `test-crazypod-music-only-build.py` 检查。
+
+## 2026-11-18 · 音乐专用 AOT 字体资源重写
+
+- 原硬件 ZIP 携带 47 个语义字体规格 × JP/KR/SC/TC 四个地区，包含大量已从硬件固件删除的 MiniApps、Books、Themes Serif/Mono 与大字号变体。上一版完整构建的 CI 固件产物上传体积约 521 MB，其中固件镜像只有约 1.5 MB；二者不应混淆。
+- 新增 `tools/crazypod-runtime-font-music-only.txt`：仅包含 Home/Now Playing/歌词/歌曲和锁屏元数据所需的 9 个系统字体规格（400 常规 8/10/12/15/16/18；700 粗体 8/10/16），每规格仍提供完整 JP/KR/SC/TC 字形，不做中文歌名/艺人专用字符裁剪。
+- 硬件 `build-hw.sh` 显式传入音乐版规格并用相同规格做产物完整性审计；模拟器和字体开发测试继续默认使用原 47 规格，完整字体清单及文件源码保留。
+- 实体机字体语义缓存池从 48 减至 24，模拟器保留 48；按 8192 B × 24 仅覆盖位图就减少 196,608 字节静态 BSS。硬件字体就绪检查不再加载已停用的 Serif/Mono，但仍检查歌词粗体、元数据及 SC 的 JP fallback。
+- 实际 ZIP 大小与 ELF text/data/bss 仍以本轮完整 ARM CI 为准。若需要恢复旧 MiniApp 字体实验，使用模拟器配置而非把旧字体重新塞入音乐设备。

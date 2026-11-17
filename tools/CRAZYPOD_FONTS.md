@@ -150,3 +150,16 @@ font-size check does not prove that the other generated sizes are complete.
 The audit must report `U+0020` as covered; otherwise localized labels will
 visually concatenate words even when their source strings contain spaces.
 Artifact checks also reject spacing glyphs whose advance width is zero.
+
+## Music-only hardware font profile (2026-11)
+
+The iPod 6G music-only hardware package sets
+`CRAZYPOD_RUNTIME_FONT_SPECS=tools/crazypod-runtime-font-music-only.txt`
+when invoking `build-crazypod-runtime-fonts.sh` and audits the generated
+font directory using that exact profile. It ships nine semantic **system**
+font tuples with all four regional glyph sets; metadata and lyrics still
+support arbitrary CJK text, not only strings in the UI translation catalog.
+The original `crazypod-runtime-font-specs.txt` remains canonical for the
+legacy simulator and font-development tests, including retired Serif/Mono
+and MiniApp theme cases. Do not put those 47 tuples back into an iPod
+music-only distribution.

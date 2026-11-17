@@ -18,8 +18,15 @@
 
 #define CRAZYPOD_FONT_MIN_SIZE 6
 #define CRAZYPOD_FONT_MAX_SIZE 48
-/* Shell faces and a certified theme's faces/line-height variants coexist. */
+/* Old MiniApp/theme simulator reserves the original 48 independent faces.
+ * Music-only firmware uses at most nine semantic tuples, with parallel JP
+ * fallback faces for PingFang SC. Keep comfortable headroom without
+ * reserving a 48 x 8 KiB coverage map in iPod RAM. */
+#ifdef SIMULATOR
 #define CRAZYPOD_RUNTIME_FONT_MAX 48
+#else
+#define CRAZYPOD_RUNTIME_FONT_MAX 24
+#endif
 #define CRAZYPOD_ASSET_FONT_MAX 4
 #if MAXUSERFONTS < CRAZYPOD_RUNTIME_FONT_MAX + CRAZYPOD_ASSET_FONT_MAX + 12
 #error "Rockbox font capacity must cover CrazyPod and the Rockbox UI"
@@ -227,12 +234,28 @@ bool crazypod_runtime_fonts_ready(void)
         crazypod_runtime_font_resolve(
                CRAZYPOD_FONT_FAMILY_SYSTEM, 18, 400,
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
+        /* Hardware no longer distributes legacy serif/mono CPK faces. */
+#ifdef SIMULATOR
         crazypod_runtime_font_resolve(
                CRAZYPOD_FONT_FAMILY_SERIF, 12, 400,
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
         crazypod_runtime_font_resolve(
                CRAZYPOD_FONT_FAMILY_MONO, 12, 400,
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL;
+#else
+        crazypod_runtime_font_resolve(
+               CRAZYPOD_FONT_FAMILY_SYSTEM, 16, 400,
+               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
+        crazypod_runtime_font_resolve(
+               CRAZYPOD_FONT_FAMILY_SYSTEM, 16, 700,
+               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
+        crazypod_runtime_font_resolve(
+               CRAZYPOD_FONT_FAMILY_SYSTEM, 10, 400,
+               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
+        crazypod_runtime_font_resolve(
+               CRAZYPOD_FONT_FAMILY_SYSTEM, 8, 700,
+               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL;
+#endif
 }
 
 static uint16_t read_le16(const uint8_t *value)

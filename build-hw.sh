@@ -264,8 +264,13 @@ if [ ! -x "$RUNTIME_FONT_BUILDER" ]; then
     echo "Error: missing CrazyPod runtime font builder." >&2
     exit 1
 fi
-"$RUNTIME_FONT_BUILDER" "$PACKAGE_DIR/.rockbox/fonts"
+# Music firmware needs only the system faces referenced by Home, lyrics,
+# lock-screen metadata and Now Playing, not 47 retired app/theme tuples.
+CRAZYPOD_FONT_SPEC="$(cd .. && pwd)/tools/crazypod-runtime-font-music-only.txt"
+CRAZYPOD_RUNTIME_FONT_SPECS="$CRAZYPOD_FONT_SPEC" \
+    "$RUNTIME_FONT_BUILDER" "$PACKAGE_DIR/.rockbox/fonts"
 python3 ../tools/crazypod_runtime_font_audit.py \
+    --spec-file "$CRAZYPOD_FONT_SPEC" \
     --font-dir "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot"
 cp rockbox.ipod "$PACKAGE_DIR/.rockbox/rockbox.ipod"
 [ ! -f rockbox-info.txt ] || cp rockbox-info.txt "$PACKAGE_DIR/.rockbox/rockbox-info.txt"
@@ -290,6 +295,9 @@ rm -f "$archive_name"
 )
 mv "$PACKAGE_DIR/../$archive_name" "$archive_name"
 
+echo "CrazyPod: music-only AOT font tuples: 9 (4 regional faces each)"
+echo "CrazyPod: AOT font directory KiB $(du -sk "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot" | awk '{print $1}')"
+echo "CrazyPod: package bytes $(wc -c < "$archive_name")"
 echo "CrazyPod: firmware bytes $(wc -c < rockbox.ipod)"
 echo "CrazyPod: built $(pwd)/rockbox.ipod"
 echo "CrazyPod: packaged $(pwd)/$archive_name"

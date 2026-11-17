@@ -12,7 +12,9 @@ pingfang_dir=${CRAZYPOD_PINGFANG_DIR:-"$repo_root/.cache/crazypod-pingfang"}
 cache_dir=${CRAZYPOD_AOT_FONT_CACHE:-"$repo_root/.cache/crazypod-noto-aot"}
 destination="$1/crazypod-aot"
 converter=${CRAZYPOD_CONVTTF:-"$repo_root/tools/convttf"}
-spec_file="$repo_root/tools/crazypod-runtime-font-specs.txt"
+# A hardware music-only build supplies a smaller explicit font manifest.
+# The legacy simulator (and stand-alone font tests) keep the full set.
+spec_file=${CRAZYPOD_RUNTIME_FONT_SPECS:-"$repo_root/tools/crazypod-runtime-font-specs.txt"}
 # Bump this whenever convttf changes the meaning of stored glyph metrics.
 # Prefixing the cache entry keeps older artifacts available but unusable.
 cache_revision=advance-bearing-v2-pingfang-system-sc

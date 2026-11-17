@@ -1,0 +1,13 @@
+# iPod 6G music-only firmware. Full regional CJK coverage at just the
+# actual metadata, song/album, lock-screen and lyric sizes and weights.
+# Keep these tuples a subset of crazypod-runtime-font-specs.txt.
+# JP regular files also provide Hangul fallback for PingFang SC bold faces.
+system:400:8
+system:400:10
+system:400:12
+system:400:15
+system:400:16
+system:400:18
+system:700:8
+system:700:10
+system:700:16
