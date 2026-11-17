@@ -62,6 +62,10 @@ uint32_t crazypod_monotonic_usec(void);
 void crazypod_present_init(long now);
 void crazypod_present_set_home_interaction(bool active);
 void crazypod_present_note_home_selection(void);
+/* Keep panel commits behind the actual LVGL flush for a new selection. */
+bool crazypod_present_home_selection_waiting_for_flush(void);
+void crazypod_present_home_selection_frame_flushed(void);
+void crazypod_present_cancel_home_selection(void);
 void crazypod_present_queue_rect(int x, int y, int width, int height);
 void crazypod_present_queue_home_rect(
     int x, int y, int width, int height);
