@@ -14,6 +14,8 @@
 #define CRAZYPOD_LM_GLASS                  0xC8D4E5u
 #define CRAZYPOD_LM_GLASS_FILL_OPA         38
 #define CRAZYPOD_LM_GLASS_BORDER_OPA       56
+#define CRAZYPOD_LM_FOCUS_FILL_OPA         76
+#define CRAZYPOD_LM_FOCUS_BORDER_OPA       93
 
 /* One artwork dimension is shared by the screen and its RGB565 cache.
  * Keep the presentation's double-bank allocation in the memory budget. */
