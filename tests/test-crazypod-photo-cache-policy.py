@@ -34,8 +34,26 @@ if "crazypod_photo_catalog_invalidate();" not in invalidate_body:
     raise SystemExit("photo catalog invalidation no longer refreshes the catalog")
 if "crazypod_photo_cache_invalidate" in invalidate_body:
     raise SystemExit("USB catalog invalidation must preserve decoded photo caches")
-if "crazypod_photos_invalidate_catalog();" not in prompts_source:
-    raise SystemExit("USB connection no longer invalidates the photo catalog")
+# Simulated/legacy Photos remains a source-validated cache implementation.
+# The current music-only iPod firmware excludes this engine completely,
+# so its USB lifecycle must not reference it or touch its old catalog.
+manifest = (ROOT / "apps/SOURCES").read_text(encoding="utf-8")
+retired_guard = manifest.split(
+    "/* Retired Notes/Photos/Organizer/Customize/MiniApps compatibility:", 1
+)
+if len(retired_guard) == 2:
+    guarded_sources = retired_guard[1].split("#endif", 1)[0]
+    if "crazypod/crazypod_photos.c" not in guarded_sources:
+        raise SystemExit("retired Photos source escaped simulator-only guard")
+    if "crazypod_photos_invalidate_catalog();" in prompts_source:
+        raise SystemExit("music-only USB flow must not load retired Photos")
+    expected_result = (
+        "Photo cache identity checks pass; music-only USB skips Photos"
+    )
+else:
+    if "crazypod_photos_invalidate_catalog();" not in prompts_source:
+        raise SystemExit("legacy USB flow no longer invalidates photo catalog")
+    expected_result = "Photo USB refresh preserves source-validated decoded caches"
 
 load_body = function_body(cache_source, "crazypod_photo_cache_load")
 for identity_check in (
@@ -49,4 +67,4 @@ for identity_check in (
             f"{identity_check}"
         )
 
-print("Photo USB refresh preserves source-validated decoded caches")
+print(expected_result)
