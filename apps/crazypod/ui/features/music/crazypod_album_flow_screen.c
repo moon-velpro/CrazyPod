@@ -59,6 +59,7 @@ void crazypod_album_flow_screen_render(
     const lv_font_t *metadata_font)
 {
     int count = crazypod_music_album_count();
+    lv_obj_t *caption_material;
 
     lv_obj_set_style_bg_color(parent, lv_color_hex(CRAZYPOD_LM_CANVAS), 0);
     lv_obj_set_style_bg_opa(parent, LV_OPA_COVER, 0);
@@ -68,6 +69,18 @@ void crazypod_album_flow_screen_render(
             CP_TR("Add local music and rescan."));
         return;
     }
+
+    /* Keep album covers unobstructed. Put only metadata in a quiet,
+     * low-cost floating control surface below native Cover Flow. */
+    caption_material = crazypod_ui_widget_box(
+        parent, 14, 176, 292, 45, 12,
+        CRAZYPOD_LM_GLASS, CRAZYPOD_LM_GLASS_FILL_OPA);
+    lv_obj_set_style_border_width(caption_material, 1, 0);
+    lv_obj_set_style_border_color(
+        caption_material, lv_color_hex(CRAZYPOD_LM_TEXT), 0);
+    lv_obj_set_style_border_opa(
+        caption_material, CRAZYPOD_LM_GLASS_BORDER_OPA, 0);
+    lv_obj_remove_flag(caption_material, LV_OBJ_FLAG_CLICKABLE);
 
     album_title = make_label(
         parent, "", metadata_font, COLOR_WHITE, LV_OPA_COVER);
