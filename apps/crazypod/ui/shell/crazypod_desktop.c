@@ -101,6 +101,8 @@ static void update_selection_chrome(void)
 
         if(home_rows[index] == NULL || home_labels[index] == NULL)
             continue;
+        /* Rebind localized labels after a runtime language change. */
+        CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
         lv_obj_set_style_bg_color(
             home_rows[index], lv_color_hex(HOME_ACCENT), 0);
         lv_obj_set_style_bg_opa(
