@@ -303,6 +303,7 @@ lv_obj_t *crazypod_desktop_create(
     int i;
 
     memset(&desktop_host, 0, sizeof(desktop_host));
+    memset(home_private_badges, 0, sizeof(home_private_badges));
     if(host != NULL)
         desktop_host = *host;
     screen = lv_obj_create(NULL);
