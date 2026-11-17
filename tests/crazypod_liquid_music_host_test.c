@@ -33,6 +33,16 @@ int main(void)
     assert(shade_channel(255, 5, CRAZYPOD_LM_SHADE_OPA) <= 111);
     assert(shade_channel(255, 8, CRAZYPOD_LM_SHADE_OPA) <= 111);
 
+    /* Apple-like root lists use one soft highlight on light paper;
+     * the background does not compete with Music artwork. */
+    assert(CRAZYPOD_LM_NATIVE_BG != CRAZYPOD_LM_CANVAS);
+    assert(CRAZYPOD_LM_NATIVE_BG > 0xE8E8E8u);
+    assert(CRAZYPOD_LM_NATIVE_INK < 0x444444u);
+    assert(CRAZYPOD_LM_NATIVE_SELECTED != CRAZYPOD_LM_NATIVE_BG);
+    assert(CRAZYPOD_LM_HOME_IDLE_OPA == 0);
+    assert(CRAZYPOD_LM_WAVE_HEIGHT <= 10);
+    assert(CRAZYPOD_LM_WAVE_Y + CRAZYPOD_LM_WAVE_HEIGHT < 200);
+
     /* Native UI and wallpaper blur must crop the same iPod glass pill. */
     assert(CRAZYPOD_PRODUCT_SCREEN_WIDTH == 320);
     assert(CRAZYPOD_PRODUCT_SCREEN_HEIGHT == 240);
