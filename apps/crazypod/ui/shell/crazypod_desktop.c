@@ -275,46 +275,55 @@ lv_obj_t *crazypod_desktop_create(
             HOME_ROW_TOP + i * (HOME_ROW_HEIGHT + HOME_ROW_GAP),
             HOME_ROW_WIDTH, HOME_ROW_HEIGHT, 14,
             HOME_GLASS, LV_OPA_TRANSP);
-        /* Show the four supplied iPhone icons as photographs, not
-         * recolored monochrome glyphs on simulated Android tiles.
-         * Static source descriptors are cached; wheel detents touch only
-         * the row selection chrome. */
-        if(i == CRAZYPOD_HOME_NOW_PLAYING) {
-            /* Voice Memos is a recording app, not Now Playing.
-             * Keep the actual user-supplied Voice Memos image available
-             * as a source asset without mislabeling its function. */
-            lv_obj_t *play_image;
-            home_badges[i] = crazypod_ui_widget_box(
-                home_rows[i], HOME_APP_TILE_X, HOME_APP_TILE_Y,
-                HOME_APP_TILE_SIZE, HOME_APP_TILE_SIZE, 6,
-                0x253047, LV_OPA_COVER);
-            play_image = lv_image_create(home_badges[i]);
-            lv_image_set_src(
-                play_image,
-                crazypod_menu_icon_asset(
-                    CRAZYPOD_MENU_ICON_NOW_PLAYING));
-            lv_obj_set_style_image_recolor(
-                play_image, lv_color_hex(COLOR_WHITE), 0);
-            lv_obj_set_style_image_recolor_opa(
-                play_image, LV_OPA_COVER, 0);
-            lv_obj_center(play_image);
-            lv_obj_remove_flag(
-                play_image, LV_OBJ_FLAG_CLICKABLE);
-        }
-        else {
-            /* Use the user-uploaded iPhone Music, Podcasts and
-             * Settings image pixels, including their original alpha. */
-            home_badges[i] = lv_image_create(home_rows[i]);
-            lv_image_set_src(
-                home_badges[i],
-                crazypod_iphone_app_icon(
-                    i == CRAZYPOD_HOME_MUSIC
-                        ? CRAZYPOD_IPHONE_ICON_MUSIC :
-                    i == CRAZYPOD_HOME_PODCASTS
-                        ? CRAZYPOD_IPHONE_ICON_PODCASTS :
-                        CRAZYPOD_IPHONE_ICON_SETTINGS));
-            lv_obj_set_pos(
-                home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
+        {
+            const enum crazypod_iphone_app_icon_id app_id =
+                i == CRAZYPOD_HOME_MUSIC ? CRAZYPOD_IPHONE_ICON_MUSIC :
+                i == CRAZYPOD_HOME_PODCASTS
+                    ? CRAZYPOD_IPHONE_ICON_PODCASTS :
+                    CRAZYPOD_IPHONE_ICON_SETTINGS;
+            const lv_image_dsc_t *private_image =
+                i == CRAZYPOD_HOME_NOW_PLAYING
+                    ? NULL : crazypod_iphone_app_icon(app_id);
+
+            if(private_image != NULL) {
+                /* Internal builds: retain the exact user-supplied app
+                 * art and alpha, with zero I/O in the Click Wheel loop. */
+                home_badges[i] = lv_image_create(home_rows[i]);
+                lv_image_set_src(home_badges[i], private_image);
+                lv_obj_set_pos(
+                    home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
+            }
+            else {
+                /* Public/CI builds: original source-drawn app tile.
+                 * Voice Memos is never misidentified as Now Playing. */
+                static const uint32_t tile_colors[] = {
+                    0x253047, 0xFFFFFF, 0xA344CD, 0xC6CCD3
+                };
+                static const uint32_t glyph_colors[] = {
+                    0xFFFFFF, 0xEA3357, 0xFFFFFF, 0x2B3540
+                };
+                static const enum crazypod_menu_icon glyphs[] = {
+                    CRAZYPOD_MENU_ICON_NOW_PLAYING,
+                    CRAZYPOD_MENU_ICON_MUSIC,
+                    CRAZYPOD_MENU_ICON_PODCAST,
+                    CRAZYPOD_MENU_ICON_SETTINGS
+                };
+                lv_obj_t *symbol;
+
+                home_badges[i] = crazypod_ui_widget_box(
+                    home_rows[i], HOME_APP_TILE_X, HOME_APP_TILE_Y,
+                    HOME_APP_TILE_SIZE, HOME_APP_TILE_SIZE, 6,
+                    tile_colors[i], LV_OPA_COVER);
+                symbol = lv_image_create(home_badges[i]);
+                lv_image_set_src(
+                    symbol, crazypod_menu_icon_asset(glyphs[i]));
+                lv_obj_set_style_image_recolor(
+                    symbol, lv_color_hex(glyph_colors[i]), 0);
+                lv_obj_set_style_image_recolor_opa(
+                    symbol, LV_OPA_COVER, 0);
+                lv_obj_center(symbol);
+                lv_obj_remove_flag(symbol, LV_OBJ_FLAG_CLICKABLE);
+            }
         }
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
