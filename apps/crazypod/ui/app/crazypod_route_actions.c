@@ -30,6 +30,7 @@
 #include "../presentation/crazypod_preview_motion.h"
 #include "../shell/crazypod_app_catalog.h"
 #include "../shell/crazypod_desktop.h"
+#include "../shell/crazypod_home_model.h"
 #include "../shell/crazypod_notification.h"
 #include "crazypod_app_launcher.h"
 #include "crazypod_choice_coordinator.h"
@@ -337,26 +338,29 @@ static bool commit_calendar_editor(void)
     return true;
 }
 
+/* Legacy reorder state is still loadable, but it no longer controls the
+ * fixed four-destination Home. Persist app order without changing its focus. */
 static void persist_main_menu(
     enum crazypod_app_id preferred)
 {
-    int next = crazypod_apps_visible_index(preferred);
-
-    if(next < 0)
-        next = crazypod_desktop_selected();
-    if(next >= crazypod_apps_visible_count())
-        next = crazypod_apps_visible_count() - 1;
-    if(next < 0)
-        next = 0;
-    crazypod_desktop_set_selected(next, false);
+    (void)preferred;
     crazypod_state_mark_dirty();
     crazypod_state_save(true);
 }
 
 enum crazypod_app_id crazypod_route_actions_selected_app(void)
 {
-    return crazypod_apps_visible_id(
-        crazypod_desktop_selected());
+    switch(crazypod_desktop_selected()) {
+    case CRAZYPOD_HOME_NOW_PLAYING:
+    case CRAZYPOD_HOME_MUSIC:
+        return CRAZYPOD_APP_MUSIC;
+    case CRAZYPOD_HOME_PODCASTS:
+        return CRAZYPOD_APP_PODCASTS;
+    case CRAZYPOD_HOME_SETTINGS:
+        return CRAZYPOD_APP_SETTINGS;
+    default:
+        return CRAZYPOD_APP_INVALID;
+    }
 }
 
 void crazypod_route_actions_main_menu_changed(
