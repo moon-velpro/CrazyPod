@@ -174,6 +174,17 @@ cc -std=c99 -Wall -Wextra -Werror \
     "$repo_root/tests/crazypod_image_host_test.c" \
     -o "$test_root/crazypod_image_host_test"
 
+# Compile the shipping A8 icon rasterizer on Linux as well as on ARM.
+cc -std=c99 -Wall -Wextra -Werror \
+    -I"$repo_root/tests/crazypod-image-stubs" \
+    -I"$repo_root/apps/crazypod/ui" \
+    -I"$repo_root/apps/crazypod/ui/presentation" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_menu_icon_assets.c" \
+    "$repo_root/tests/crazypod_apple_glyph_host_test.c" \
+    -o "$test_root/crazypod_apple_glyph_host_test"
+
+"$test_root/crazypod_apple_glyph_host_test"
+
 "$test_root/crazypod_image_host_test"
 
 cc -std=c99 -Wall -Wextra -Werror \
