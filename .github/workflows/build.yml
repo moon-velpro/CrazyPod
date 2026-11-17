@@ -109,6 +109,55 @@ jobs:
             build-hw-ipod6g/rockbox.ipod
             build-hw-ipod6g/CrazyPod-6G.zip
 
+  # macOS runners can remain queued for extended periods. Compile/link
+  # the same IPOD_6G + SIMULATOR sources on Linux to catch regressions in
+  # legacy diagnostics without bundling the 47-tuple font archive.
+  linux_simulator_link:
+    name: Linux simulator link check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Install simulator link dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc \
+            make \
+            perl \
+            python3 \
+            pkg-config \
+            libfreetype6-dev \
+            libsdl2-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            libavutil-dev \
+            libswscale-dev \
+            libswresample-dev \
+            zlib1g-dev
+
+      - name: Compile and link Linux simulator
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build-sim-linux
+          (
+            cd build-sim-linux
+            ../tools/configure --target=ipod6g --type=s --sdl-threads
+            make dep
+            make -j2
+            test -x rockboxui
+          ) 2>&1 | tee build-sim-linux.log
+
+      - name: Upload Linux simulator link log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crazypod-linux-simulator-link-log
+          if-no-files-found: warn
+          path: build-sim-linux.log
+
   simulator:
     name: macOS simulator
     runs-on: macos-latest

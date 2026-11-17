@@ -85,6 +85,18 @@ def verify() -> None:
                    "CRAZYPOD_APP_LOCK"):
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
+    # The real simulator sources need an independent Linux compile/link gate
+    # when the macOS runner is queued; do not stage old full font packages.
+    assert "linux_simulator_link:" in workflow
+    assert "name: Linux simulator link check" in workflow
+    linux_job = workflow.split("  linux_simulator_link:", 1)[1].split(
+        "  simulator:", 1
+    )[0]
+    assert "../tools/configure --target=ipod6g --type=s --sdl-threads" in linux_job
+    assert "make -j2" in linux_job
+    assert "test -x rockboxui" in linux_job
+    assert "build-crazypod-runtime-fonts.sh" not in linux_job
+    assert "runs-on: macos-latest" in workflow
 
     # The hardware package must not include all 47 x 4 CJK faces needed by
     # retired CPK apps. Simulator/font fixtures keep their original manifest.

@@ -180,3 +180,9 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - 硬件现在为三个 Now Playing 槽位保留 128×128 RGB565 双缓冲：计算上节省 `3 × 2 × (320² - 128²) × 2 = 1,032,192` B 静态 BSS。无需更改专辑封面索引、下一曲预取或播放画面大小；这是消除未被使用的缓存容量，而不是再降一档画质。
 - `SIMULATOR` 仍支持 320px 容量；图片解码的 scratch 工作区独立保持 320px+64KiB 预算，避免大尺寸嵌入 JPEG 因缩减输出缓存而失去解码临时空间。
 - 旧字体/封面文件均不删除。仍要求 ARM ELF 及实机验证图像解码、歌曲切换、专辑封面和锁屏预取，防止悬挂引用或画面失效。
+
+## 2026-11-18 · 为 SIMULATOR 增加 Linux 编译/链接门禁
+
+- macOS runner 连续排队导致当前修改缺少完整模拟器源码编译验证；因此在 `.github/workflows/build.yml` 增设 Ubuntu `Linux simulator link check`，使用相同的 `--target=ipod6g --type=s --sdl-threads` 配置做 `make dep` 和 `make -j2`，要求生成 `rockboxui`。
+- 此门禁只编译、链接，不生成旧版 47×4 字体包，不启动模拟器 GUI，也不改变正常 macOS app 构建；仍保留原 macOS job 验证平台特定兼容性。
+- 新日志作为单独 artifact，帮助捕获仅在 `SIMULATOR` 编译路径中存在的书籍／MiniApps 旧诊断兼容问题，不与已验证的 ARM 音乐固件混淆。
