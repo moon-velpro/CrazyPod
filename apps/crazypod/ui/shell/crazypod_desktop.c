@@ -338,9 +338,15 @@ lv_obj_t *crazypod_desktop_create(
         lv_obj_set_style_bg_grad_dir(
             home_badges[i], LV_GRAD_DIR_VER, 0);
         lv_obj_set_style_border_width(home_badges[i], 1, 0);
+        /* A white Music app tile needs a visible hairline on the light
+         * iPod wallpaper, otherwise it reads as a bare red glyph. */
         lv_obj_set_style_border_color(
-            home_badges[i], lv_color_hex(COLOR_WHITE), 0);
-        lv_obj_set_style_border_opa(home_badges[i], 70, 0);
+            home_badges[i],
+            lv_color_hex(i == CRAZYPOD_HOME_MUSIC
+                ? 0xD5D9E1 : COLOR_WHITE), 0);
+        lv_obj_set_style_border_opa(
+            home_badges[i],
+            i == CRAZYPOD_HOME_MUSIC ? 175 : 70, 0);
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
         home_symbols[i] = lv_image_create(home_badges[i]);
