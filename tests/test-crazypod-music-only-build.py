@@ -157,8 +157,20 @@ def verify() -> None:
     # player. No new navigation action, audio thread or wheel polling.
     assert "CRAZYPOD_LM_NATIVE_BG" in liquid
     assert "CRAZYPOD_LM_HOME_IDLE_OPA          0" in liquid
-    assert "CRAZYPOD_LM_HOME_SELECTION_FILL" in desktop
-    assert "CRAZYPOD_LM_NATIVE_HAIRLINE" in desktop
+    assert "CRAZYPOD_PRODUCT_HOME_VIEWPORT_HEIGHT" in source(
+        "apps/crazypod/crazypod_product_geometry.h"
+    )
+    assert "home_viewport = lv_obj_create(screen);" in desktop
+    assert "home_reel = lv_obj_create(home_viewport);" in desktop
+    assert "lv_obj_set_style_clip_corner(home_viewport, true, 0)" in desktop
+    assert "lv_obj_set_y(" in desktop
+    assert "crazypod_home_reel_offset_y(selected_app)" in desktop
+    assert desktop.count("update_home_vertical_scroll();") == 3
+    assert "selected_app = CRAZYPOD_HOME_MUSIC;" in desktop
+    assert "home_entry_subtitle(" in desktop
+    assert "home_private_badges[index]" in desktop
+    assert "crazypod_iphone_app_icon(" in desktop
+    assert "crazypod_image_render_glass_rgb565(" not in desktop
     assert "native_root =" in renderer
     assert "? CRAZYPOD_LM_NATIVE_BG" in renderer
     assert "? CRAZYPOD_LM_NATIVE_INK" in renderer
