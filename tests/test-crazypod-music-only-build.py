@@ -18,6 +18,8 @@ def verify() -> None:
     workflow = source(".github/workflows/build.yml")
     boot = source("apps/crazypod/crazypod_main.c")
     launcher = source("apps/crazypod/ui/app/crazypod_app_launcher.c")
+    desktop = source("apps/crazypod/ui/shell/crazypod_desktop.c")
+    home_input = source("apps/crazypod/ui/shell/crazypod_home_input.c")
     runtime = source("apps/crazypod/ui/app/crazypod_runtime_services.c")
     feature_input = source("apps/crazypod/ui/app/crazypod_feature_input.c")
     query = source("apps/crazypod/ui/navigation/crazypod_route_query.c")
@@ -70,6 +72,20 @@ def verify() -> None:
         )
     assert "crazypod_video_disabled_host_test.c" in source(
         "tests/run-crazypod-ui-host-tests.sh"
+    )
+
+    # A real Click Wheel detent must only refresh old/new Home rows, not
+    # rebuild all four labels or trigger repeated screen launches.
+    assert desktop.count("update_selection_row(previous);") == 2
+    assert desktop.count("update_selection_row(selected);") == 2
+    assert "CP_LV_LABEL_SET_TEXT(home_labels[index]" in desktop
+    assert "event->base == BUTTON_SELECT && !event->repeated" in home_input
+    assert "event->release" in home_input
+    assert "BUTTON_SELECT | BUTTON_REPEAT" in source(
+        "tests/crazypod_home_input_host_test.c"
+    )
+    assert "#define CRAZYPOD_TARGET_FPS 50" in source(
+        "apps/crazypod/crazypod_frameclock.h"
     )
 
     # The route ABI is stable, but all retired dispatch paths are inert.
