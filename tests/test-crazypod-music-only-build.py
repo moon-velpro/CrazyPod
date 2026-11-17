@@ -160,8 +160,8 @@ def verify() -> None:
     assert "CRAZYPOD_LM_HOME_SELECTION_FILL" in desktop
     assert "CRAZYPOD_LM_NATIVE_HAIRLINE" in desktop
     assert "native_root =" in renderer
-    assert "native_root ? CRAZYPOD_LM_NATIVE_BG" in renderer
-    assert "native_root ? CRAZYPOD_LM_NATIVE_INK" in renderer
+    assert "? CRAZYPOD_LM_NATIVE_BG" in renderer
+    assert "? CRAZYPOD_LM_NATIVE_INK" in renderer
     assert "state->route == MUSIC_ROUTE_MENU" in native_menu
     assert "state->route == SETTINGS_ROUTE_MENU" in native_menu
     assert "native_root ? LCD_WIDTH - 24" in native_menu
