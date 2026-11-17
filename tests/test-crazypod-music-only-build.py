@@ -82,6 +82,9 @@ def verify() -> None:
         assert abandoned_call not in startup, (
             f"Retired MiniApp startup hook: {abandoned_call}"
         )
+    assert "CRAZYPOD_WAIT_BLOCK, crazypod_state_wait_ticks()" in runtime, (
+        "LCD-off scheduler must not force 1Hz polling after alarm removal"
+    )
     assert "crazypod_now_playing_theme_enabled(void)" in theme
     assert "return false; /* Always render the native Now Playing screen. */" in theme
     assert "crazypod_miniapps.h" not in theme
