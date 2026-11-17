@@ -175,6 +175,9 @@ def verify() -> None:
     assert "selected_app = CRAZYPOD_HOME_MUSIC;" in desktop
     assert "home_entry_subtitle(" in desktop
     assert "home_private_badges[index]" in desktop
+    assert "home_fallback_glyphs[index]" in desktop
+    assert "home_fallback_glyphs[i] = symbol;" in desktop
+    assert "(selected ? 22 : 17) * LV_SCALE_NONE / 14" in desktop
     assert "crazypod_iphone_app_icon(" in desktop
     assert "crazypod_image_render_glass_rgb565(" not in desktop
     assert "native_root =" in renderer
@@ -212,6 +215,13 @@ def verify() -> None:
     assert "uint32_t shade_color = CRAZYPOD_NOW_SHADE_COLOR;" in now_screen
     assert "&content_color, &shade_color" in now_screen
     assert "shade_color, CRAZYPOD_NOW_SHADE_OPA" in now_screen
+    transport_region = now_screen.split(
+        "view->progress_marker = make_box(", 1
+    )[1].split("void crazypod_now_screen_reset(", 1)[0]
+    assert "COLOR_WHITE" not in transport_region, (
+        "Artwork-adaptive background requires matching transport/time contrast"
+    )
+    assert transport_region.count("content_color") >= 6
     assert "crazypod_lm_album_shade(" in liquid
     assert "lv_obj_add_event_cb(view->wave_surface" in now_screen
     assert "lv_obj_add_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN)" in capsule
