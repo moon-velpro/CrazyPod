@@ -16,9 +16,9 @@ int main(void)
     const lv_image_dsc_t *fallback =
         crazypod_menu_icon_asset(CRAZYPOD_MENU_ICON_SHUFFLE);
 
-    assert(music != NULL && music->header.w == 21);
+    assert(music != NULL && music->header.w == CRAZYPOD_IPHONE_APP_ICON_SIZE);
     assert(music->header.cf == LV_COLOR_FORMAT_RGB565A8);
-    assert(music->data_size == 21u * 21 * 3);
+    assert(music->data_size == 35u * 35 * 3);
     assert(music->data[0] == 0x42);
     assert(crazypod_iphone_app_icon(CRAZYPOD_IPHONE_ICON_SETTINGS) == NULL);
 
