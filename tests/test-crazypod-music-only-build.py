@@ -78,6 +78,12 @@ def verify() -> None:
 
     # A real Click Wheel detent must only refresh old/new Home rows, not
     # rebuild all four labels or trigger repeated screen launches.
+    detent_helper = desktop.split("static void update_selection_row(int index)", 1)[1].split(
+        "static void update_selection_chrome(void)", 1
+    )[0]
+    assert "lv_obj_set_style_border_width" not in detent_helper
+    assert "lv_obj_set_style_border_color" not in detent_helper
+    assert "CP_LV_LABEL_SET_TEXT" not in detent_helper
     assert desktop.count("update_selection_row(previous);") == 2
     assert desktop.count("update_selection_row(selected);") == 2
     assert "CP_LV_LABEL_SET_TEXT(home_labels[index]" in desktop
