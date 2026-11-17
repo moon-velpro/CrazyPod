@@ -14,7 +14,7 @@
 #include "../../crazypod_product_geometry.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_liquid_music.h"
-#include "../presentation/crazypod_menu_icon_assets.h"
+#include "../presentation/crazypod_iphone_app_icons.h"
 #include "../presentation/crazypod_ui_widgets.h"
 #include "crazypod_desktop.h"
 #include "crazypod_desktop_native.h"
@@ -30,11 +30,9 @@
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
 #define HOME_ROW_HEIGHT CRAZYPOD_PRODUCT_HOME_ROW_HEIGHT
 #define HOME_ROW_GAP CRAZYPOD_PRODUCT_HOME_ROW_GAP
-/* iPhone-style app tiles are miniature rounded-square apps, not Android
- * Material circles. A 21px tile fits the existing 25px Home row without
- * changing the Click Wheel or the 320x240 layout. */
-#define HOME_APP_TILE_SIZE 21
-#define HOME_APP_TILE_RADIUS 6
+/* The user-supplied PNGs are downsampled once to the native screen size.
+ * Display the full artwork with original rounded alpha edges. */
+#define HOME_APP_TILE_SIZE CRAZYPOD_IPHONE_APP_ICON_SIZE
 #define HOME_APP_TILE_X 6
 #define HOME_APP_TILE_Y 2
 #define HOME_WHEEL_POSITIONS 96
@@ -48,7 +46,6 @@ static lv_obj_t *wallpaper;
 static lv_obj_t *wallpaper_dim;
 static lv_obj_t *home_headline;
 static lv_obj_t *home_badges[CRAZYPOD_HOME_DESTINATION_COUNT];
-static lv_obj_t *home_symbols[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_chevrons[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_rows[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_labels[CRAZYPOD_HOME_DESTINATION_COUNT];
@@ -85,57 +82,6 @@ static const char *home_entry_title(int index)
     case CRAZYPOD_HOME_SETTINGS: return CP_TR("Settings");
     default: return "";
     }
-}
-
-/* Four original, visually consistent system-style symbols.
- * In particular, Podcasts is a radio beacon, never a speaker icon. */
-static enum crazypod_menu_icon home_entry_icon(int index)
-{
-    switch(index) {
-    case CRAZYPOD_HOME_NOW_PLAYING:
-        return CRAZYPOD_MENU_ICON_NOW_PLAYING;
-    case CRAZYPOD_HOME_MUSIC:
-        return CRAZYPOD_MENU_ICON_MUSIC;
-    case CRAZYPOD_HOME_PODCASTS:
-        return CRAZYPOD_MENU_ICON_PODCAST;
-    case CRAZYPOD_HOME_SETTINGS:
-        return CRAZYPOD_MENU_ICON_SETTINGS;
-    default:
-        return CRAZYPOD_MENU_ICON_NONE;
-    }
-}
-
-/* iPhone app-icon language: white Music tile with coral note,
- * violet Podcasts tile, cool metallic Settings tile and dark player tile.
- * These are original CrazyPod glyphs, not extracted Apple app assets. */
-static uint32_t home_entry_color(int index)
-{
-    static const uint32_t colors[] = {
-        0x253047, 0xFFFFFF, 0xB45BEA, 0xC9D1D8
-    };
-
-    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
-        ? colors[index] : colors[0];
-}
-
-static uint32_t home_entry_gradient(int index)
-{
-    static const uint32_t colors[] = {
-        0x131C2B, 0xFFF9FB, 0x8136C7, 0x82909D
-    };
-
-    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
-        ? colors[index] : colors[0];
-}
-
-static uint32_t home_entry_glyph_color(int index)
-{
-    static const uint32_t colors[] = {
-        0xFFFFFF, 0xF33C63, 0xFFFFFF, 0x303840
-    };
-
-    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
-        ? colors[index] : colors[0];
 }
 
 static void update_selection_row(int index)
@@ -328,39 +274,19 @@ lv_obj_t *crazypod_desktop_create(
             HOME_ROW_TOP + i * (HOME_ROW_HEIGHT + HOME_ROW_GAP),
             HOME_ROW_WIDTH, HOME_ROW_HEIGHT, 14,
             HOME_GLASS, LV_OPA_TRANSP);
-        home_badges[i] = crazypod_ui_widget_box(
-            home_rows[i], HOME_APP_TILE_X, HOME_APP_TILE_Y,
-            HOME_APP_TILE_SIZE, HOME_APP_TILE_SIZE,
-            HOME_APP_TILE_RADIUS,
-            home_entry_color(i), LV_OPA_COVER);
-        lv_obj_set_style_bg_grad_color(
-            home_badges[i], lv_color_hex(home_entry_gradient(i)), 0);
-        lv_obj_set_style_bg_grad_dir(
-            home_badges[i], LV_GRAD_DIR_VER, 0);
-        lv_obj_set_style_border_width(home_badges[i], 1, 0);
-        /* A white Music app tile needs a visible hairline on the light
-         * iPod wallpaper, otherwise it reads as a bare red glyph. */
-        lv_obj_set_style_border_color(
+        /* Show the four supplied iPhone icons as photographs, not
+         * recolored monochrome glyphs on simulated Android tiles.
+         * Static source descriptors are cached; wheel detents touch only
+         * the row selection chrome. */
+        home_badges[i] = lv_image_create(home_rows[i]);
+        lv_image_set_src(
             home_badges[i],
-            lv_color_hex(i == CRAZYPOD_HOME_MUSIC
-                ? 0xD5D9E1 : COLOR_WHITE), 0);
-        lv_obj_set_style_border_opa(
-            home_badges[i],
-            i == CRAZYPOD_HOME_MUSIC ? 175 : 70, 0);
+            crazypod_iphone_app_icon(
+                (enum crazypod_home_destination)i));
+        lv_obj_set_pos(
+            home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
-        home_symbols[i] = lv_image_create(home_badges[i]);
-        lv_image_set_src(
-            home_symbols[i],
-            crazypod_menu_icon_asset(home_entry_icon(i)));
-        lv_obj_set_style_image_recolor(
-            home_symbols[i],
-            lv_color_hex(home_entry_glyph_color(i)), 0);
-        lv_obj_set_style_image_recolor_opa(
-            home_symbols[i], LV_OPA_COVER, 0);
-        lv_obj_center(home_symbols[i]);
-        lv_obj_remove_flag(
-            home_symbols[i], LV_OBJ_FLAG_CLICKABLE);
         home_labels[i] = crazypod_ui_widget_label(
             home_rows[i], home_entry_title(i),
             body_font, CRAZYPOD_LM_HOME_TEXT, LV_OPA_COVER);
