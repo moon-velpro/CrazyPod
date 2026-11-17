@@ -9,6 +9,7 @@
 #include "button.h"
 #include "kernel.h"
 
+#include "../../crazypod_frameclock.h"
 #include "../../crazypod_wallpaper.h"
 #include "../../crazypod_product_geometry.h"
 #include "../presentation/crazypod_hold_feedback.h"
