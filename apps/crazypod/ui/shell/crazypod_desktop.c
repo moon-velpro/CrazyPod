@@ -100,18 +100,6 @@ static uint32_t home_entry_color(int index)
         ? colors[index] : colors[0];
 }
 
-/* A four-row LVGL Home has no native moving band. Request a full,
- * hardware-synchronized present only when selection changes while the
- * physical wheel is touched. Keep unrelated partial LVGL work deferred until
- * release, preserving the Home interaction gate and avoiding unsynced DMA. */
-static void queue_touched_home_selection(void)
-{
-#ifdef HAVE_WHEEL_POSITION
-    if(desktop_active && wheel_touch_status())
-        crazypod_present_queue_full();
-#endif
-}
-
 static void update_selection_row(int index)
 {
     bool selected = index == selected_app;
@@ -190,7 +178,6 @@ static bool set_selected_target(int selected)
         update_selection_row(previous);
         update_selection_row(selected);
     }
-    queue_touched_home_selection();
     return true;
 }
 #endif
@@ -368,8 +355,7 @@ void crazypod_desktop_set_selected(int selected, bool animated)
             crazypod_present_note_home_selection();
         update_selection_row(previous);
         update_selection_row(selected);
-        queue_touched_home_selection();
-    }
+        }
 }
 
 void crazypod_desktop_move_selection(int direction)
@@ -393,6 +379,9 @@ void crazypod_desktop_set_active(bool active, long now)
 #endif
     if(active)
         return;
+    /* A backgrounded Home cannot satisfy an outstanding selection flush;
+     * clear its metric instead of attributing another screen's frame. */
+    crazypod_present_cancel_home_selection();
     wheel_tracking = false;
     wheel_position = -1;
     wheel_detent_accumulator = 0;
