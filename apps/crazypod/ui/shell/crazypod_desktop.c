@@ -5,6 +5,7 @@
 #ifdef IPOD_6G
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "button.h"
@@ -24,6 +25,13 @@
 #include "crazypod_status_bar.h"
 
 #define COLOR_WHITE 0xFFFFFF
+#define HOME_INK 0x101217
+#define HOME_ACCENT 0xE9E2D7
+#define HOME_ENTRY_COUNT 4
+#define HOME_ROW_X 15
+#define HOME_ROW_TOP 36
+#define HOME_ROW_HEIGHT 30
+#define HOME_ROW_GAP 4
 #define HOME_POSITION_ONE (1L << 16)
 #define HOME_WHEEL_POSITIONS 96
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
@@ -40,8 +48,10 @@
 static struct crazypod_desktop_host desktop_host;
 static lv_obj_t *screen;
 static lv_obj_t *wallpaper;
-static lv_obj_t *title;
-static lv_obj_t *indicators[CRAZYPOD_APP_COUNT];
+static lv_obj_t *home_rows[HOME_ENTRY_COUNT];
+static lv_obj_t *home_labels[HOME_ENTRY_COUNT];
+static lv_obj_t *preview_title;
+static lv_obj_t *preview_index;
 static int selected_app;
 static int32_t position_q16;
 static int32_t spring_velocity_q16;
@@ -69,56 +79,57 @@ static void hold_feedback_teardown_ready(lv_event_t *event)
     crazypod_desktop_native_restore_after_modal();
 }
 
-static const struct crazypod_app_descriptor *visible_app(int index)
+/* Product Home stays independent of the persisted experimental app order. */
+static const char *home_entry_title(int index)
 {
-    return crazypod_app_catalog_find(crazypod_apps_visible_id(index));
+    switch(index) {
+    case 0: return CP_TR("Now Playing");
+    case 1: return CP_TR("Music");
+    case 2: return CP_TR("Podcasts");
+    case 3: return CP_TR("Settings");
+    default: return "";
+    }
 }
 
 static void update_selection_chrome(void)
 {
-    int visible_count = crazypod_apps_visible_count();
-    int indicator_strip_width = visible_count > 0
-        ? HOME_SELECTED_INDICATOR_WIDTH +
-            (visible_count - 1) *
-                (HOME_INDICATOR_WIDTH + HOME_INDICATOR_GAP)
-        : 0;
-    int indicator_x = (LCD_WIDTH - indicator_strip_width) / 2;
-    const struct crazypod_app_descriptor *selected =
-        visible_app(selected_app);
-    int i;
+    char index_text[12];
+    int index;
 
-    if(title != NULL && selected != NULL)
-        CP_LV_LABEL_SET_TEXT(title, selected->name);
-    for(i = 0; i < CRAZYPOD_APP_COUNT; ++i) {
-        int width = i == selected_app
-            ? HOME_SELECTED_INDICATOR_WIDTH
-            : HOME_INDICATOR_WIDTH;
+    for(index = 0; index < HOME_ENTRY_COUNT; ++index) {
+        bool selected = index == selected_app;
 
-        if(indicators[i] == NULL)
+        if(home_rows[index] == NULL || home_labels[index] == NULL)
             continue;
-        if(i >= visible_count) {
-            lv_obj_add_flag(indicators[i], LV_OBJ_FLAG_HIDDEN);
-            continue;
-        }
-        lv_obj_remove_flag(indicators[i], LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_pos(indicators[i], indicator_x, 169);
-        lv_obj_set_size(indicators[i], width, 4);
+        lv_obj_set_style_bg_color(
+            home_rows[index], lv_color_hex(HOME_ACCENT), 0);
         lv_obj_set_style_bg_opa(
-            indicators[i],
-            i == selected_app ? LV_OPA_COVER : 89, 0);
-        indicator_x += width + HOME_INDICATOR_GAP;
+            home_rows[index], selected ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
+        lv_obj_set_style_text_color(
+            home_labels[index],
+            lv_color_hex(selected ? HOME_INK : COLOR_WHITE), 0);
+        lv_obj_set_style_opa(
+            home_labels[index], selected ? 255 : 205, 0);
+    }
+    if(preview_title != NULL)
+        CP_LV_LABEL_SET_TEXT(preview_title, home_entry_title(selected_app));
+    if(preview_index != NULL) {
+        snprintf(index_text, sizeof(index_text),
+                 "%02d / %02d", selected_app + 1, HOME_ENTRY_COUNT);
+        CP_LV_LABEL_SET_TEXT(preview_index, index_text);
     }
 }
 
 static void layout(void)
 {
     update_selection_chrome();
-    crazypod_desktop_native_invalidate(false);
+    if(screen != NULL)
+        lv_obj_invalidate(screen);
 }
 
 static int clamp_selected(int selected)
 {
-    int count = crazypod_apps_visible_count();
+    int count = HOME_ENTRY_COUNT;
 
     if(selected < 0)
         return 0;
@@ -158,10 +169,7 @@ static void advance_spring_tick(void)
 {
     int32_t target = selected_position_q16();
     int64_t acceleration;
-    int32_t maximum =
-        (crazypod_apps_visible_count() > 0
-            ? crazypod_apps_visible_count() - 1 : 0) *
-        HOME_POSITION_ONE;
+    int32_t maximum = (HOME_ENTRY_COUNT - 1) * HOME_POSITION_ONE;
 
     if(!springing)
         return;
@@ -273,23 +281,20 @@ lv_obj_t *crazypod_desktop_create(
     long now, const lv_font_t *metadata_font,
     const struct crazypod_desktop_host *host)
 {
-    const lv_image_dsc_t *image =
-        crazypod_custom_home_wallpaper();
+    const lv_image_dsc_t *image = crazypod_custom_home_wallpaper();
+    const lv_font_t *body_font = metadata_font != NULL
+        ? metadata_font : &lv_font_montserrat_14;
+    lv_obj_t *separator;
+    lv_obj_t *kicker;
     int i;
 
     memset(&desktop_host, 0, sizeof(desktop_host));
     if(host != NULL)
         desktop_host = *host;
-    (void)now;
     screen = lv_obj_create(NULL);
     crazypod_ui_widget_make_plain(screen);
-    lv_obj_set_style_bg_color(
-        screen, lv_color_hex(crazypod_appearance_home_color()), 0);
+    lv_obj_set_style_bg_color(screen, lv_color_hex(HOME_INK), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
-    if(image == NULL &&
-       crazypod_appearance_get()->home_wallpaper[0] == '\0' &&
-       crazypod_appearance_get()->home_background == 0)
-        image = crazypod_default_wallpaper();
     wallpaper = lv_image_create(screen);
     if(image != NULL)
         lv_image_set_src(wallpaper, image);
@@ -299,16 +304,35 @@ lv_obj_t *crazypod_desktop_create(
     lv_obj_remove_flag(wallpaper, LV_OBJ_FLAG_CLICKABLE);
     crazypod_status_bar_create(0, screen);
 
-    title = crazypod_ui_widget_label(
-        screen, visible_app(0)->name,
-        &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_set_width(title, LCD_WIDTH);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(title, 0, 150);
-    for(i = 0; i < CRAZYPOD_APP_COUNT; ++i)
-        indicators[i] = crazypod_ui_widget_box(
-            screen, 0, 169, 5, 4,
-            LV_RADIUS_CIRCLE, COLOR_WHITE, 89);
+    /* Four legible destinations, with no app-carousel icon decoding. */
+    for(i = 0; i < HOME_ENTRY_COUNT; ++i) {
+        home_rows[i] = crazypod_ui_widget_box(
+            screen, HOME_ROW_X,
+            HOME_ROW_TOP + i * (HOME_ROW_HEIGHT + HOME_ROW_GAP),
+            152, HOME_ROW_HEIGHT, 8, HOME_ACCENT, LV_OPA_TRANSP);
+        home_labels[i] = crazypod_ui_widget_label(
+            home_rows[i], home_entry_title(i),
+            body_font, COLOR_WHITE, LV_OPA_COVER);
+        lv_obj_set_pos(home_labels[i], 11, 5);
+        lv_obj_set_width(home_labels[i], 128);
+        lv_label_set_long_mode(home_labels[i], LV_LABEL_LONG_MODE_DOTS);
+    }
+    separator = crazypod_ui_widget_box(
+        screen, 175, 40, 1, 120, 0, COLOR_WHITE, 40);
+    lv_obj_remove_flag(separator, LV_OBJ_FLAG_CLICKABLE);
+    kicker = crazypod_ui_widget_label(
+        screen, "CrazyPod", &lv_font_montserrat_12,
+        HOME_ACCENT, 155);
+    lv_obj_set_pos(kicker, 187, 45);
+    preview_title = crazypod_ui_widget_label(
+        screen, home_entry_title(0), body_font, COLOR_WHITE, LV_OPA_COVER);
+    lv_obj_set_pos(preview_title, 187, 90);
+    lv_obj_set_width(preview_title, 123);
+    lv_label_set_long_mode(preview_title, LV_LABEL_LONG_MODE_DOTS);
+    preview_index = crazypod_ui_widget_label(
+        screen, "01 / 04", &lv_font_montserrat_12,
+        HOME_ACCENT, 155);
+    lv_obj_set_pos(preview_index, 187, 139);
 
     crazypod_now_capsule_create(screen, metadata_font);
     selected_app = 0;
@@ -366,7 +390,7 @@ void crazypod_desktop_set_selected(int selected, bool animated)
 
 void crazypod_desktop_move_selection(int direction)
 {
-    int count = crazypod_apps_visible_count();
+    int count = HOME_ENTRY_COUNT;
     int selected = selected_app + direction;
 
     if(count <= 1 || direction == 0 ||
@@ -415,7 +439,8 @@ bool crazypod_desktop_motion_active(void)
 bool crazypod_desktop_wheel_touch_active(void)
 {
 #ifdef HAVE_WHEEL_POSITION
-    return desktop_active && wheel_touch_status();
+    /* This Home is LVGL-owned; native-only present deferral must stay off. */
+    return false;
 #else
     return false;
 #endif
@@ -482,35 +507,19 @@ void crazypod_desktop_hold_feedback_begin(
 
 void crazypod_desktop_refresh_appearance(void)
 {
-    const lv_image_dsc_t *custom =
-        crazypod_custom_home_wallpaper();
+    const lv_image_dsc_t *custom = crazypod_custom_home_wallpaper();
 
     if(screen == NULL)
         return;
     if(custom != NULL) {
         lv_image_set_src(wallpaper, custom);
         lv_obj_remove_flag(wallpaper, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_bg_color(
-            screen, lv_color_hex(0x141419), 0);
     }
-    else if(crazypod_appearance_get()->home_wallpaper[0] == '\0' &&
-            crazypod_appearance_get()->home_background == 0 &&
-            crazypod_default_wallpaper() != NULL) {
-        lv_image_set_src(wallpaper, crazypod_default_wallpaper());
-        lv_obj_remove_flag(wallpaper, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_bg_color(
-            screen, lv_color_hex(0x141419), 0);
-    }
-    else {
+    else
         lv_obj_add_flag(wallpaper, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_bg_color(
-            screen, lv_color_hex(crazypod_appearance_home_color()), 0);
-    }
-    crazypod_icons_load_theme(crazypod_appearance_get()->icon_theme);
-    crazypod_desktop_native_invalidate_icons();
+    lv_obj_set_style_bg_color(screen, lv_color_hex(HOME_INK), 0);
     crazypod_now_capsule_refresh_material();
     crazypod_now_capsule_refresh_appearance();
-    crazypod_desktop_native_invalidate(true);
     layout();
     if(desktop_host.refresh_corner_masks != NULL)
         desktop_host.refresh_corner_masks();
@@ -519,63 +528,16 @@ void crazypod_desktop_refresh_appearance(void)
     lv_obj_invalidate(screen);
 }
 
-static void render_desktop_icons(
-    int tile_size, bool blocked, bool snapshot)
+/* The original native icon carousel remains in Git history for Lab. */
+void crazypod_desktop_render_icon(int tile_size, bool blocked)
 {
-    bool rendered;
-    uint32_t render_started_us;
-    int count = crazypod_apps_visible_count();
-    int app_indices[CRAZYPOD_DESKTOP_NATIVE_MAX_VISIBLE];
-    int centers_x[CRAZYPOD_DESKTOP_NATIVE_MAX_VISIBLE];
-    int whole = position_q16 >> 16;
-    int spacing = tile_size + 6;
-    int first = whole - 2;
-    int visible = 0;
-    int index;
-
-    if(blocked)
-        return;
-    for(index = first;
-        index < first + CRAZYPOD_DESKTOP_NATIVE_MAX_VISIBLE;
-        ++index) {
-        int center_x;
-
-        if(index < 0 || index >= count)
-            continue;
-        center_x = 160 + (int)(((int64_t)
-            (index * HOME_POSITION_ONE - position_q16) * spacing) >> 16);
-        if(center_x + tile_size / 2 <= 0 ||
-           center_x - tile_size / 2 >= LCD_WIDTH)
-            continue;
-        app_indices[visible] = crazypod_app_catalog_index(
-            crazypod_apps_visible_id(index));
-        centers_x[visible] = center_x;
-        ++visible;
-    }
-    render_started_us = crazypod_monotonic_usec();
-    rendered = snapshot
-        ? crazypod_desktop_native_render_snapshot(
-            app_indices, centers_x, visible, tile_size)
-        : crazypod_desktop_native_render(
-            app_indices, centers_x, visible, tile_size, false);
-    if(!rendered)
-        return;
-    if(snapshot)
-        return;
-    crazypod_present_note_render(
-        CRAZYPOD_RENDER_HOME,
-        crazypod_monotonic_usec() - render_started_us);
-}
-
-void crazypod_desktop_render_icon(
-    int tile_size, bool blocked)
-{
-    render_desktop_icons(tile_size, blocked, false);
+    (void)tile_size;
+    (void)blocked;
 }
 
 void crazypod_desktop_render_icon_snapshot(int tile_size)
 {
-    render_desktop_icons(tile_size, false, true);
+    (void)tile_size;
 }
 
 #endif
