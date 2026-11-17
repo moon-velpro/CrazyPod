@@ -22,14 +22,20 @@ SF Symbols 与部分 Apple Design Resources 有明确使用许可和限制，不
 | Brightness | 中心圆盘和八条日光射线 | 不能用音量图标 |
 | Volume | 喇叭和两级音波 | 不用麦克风 |
 
-所有符号使用 24×24 光学基准网格，最终在屏幕上绘制为 **14×14 A8**。线帽圆润、视觉中心一致、留白足够且统一使用系统前景色；大背景、胶囊高光和图标语义分层，不把 320×240 UI 做成一排安卓 App 磁贴。Home 保留彩色小徽标，但图标本体统一为白色单色线形。
+内部菜单符号使用 24×24 光学基准网格，最终在屏幕上绘制为 **14×14 A8**。线帽圆润、视觉中心一致、留白足够，使用当前菜单文字前景色。
+
+**Home 的应用入口改为 iPhone 式彩色圆角方形 App tile**，而不是安卓式彩色圆圈：在每个 25px 高的入口行中保留 21×21px 小方形图标（圆角半径 6px），不修改行高、触控转盘逻辑、标题、播放胶囊位置。Music 用白底/粉红音符；Podcasts 用紫色渐变/白色广播；Settings 用银灰渐变/深灰齿轮；Now Playing 用深色渐变/白色播放符号。纹理、形状和位置均由 CrazyPod 代码绘制，**不是苹果官方 App 图标逐像素复制**。
 
 ## 实现
 
 - `apps/crazypod/ui/presentation/crazypod_menu_icon_assets.c`：43 类原创几何符号，涵盖 116 个原有语义图标 ID，沿用旧 ABI。只有第一次请求某一图标时才执行整数式软件栅格化，并把 14×14 A8 结果留在固定缓冲中；同一类符号共享缓冲，无文件、网络和动态内存分配。当前基础缓冲上限：`43 × 14 × 14 = 8,428` B（不含 LVGL 描述符和其他小状态）。
-- `apps/crazypod/ui/shell/crazypod_desktop.c`：Home 的 Music、Podcasts、Now Playing、Settings 直接取对应语义图标，以白色单色模式居中放入现有 19px 小徽标；旧的 `LV_SYMBOL_VOLUME_MID` 播客替身已删除。
+- `apps/crazypod/ui/shell/crazypod_desktop.c`：Home 的 Music、Podcasts、Now Playing、Settings 直接取对应语义图标，以符合 iOS 主屏逻辑的双色及渐变形式放入 **21px 圆角方形图标**；旧的 `LV_SYMBOL_VOLUME_MID` 播客替身已删除。
 - 整体菜单及 Home 快捷面板从相同的 `crazypod_menu_icon_asset` 获取图标，避免一部分苹果风、一部分 Material 风。
 - 已删除以前的 `tools/generate-crazypod-menu-icons.py`（通过网络下载 Material Symbols）与 `crazypod_menu_icon_data.inc`（原 Material 图集），避免以后不经意把 Android 图标重新引入构建。
+
+## 法律与素材边界
+
+用户要求以 iPhone 的原生 App 图标为标准。Apple 官方图标可以作为人工比对视觉目标，但 Apple Design Resources 的许可明确限定用途，并禁止直接嵌入/擅自再分发设计资源（参见 https://developer.apple.com/support/downloads/terms/apple-design-resources/Apple-Design-Resources-License-20230621-English.pdf）。CrazyPod 是 Rockbox 固件，不能把下载的官方 iPhone 应用图标当成自由素材加入公开仓库、编译产物或安装包。若以后获得针对固件发行的明确授权，才能以授权素材替换当前原创图形；不在本仓库放置抓取图标的脚本。
 
 ## 质量门槛
 
