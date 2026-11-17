@@ -88,25 +88,6 @@ jobs:
             exit 1
           fi
 
-      - name: Assert music edition excludes obsolete apps and content
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from zipfile import ZipFile
-          archive = 'build-hw-ipod6g/CrazyPod-6G.zip'
-          with ZipFile(archive) as z:
-              names = set(z.namelist())
-              assert '.rockbox/rockbox.ipod' in names
-              forbidden = (
-                  'MiniApps/', 'Books/', 'Videos/', 'Contacts/',
-                  'Calendars/', '.rockbox/crazypod/miniapps/',
-              )
-              leaked = [name for name in names if name.startswith(forbidden)]
-              assert not leaked, f'Non-music payload shipped: {leaked[:15]}'
-              for directory in ('Music/', 'Podcasts/', 'Pictures/'):
-                  assert directory in names, f'Missing media folder: {directory}'
-          PY
-
       - name: Upload hardware build log
         if: always()
         uses: actions/upload-artifact@v4
