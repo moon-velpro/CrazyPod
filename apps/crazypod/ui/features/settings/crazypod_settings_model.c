@@ -192,8 +192,7 @@ const char *crazypod_ui_settings_group_detail(int index)
     case 3: return CP_TR("Shuffle and repeat");
     case 4: return CP_TR("Charging, storage and sleep");
     case 5: return CP_TR("Beeps and wheel feedback");
-    case 6: return CP_TR("Reorder or hide entries");
-    case 7:
+    case 6:
         return crazypod_language_native_name(crazypod_language_current());
     default: return "";
     }
