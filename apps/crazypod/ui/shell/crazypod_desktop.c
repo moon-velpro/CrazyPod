@@ -16,6 +16,7 @@
 #include "../../crazypod_icons.h"
 #include "../../crazypod_wallpaper.h"
 #include "../presentation/crazypod_hold_feedback.h"
+#include "../presentation/crazypod_liquid_music.h"
 #include "../presentation/crazypod_ui_widgets.h"
 #include "crazypod_app_catalog.h"
 #include "crazypod_desktop.h"
@@ -25,8 +26,8 @@
 #include "crazypod_status_bar.h"
 
 #define COLOR_WHITE 0xFFFFFF
-#define HOME_INK 0x111319
-#define HOME_GLASS 0xC8D4E5
+#define HOME_INK CRAZYPOD_LM_CANVAS
+#define HOME_GLASS CRAZYPOD_LM_GLASS
 #define HOME_ROW_X 12
 #define HOME_ROW_TOP 36
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
