@@ -19,6 +19,11 @@ def verify() -> None:
     boot = source("apps/crazypod/crazypod_main.c")
     launcher = source("apps/crazypod/ui/app/crazypod_app_launcher.c")
     runtime = source("apps/crazypod/ui/app/crazypod_runtime_services.c")
+    feature_input = source("apps/crazypod/ui/app/crazypod_feature_input.c")
+    query = source("apps/crazypod/ui/navigation/crazypod_route_query.c")
+    renderer = source("apps/crazypod/ui/app/crazypod_route_renderer.c")
+    registry = source("apps/crazypod/ui/navigation/crazypod_route_registry.c")
+    route_actions = source("apps/crazypod/ui/app/crazypod_route_actions.c")
     startup = source("apps/crazypod/crazypod_ui.c")
     theme = source(
         "apps/crazypod/ui/features/now_playing/crazypod_now_playing_theme.c"
@@ -60,6 +65,31 @@ def verify() -> None:
     assert "crazypod_video_disabled_host_test.c" in source(
         "tests/run-crazypod-ui-host-tests.sh"
     )
+
+    # The route ABI is stable, but all retired dispatch paths are inert.
+    assert "crazypod_route_registry_product_allowed(" in registry
+    assert "crazypod_route_registry_product_allowed(route)" in launcher
+    assert "crazypod_route_registry_product_allowed(route)" in route_actions
+    assert "crazypod_route_registry_product_allowed(state->route)" in route_actions
+    for retired in (
+        "CRAZYPOD_FEATURE_BOOKS", "CRAZYPOD_FEATURE_NOTES",
+        "CRAZYPOD_FEATURE_PHOTOS", "CRAZYPOD_FEATURE_ORGANIZER",
+        "CRAZYPOD_FEATURE_CUSTOMIZE", "CRAZYPOD_FEATURE_MINIAPPS",
+    ):
+        assert retired not in feature_input, (
+            f"Retired app input binding still compiled: {retired}"
+        )
+        assert retired not in query, (
+            f"Retired app menu query still compiled: {retired}"
+        )
+        assert retired not in renderer, (
+            f"Retired app renderer still compiled: {retired}"
+        )
+    for retained in ("CRAZYPOD_FEATURE_MUSIC",
+                     "CRAZYPOD_FEATURE_NOW_PLAYING",
+                     "CRAZYPOD_FEATURE_SETTINGS"):
+        assert retained in feature_input and retained in query
+        assert retained in renderer
 
     # No old app runtime may be initialized, scanned, or polled on boot.
     for abandoned_call in (
