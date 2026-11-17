@@ -662,6 +662,7 @@ static enum cp_glyph menu_glyph(enum crazypod_menu_icon icon)
     case CRAZYPOD_MENU_ICON_EXPORT:
     case CRAZYPOD_MENU_ICON_IMPORT:
         return G_SAVE;
+    case CRAZYPOD_MENU_ICON_PIN:
     case CRAZYPOD_MENU_ICON_PRESETS:
     case CRAZYPOD_MENU_ICON_BOOKMARK:
     case CRAZYPOD_MENU_ICON_DUPLICATE:
