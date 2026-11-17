@@ -328,12 +328,12 @@ void crazypod_now_screen_render(
         CRAZYPOD_NOW_SHADE_COLOR, CRAZYPOD_NOW_SHADE_OPA);
     lv_obj_remove_flag(shade, LV_OBJ_FLAG_CLICKABLE);
 
-    /* The material belongs to navigation/metadata, not to the cover.
-     * Opa and border are static: no framebuffer blur per animation frame. */
+    /* Give the artwork the visual priority. Only a very quiet
+     * translucent metadata scrim remains (no raised glass card). */
     material = make_box(
         context->parent, 154, 52, 154, 117, 14,
-        CRAZYPOD_LM_GLASS, CRAZYPOD_LM_GLASS_FILL_OPA);
-    lv_obj_set_style_border_width(material, 1, 0);
+        CRAZYPOD_LM_GLASS, 19);
+    lv_obj_set_style_border_width(material, 0, 0);
     lv_obj_set_style_border_color(
         material, lv_color_hex(COLOR_WHITE), 0);
     lv_obj_set_style_border_opa(
@@ -524,7 +524,7 @@ void crazypod_now_screen_render(
         view->wave_surface, lv_color_hex(CRAZYPOD_LM_GLASS), 0);
     lv_obj_set_style_bg_opa(
         view->wave_surface, CRAZYPOD_LM_GLASS_FILL_OPA, 0);
-    lv_obj_set_style_border_width(view->wave_surface, 1, 0);
+    lv_obj_set_style_border_width(view->wave_surface, 0, 0);
     lv_obj_set_style_border_color(
         view->wave_surface, lv_color_hex(COLOR_WHITE), 0);
     lv_obj_set_style_border_opa(
@@ -537,13 +537,38 @@ void crazypod_now_screen_render(
         (audio_status() & AUDIO_STATUS_PAUSE) == 0;
     view->wave_tick = current_tick;
     view->progress_marker = make_box(
-        view->wave_surface, 0, 14, 7, 7,
+        view->wave_surface, 0, 1, 7, 6,
         LV_RADIUS_CIRCLE, COLOR_WHITE, LV_OPA_COVER);
     lv_obj_set_style_shadow_width(view->progress_marker, 3, 0);
     lv_obj_set_style_shadow_color(
         view->progress_marker, lv_color_hex(context->primary_color), 0);
     lv_obj_set_style_shadow_opa(view->progress_marker, 100, 0);
     lv_obj_remove_flag(view->progress_marker, LV_OBJ_FLAG_CLICKABLE);
+
+    /* iPhone-like transport hierarchy, visually linked to the hardware
+     * previous / play-pause / next buttons. No new touchscreen behavior. */
+    {
+        lv_obj_t *previous = make_label(
+            context->parent, LV_SYMBOL_PREV,
+            &lv_font_montserrat_16, COLOR_WHITE, 220);
+        lv_obj_t *next = make_label(
+            context->parent, LV_SYMBOL_NEXT,
+            &lv_font_montserrat_16, COLOR_WHITE, 220);
+
+        lv_obj_set_pos(previous, 104, 194);
+        lv_obj_set_pos(next, 204, 194);
+        view->transport_status = make_label(
+            context->parent,
+            (audio_status() & AUDIO_STATUS_PLAY) != 0 &&
+            (audio_status() & AUDIO_STATUS_PAUSE) == 0
+                ? LV_SYMBOL_PAUSE : LV_SYMBOL_PLAY,
+            &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
+        lv_obj_set_pos(view->transport_status, 154, 194);
+        lv_obj_remove_flag(previous, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_remove_flag(next, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_remove_flag(
+            view->transport_status, LV_OBJ_FLAG_CLICKABLE);
+    }
     view->elapsed = make_label(context->parent, "0:00",
                              &lv_font_montserrat_8,
                              COLOR_WHITE, 180);
@@ -571,12 +596,25 @@ int crazypod_now_screen_wave_phase(void)
     return wave_phase;
 }
 
+static void update_transport_play_state(void)
+{
+    const char *symbol =
+        (audio_status() & AUDIO_STATUS_PLAY) != 0 &&
+        (audio_status() & AUDIO_STATUS_PAUSE) == 0
+            ? LV_SYMBOL_PAUSE : LV_SYMBOL_PLAY;
+
+    if(now_view.transport_status != NULL &&
+       strcmp(lv_label_get_text(now_view.transport_status), symbol) != 0)
+        CP_LV_LABEL_SET_TEXT(now_view.transport_status, symbol);
+}
+
 void crazypod_now_screen_tick_wave(long now, bool active, bool blocked)
 {
     bool playing;
 
     if(!active || blocked || now_view.wave_surface == NULL)
         return;
+    update_transport_play_state();
     tick_lyrics_scroll(now);
     playing = (audio_status() & AUDIO_STATUS_PLAY) != 0 &&
               (audio_status() & AUDIO_STATUS_PAUSE) == 0;
@@ -614,6 +652,7 @@ static void format_time_ms(
 void crazypod_now_screen_update_playback(
     uint32_t elapsed_ms, uint32_t length_ms)
 {
+    update_transport_play_state();
     if(now_view.lyrics_current != NULL &&
        crazypod_lyrics_available()) {
         const char *previous;
