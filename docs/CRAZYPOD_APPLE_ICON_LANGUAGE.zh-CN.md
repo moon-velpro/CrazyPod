@@ -57,7 +57,7 @@ export CRAZYPOD_PRIVATE_ICONS_ALLOW_PARTIAL=1
 - 转换器：`tools/prepare-crazypod-private-icons.py`。
 - 生成的 C 像素数据：`apps/crazypod/ui/presentation/crazypod_private_icon_assets.inc`，被 `.gitignore` 忽略。
 - 启用宏：`CRAZYPOD_PRIVATE_ICONS`；标准编译根本不加载生成的像素表。
-- 私有图片处理：Home App 21×21 RGB565A8（彩色、保留透明圆角）；Menu 14×14 A8（要求透明背景单色符号）。运行时无 PNG 解码与磁盘访问，且图标数组为只读编译数据。点击转盘仅复用描述符。
+- 私有图片处理：Home App 35×35 RGB565A8（彩色、保留透明圆角）；Menu 14×14 A8（要求透明背景单色符号）。运行时无 PNG 解码与磁盘访问，且图标数组为只读编译数据。点击转盘仅复用描述符。
 
 ## 授权边界
 
@@ -70,4 +70,4 @@ export CRAZYPOD_PRIVATE_ICONS_ALLOW_PARTIAL=1
 
 ## 测试与出货要求
 
-公共 CI 测试无私有像素的默认回退和 UI/导航/声学构建；私有集成测试使用本地目录验证 21×21 A8 透明角、14×14 A8 可读性、图标本体及每项语义映射。任何内部构建仍需检查声音播放、Click Wheel、Hold、USB、LCD TE 和音频下溢；未经真机验证不宣称可安全刷机。PR 保持 Draft。
+公共 CI 测试无私有像素的默认回退和 UI/导航/声学构建；私有集成测试使用本地目录验证 35×35 RGB565A8 透明角、14×14 A8 可读性、图标本体及每项语义映射。任何内部构建仍需检查声音播放、Click Wheel、Hold、USB、LCD TE 和音频下溢；未经真机验证不宣称可安全刷机。PR 保持 Draft。
