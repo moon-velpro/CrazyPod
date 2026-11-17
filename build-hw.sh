@@ -108,6 +108,10 @@ Environment:
                            capture raw iAP frames in build-hw-ipod6g-iap/
   CROSS_COMPILE=prefix-   default arm-none-eabi-
   JOBS=N                  parallel job count
+  CRAZYPOD_PRIVATE_ICONS_DIR=/path/to/private-icons
+                           use locally supplied iPhone app / SF-style PNGs
+  CRAZYPOD_PRIVATE_ICONS_ALLOW_PARTIAL=1
+                           allow a mixed local preview; defaults to fail-closed
 EOF
             exit 0
             ;;
@@ -151,6 +155,18 @@ if [ "$repro_enabled" -eq 1 ]; then
             ;;
     esac
 fi
+private_icons_enabled=0
+if [ -n "${CRAZYPOD_PRIVATE_ICONS_DIR:-}" ]; then
+    private_icons_enabled=1
+    if [ "${CRAZYPOD_PRIVATE_ICONS_ALLOW_PARTIAL:-}" = 1 ]; then
+        python3 tools/prepare-crazypod-private-icons.py \
+            --source "$CRAZYPOD_PRIVATE_ICONS_DIR" --allow-partial
+    else
+        python3 tools/prepare-crazypod-private-icons.py \
+            --source "$CRAZYPOD_PRIVATE_ICONS_DIR"
+    fi
+    CRAZYPOD_BUILD_DEFINES="$CRAZYPOD_BUILD_DEFINES -DCRAZYPOD_PRIVATE_ICONS"
+fi
 require_tools
 python3 tests/test-crazypod-lvgl-layer-budget.py
 # No CPKs or plugin payloads are generated for the music-only build.
@@ -163,6 +179,12 @@ elif [ "$CRAZYPOD_BUILD_VARIANT" = "iap" ]; then
 else
     BUILDDIR="build-hw-ipod6g"
     STAMP="crazypod hardware ipod6g lvgl production"
+fi
+
+if [ "$private_icons_enabled" -eq 1 ]; then
+    # Private artwork is never mixed with the normal firmware output.
+    BUILDDIR="$BUILDDIR-private"
+    STAMP="$STAMP local-only private icons"
 fi
 
 configure_build() {
@@ -257,14 +279,21 @@ for codec in lib/rbcodec/codecs/*.codec; do
     esac
     cp "$codec" "$PACKAGE_DIR/.rockbox/codecs/"
 done
-rm -f CrazyPod-6G.zip
+archive_name="CrazyPod-6G.zip"
+if [ "$private_icons_enabled" -eq 1 ]; then
+    archive_name="CrazyPod-6G-INTERNAL-ONLY.zip"
+fi
+rm -f "$archive_name"
 (
     cd "$PACKAGE_DIR"
-    zip -q -r "$PACKAGE_DIR/../CrazyPod-6G.zip" \
+    zip -q -r "$PACKAGE_DIR/../$archive_name" \
         .rockbox Music Podcasts
 )
-mv "$PACKAGE_DIR/../CrazyPod-6G.zip" CrazyPod-6G.zip
+mv "$PACKAGE_DIR/../$archive_name" "$archive_name"
 
 echo "CrazyPod: firmware bytes $(wc -c < rockbox.ipod)"
 echo "CrazyPod: built $(pwd)/rockbox.ipod"
-echo "CrazyPod: packaged $(pwd)/CrazyPod-6G.zip"
+echo "CrazyPod: packaged $(pwd)/$archive_name"
+if [ "$private_icons_enabled" -eq 1 ]; then
+    echo "CrazyPod: INTERNAL ARTWORK BUILD — do not distribute this archive"
+fi
