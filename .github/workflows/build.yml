@@ -6,6 +6,11 @@ on:
       - main
       - design/music-first-2026
       - refactor/music-only-2026
+  pull_request:
+    branches:
+      - main
+      - design/music-first-2026
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
