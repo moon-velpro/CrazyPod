@@ -46,6 +46,10 @@ Environment:
   ROCKPOD_INCREMENTAL=1   same as --incremental
   ROCKPOD_SKIP_DEP=1      skip make dep when make.dep exists
   JOBS=N                  parallel job count
+  CRAZYPOD_PRIVATE_ICONS_DIR=/path/to/private-icons
+                           compile private source-supplied PNGs into simulator
+  CRAZYPOD_PRIVATE_ICONS_ALLOW_PARTIAL=1
+                           allow a mixed preview while assets are incomplete
 EOF
 }
 
@@ -72,11 +76,28 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
+private_icons_enabled=0
+private_icon_defines=""
+if [ -n "${CRAZYPOD_PRIVATE_ICONS_DIR:-}" ]; then
+    private_icons_enabled=1
+    if [ "${CRAZYPOD_PRIVATE_ICONS_ALLOW_PARTIAL:-}" = 1 ]; then
+        python3 tools/prepare-crazypod-private-icons.py \
+            --source "$CRAZYPOD_PRIVATE_ICONS_DIR" --allow-partial
+    else
+        python3 tools/prepare-crazypod-private-icons.py \
+            --source "$CRAZYPOD_PRIVATE_ICONS_DIR"
+    fi
+    private_icon_defines="-DCRAZYPOD_PRIVATE_ICONS"
+fi
 require_tools
 python3 tests/test-crazypod-lvgl-layer-budget.py
 # The retired native MiniApps toolchain is not part of this firmware.
 builddir="build-sim"
 configure_stamp="crazypod simulator ipod6g lvgl sdl-threads"
+if [ "$private_icons_enabled" -eq 1 ]; then
+    builddir="build-sim-private"
+    configure_stamp="$configure_stamp local-only private icons"
+fi
 
 configure_build() {
     ../tools/configure --target=ipod6g --type=s --sdl-threads
@@ -100,10 +121,10 @@ else
 fi
 
 if [ -z "${ROCKPOD_SKIP_DEP:-}" ] || [ ! -f make.dep ]; then
-    make dep
+    make EXTRA_DEFINES="$private_icon_defines" dep
 fi
 
-make -j"$(detect_jobs)"
+make EXTRA_DEFINES="$private_icon_defines" -j"$(detect_jobs)"
 
 codec_dir="lib/rbcodec/codecs"
 sim_codec_dir="simdisk/.rockbox/codecs"
@@ -160,3 +181,6 @@ chmod +x "$app_bundle/Contents/MacOS/CrazyPod Simulator"
 
 echo "CrazyPod: simulator $(pwd)/rockboxui"
 echo "CrazyPod: app bundle $(pwd)/$app_bundle"
+if [ "$private_icons_enabled" -eq 1 ]; then
+    echo "CrazyPod: INTERNAL ARTWORK SIMULATOR — do not redistribute bundle"
+fi
