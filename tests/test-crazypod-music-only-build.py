@@ -16,6 +16,28 @@ def verify() -> None:
     hw = source("build-hw.sh")
     sim = source("build-sim.sh")
     workflow = source(".github/workflows/build.yml")
+    boot = source("apps/crazypod/crazypod_main.c")
+    launcher = source("apps/crazypod/ui/app/crazypod_app_launcher.c")
+
+    # No legacy app catalog work or disk mutation before first music scan.
+    for legacy in ("crazypod_notes_init();", "crazypod_books_init();",
+                   "crazypod_workouts_init();"):
+        assert legacy not in boot, f"Legacy boot hook still active: {legacy}"
+    assert boot.count("crazypod_music_init();") == 2
+    # These IDs persist for compatibility, but the launcher has no paths to
+    # initialize any retired app from the product navigation.
+    for legacy in ("CRAZYPOD_APP_PHOTOS", "CRAZYPOD_APP_CUSTOMIZE",
+                   "CRAZYPOD_APP_WORKOUTS", "CRAZYPOD_APP_EXTRAS",
+                   "CRAZYPOD_APP_NOTES", "CRAZYPOD_APP_BOOKS",
+                   "CRAZYPOD_APP_MINI_APPS", "CRAZYPOD_APP_GAMEBOY",
+                   "CRAZYPOD_APP_CLOCK", "CRAZYPOD_APP_CONTACTS",
+                   "CRAZYPOD_APP_CALENDAR", "CRAZYPOD_APP_STOPWATCH"):
+        assert f"case {legacy}:" not in launcher, f"Retired app launch: {legacy}"
+    for active in ("CRAZYPOD_APP_MUSIC", "CRAZYPOD_APP_PODCASTS",
+                   "CRAZYPOD_APP_SETTINGS", "CRAZYPOD_APP_SHUFFLE",
+                   "CRAZYPOD_APP_LOCK"):
+        assert f"case {active}:" in launcher, f"Missing critical action: {active}"
+    assert "crazypod_product_launcher_allowed(id)" in launcher
 
     assert "crazypod/gameboy/" not in manifest, "Game Boy linked into firmware"
     assert "crazypod_gameboy_screen.c" not in manifest
