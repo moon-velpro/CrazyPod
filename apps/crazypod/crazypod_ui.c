@@ -38,7 +38,6 @@
 #include "crazypod_artwork.h"
 #include "crazypod_appearance.h"
 #include "crazypod_book_cover.h"
-#include "crazypod_books.h"
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
@@ -49,9 +48,6 @@
 #include "crazypod_lcd.h"
 #include "crazypod_music.h"
 #include "crazypod_miniapp_input.h"
-#include "crazypod_miniapp_font.h"
-#include "crazypod_notes.h"
-#include "crazypod_organizer.h"
 #include "crazypod_playlist.h"
 #include "crazypod_presets.h"
 #include "crazypod_state.h"
@@ -72,29 +68,24 @@
 #include "ui/app/crazypod_feature_input.h"
 #include "ui/app/crazypod_playback.h"
 #include "ui/app/crazypod_composition.h"
-#include "ui/features/organizer/crazypod_organizer_feature.h"
 #include "ui/navigation/crazypod_ui_routes.h"
 #include "ui/features/settings/crazypod_settings_feature.h"
 #include "ui/presentation/crazypod_ui_text.h"
 #include "ui/presentation/crazypod_ui_widgets.h"
 #include "ui/presentation/crazypod_artwork_widget.h"
 #include "ui/presentation/crazypod_alpha_jump_hud.h"
-#include "ui/features/books/crazypod_books_feature.h"
-#include "ui/features/notes/crazypod_notes_feature.h"
 #include "ui/shell/crazypod_app_catalog.h"
 #include "ui/shell/crazypod_desktop.h"
 #include "ui/shell/crazypod_desktop_native.h"
 #include "ui/shell/crazypod_home_input.h"
 #include "ui/shell/crazypod_home_actions.h"
 #include "ui/presentation/crazypod_menu_list.h"
-#include "ui/features/miniapps/crazypod_miniapps_feature.h"
 #include "ui/features/music/crazypod_music_feature.h"
 #include "ui/navigation/crazypod_feature_dispatcher.h"
 #include "ui/navigation/crazypod_input_event.h"
 #include "ui/navigation/crazypod_route_registry.h"
 #include "ui/navigation/crazypod_render_scheduler.h"
 #include "ui/features/now_playing/crazypod_now_playing_feature.h"
-#include "ui/shell/crazypod_extras_preview.h"
 #include "ui/navigation/crazypod_route_query.h"
 #include "ui/presentation/crazypod_popup_motion.h"
 #include "ui/presentation/crazypod_preview_motion.h"
@@ -113,7 +104,6 @@
 #include "ui/shell/crazypod_system_prompts.h"
 #include "ui/shell/crazypod_usb_prompt.h"
 #include "crazypod_wallpaper.h"
-#include "crazypod_workouts.h"
 
 #define CRAZYPOD_STATUS_BAR_HEIGHT 32
 #define CRAZYPOD_MENU_PANEL_Y CRAZYPOD_STATUS_BAR_HEIGHT
@@ -336,8 +326,7 @@ static const char *route_item_title(const struct route_state *state, int index)
 {
     return crazypod_route_query_item_title(
         state, index, crazypod_music_search_query(),
-        crazypod_organizer_feature_stopwatch_running(),
-        crazypod_organizer_feature_workout_running());
+        false, false);
 }
 
 static bool route_item_is_current(const struct route_state *state, int index)
@@ -405,10 +394,6 @@ static void close_product(void)
     crazypod_app_launcher_cancel_pending();
     crazypod_music_library_leave(current_tick);
     crazypod_artwork_cancel_product_requests();
-    if(crazypod_miniapps_feature_is_open()) {
-        crazypod_miniapps_feature_reset_input();
-        crazypod_miniapps_feature_close();
-    }
     crazypod_route_actions_commit_pending_main_menu_reorder();
     crazypod_choice_coordinator_dismiss(false);
     crazypod_now_playing_overlay_dismiss(false);

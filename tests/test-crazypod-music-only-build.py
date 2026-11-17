@@ -85,6 +85,13 @@ def verify() -> None:
                    "CRAZYPOD_APP_LOCK"):
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
+    app_input = source("apps/crazypod/ui/app/crazypod_app_input.c")
+    rows = source("apps/crazypod/ui/app/crazypod_menu_rows.c")
+    assert "crazypod_notes_feature_toggle_editor_field(" not in app_input
+    assert "crazypod_miniapps_feature_close(" not in startup
+    assert "crazypod_organizer_feature_stopwatch_running(" not in startup
+    assert "crazypod_organizer_feature_workout_running(" not in rows
+    assert "host.toggle_playback();" in app_input
     composition = source("apps/crazypod/ui/app/crazypod_composition.c")
     # Discontinued feature hosts must not register callbacks at startup.
     assert "crazypod_books_feature_configure_runtime(" not in composition

@@ -17,7 +17,6 @@
 #include "../../crazypod_screen_recording.h"
 #include "../../crazypod_screenshot.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../features/notes/crazypod_notes_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../navigation/crazypod_alpha_jump.h"
 #include "../navigation/crazypod_input_event.h"
@@ -1207,13 +1206,7 @@ void crazypod_app_input_handle(
     }
     else if(base == BUTTON_PLAY) {
         crazypod_alpha_jump_reset(&alpha_jump);
-        if(state->route == NOTES_ROUTE_COMPOSER &&
-           !repeated) {
-        crazypod_notes_feature_toggle_editor_field();
-            host.render(false);
-        }
-        else
-            host.toggle_playback();
+        host.toggle_playback();
     }
 }
 
