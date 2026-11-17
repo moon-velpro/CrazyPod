@@ -404,3 +404,11 @@ __pycache__
 !/miniapps/themes/*/generated/app.c
 /build-bootloader-ipod6g
 /verification
+
+# CrazyPod internal-only Apple/reference artwork and generated pixel data.
+# Never commit proprietary source PNGs or private build outputs.
+/local-private-icons/
+/private-icons/
+/apps/crazypod/ui/presentation/crazypod_private_icon_assets.inc
+/build-hw-ipod6g-private/
+/build-sim-private/
