@@ -53,6 +53,9 @@ def test_original_system_glyphs() -> None:
     # recolor them as Material/LVGL/SF-style generic glyphs.
     assert "crazypod_iphone_app_icons.h" in home
     assert "crazypod_iphone_app_icon(" in home
+    assert "if(i == CRAZYPOD_HOME_NOW_PLAYING)" in home
+    assert "CRAZYPOD_MENU_ICON_NOW_PLAYING" in home
+    assert "Voice Memos is a recording app, not Now Playing." in home
     assert "HOME_APP_TILE_SIZE CRAZYPOD_IPHONE_APP_ICON_SIZE" in home
     assert "home_entry_symbol(" not in home
     assert "home_entry_gradient(" not in home
