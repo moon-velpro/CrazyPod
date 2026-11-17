@@ -15,7 +15,7 @@
  * RGB565 color plane followed by A8 alpha plane (LVGL native format).
  * The icon silhouettes, glints and soft rounded corners are preserved.
  *
- * Source order: Now Playing=upload 4, Music=upload 1,
+ * Source order: Voice Memos=upload 4, Music=upload 1,
  * Podcasts=upload 2, Settings=upload 3.
  * Asset redistribution rights for public firmware releases must be checked.
  *
@@ -25,10 +25,10 @@
 #define APP_SIDE CRAZYPOD_IPHONE_APP_ICON_SIZE
 #define APP_PIXELS (APP_SIDE * APP_SIDE)
 #define APP_BYTES (APP_PIXELS * 3)
-#define APP_COUNT CRAZYPOD_HOME_DESTINATION_COUNT
+#define APP_COUNT CRAZYPOD_IPHONE_ICON_COUNT
 
 static const char *const app_base64[APP_COUNT] = {
-    /* Now Playing <- uploaded icon 4 (white waveform). */
+    /* Voice Memos <- uploaded icon 4 (recording waveform). */
     "//8AAP////////////////////////////////////////////8AAP//////////////////////////////////////////////////////"
     "////////////////////////////////////////////////////////////////////////////////////////////////////////////"
     "3////////////////////1T+Ov//////////////////////////////3///////3////9/////f/0j08/3//zv/3v/f/9//3//f/9//3//f"
@@ -140,12 +140,12 @@ static bool decode_icon(const char *source, uint8_t *out, size_t count)
 }
 
 const lv_image_dsc_t *crazypod_iphone_app_icon(
-    enum crazypod_home_destination destination)
+    enum crazypod_iphone_app_icon_id destination)
 {
     lv_image_dsc_t *image;
 
-    if(destination < CRAZYPOD_HOME_NOW_PLAYING ||
-       destination >= CRAZYPOD_HOME_DESTINATION_COUNT)
+    if(destination < CRAZYPOD_IPHONE_ICON_VOICE_MEMOS ||
+       destination >= CRAZYPOD_IPHONE_ICON_COUNT)
         return NULL;
     if(app_ready[destination])
         return &app_images[destination];
