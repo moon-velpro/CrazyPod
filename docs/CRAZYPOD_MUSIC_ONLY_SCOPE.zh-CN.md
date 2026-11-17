@@ -99,3 +99,10 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - 保留 `.rockbox/crazypod/default-home.bmp` 默认壁纸、Music/Podcasts、音频编解码器、字体、USB/存储逻辑和本地私人图标注入。Git 仓库中的历史素材和用户设备上的旧主题文件均不删除；增量模拟器构建也不主动清理已有文件。
 - `build-hw.sh` 现在在链接成功后报告 `arm-none-eabi-size -B` 输出的 text/data/bss，为后续固件/RAM 收缩提供测量数据。工具不存在时只略过可选诊断。
 - 包合同测试防止旧图标主题被重新打入新安装包。实际 ZIP 缩小量、ELF BSS 差值和真机性能仍需用最新构建测量；维持 Draft，不直接烧录。
+
+## 2026-11-17 · 移除已封禁路由的确认与激活代码
+
+- `crazypod_route_registry_product_allowed` 已把 Books、Notes、Photos、Organizer、Customize、MiniApps 路由隔离出新产品。本轮进一步从 `crazypod_route_actions.c` 删除其旧版激活宿主、编辑器动作回调、定制主题激活与照片详情 Click Wheel 翻阅分支，仅保留 Music/Now Playing/Settings 的真实分发。
+- `crazypod_ui.c` 的旧照片/笔记/电子书/运动确认处理改为不触碰数据的 `false` 路径，避免通过过期状态进入写入与删除；设置弹窗仍由 `crazypod_choice_coordinator` 处理。
+- 保留少量面向模拟器旧截图入口的公开兼容函数，暂不擅自迁移/删除持久化枚举或用户存储文件。新增源码合同回归，阻止这些失效路由被重新接入。
+- 这轮削的是旧调用链和编译可达性；真正 ELF 体积变化以 ARM 链接结果、`size` 分段报告与设备实测为准，不能把源码行数等同为固件缩小量。

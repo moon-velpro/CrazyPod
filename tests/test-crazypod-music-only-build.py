@@ -86,6 +86,22 @@ def verify() -> None:
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
 
+    # Legacy routes stay addressable as old persisted enum values, but
+    # can never dispatch into deleted-app activate/confirm paths.
+    assert "crazypod_route_registry_product_allowed(state->route)" in route_actions
+    assert "crazypod_books_feature_activate(" not in route_actions
+    assert "crazypod_notes_feature_activate(" not in route_actions
+    assert "crazypod_photos_feature_activate(" not in route_actions
+    assert "crazypod_organizer_feature_activate(" not in route_actions
+    assert "crazypod_miniapps_feature_activate(" not in route_actions
+    assert "crazypod_customize_feature_activate(" not in route_actions
+    assert "crazypod_books_feature_confirm(" not in startup
+    assert "crazypod_notes_feature_confirm(" not in startup
+    assert "crazypod_organizer_feature_confirm(" not in startup
+    assert "crazypod_route_actions_confirm_photos(" not in startup
+    assert "crazypod_settings_feature_activate(state, &actions)" in route_actions
+    assert "crazypod_music_feature_activate(" in route_actions
+
     # MPEG-1/2 decoder + video catalog/engines are excluded from the ELF,
     # not merely hidden from Home. The only linked compatibility layer is
     # a no-I/O stub whose behavior has a separate compiled C99 host test.

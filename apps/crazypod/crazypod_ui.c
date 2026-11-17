@@ -326,14 +326,6 @@ static struct route_state *current_route(void)
     return crazypod_ui_routes_current();
 }
 
-static int calendar_today_date(void)
-{
-    struct tm *now = get_time();
-
-    return (now->tm_year + 1900) * 10000 +
-           (now->tm_mon + 1) * 100 + now->tm_mday;
-}
-
 static int route_item_count(const struct route_state *state)
 {
     return crazypod_route_query_item_count(
@@ -503,134 +495,13 @@ static void play_wheel_feedback(long button)
 
 static bool handle_confirmation(const struct route_state *state)
 {
-    bool overlay =
-        crazypod_choice_coordinator_owns_route_state(state);
-    struct crazypod_notes_confirmation_result notes =
-        crazypod_notes_feature_confirm(
-            state, crazypod_ui_routes_depth() +
-                (overlay ? 2 : 0));
-    struct crazypod_books_confirmation_result books;
-    struct crazypod_organizer_confirmation_result organizer;
-
-    if(crazypod_route_actions_confirm_photos(
-           state, current_tick))
-        return true;
-    if(notes.handled) {
-        if(!notes.succeeded) {
-            if(overlay)
-                crazypod_choice_coordinator_show_receipt(
-                    CP_TR("Failed"), false,
-                    current_tick, false);
-            else
-                render_current_route(false);
-            if(!overlay)
-                crazypod_choice_coordinator_show_receipt(
-                    CP_TR("Failed"), false,
-                    current_tick, false);
-            return true;
-        }
-        if(notes.navigation ==
-           CRAZYPOD_NOTES_CONFIRMATION_RESET_MENU) {
-            crazypod_ui_routes_reset(NOTES_ROUTE_MENU, -1, 0);
-        }
-        else if(notes.navigation ==
-                CRAZYPOD_NOTES_CONFIRMATION_RESET_MENU_SHOW_DELETED) {
-            crazypod_ui_routes_reset(NOTES_ROUTE_MENU, -1, 0);
-            crazypod_ui_routes_push(NOTES_ROUTE_DELETED, -1, 0);
-        }
-        else if(notes.navigation ==
-                CRAZYPOD_NOTES_CONFIRMATION_TRUNCATE)
-            crazypod_ui_routes_truncate(notes.depth);
-        if(overlay) {
-            bool deleted =
-                state->route != NOTES_ROUTE_DISCARD_CONFIRM;
-
-            crazypod_choice_coordinator_show_receipt(
-                deleted ? CP_TR("Deleted") : CP_TR("Done"),
-                true, current_tick, true);
-        }
-        else {
-            render_current_route(true);
-            crazypod_choice_coordinator_show_receipt(
-                state->route != NOTES_ROUTE_DISCARD_CONFIRM
-                    ? CP_TR("Deleted") : CP_TR("Done"),
-                true, current_tick, false);
-        }
-        return true;
-    }
-
-    books = crazypod_books_feature_confirm(state);
-    if(books.handled) {
-        if(books.deleted) {
-            crazypod_books_feature_invalidate_metadata();
-            if(overlay)
-                crazypod_ui_routes_reset(
-                    BOOKS_ROUTE_MENU, -1, 0);
-            else
-                crazypod_app_launcher_open_books();
-        }
-        else if(!overlay)
-            render_current_route(false);
-        if(overlay)
-            crazypod_choice_coordinator_show_receipt(
-                books.deleted
-                    ? CP_TR("Deleted") : CP_TR("Delete Failed"),
-                books.deleted, current_tick, books.deleted);
-        else
-            crazypod_choice_coordinator_show_receipt(
-                books.deleted
-                    ? CP_TR("Deleted") : CP_TR("Delete Failed"),
-                books.deleted, current_tick, false);
-        return true;
-    }
-
-    organizer = crazypod_organizer_feature_confirm(
-        state, current_tick, HZ, calendar_today_date());
-    if(!organizer.handled)
-        return false;
-    if(!organizer.succeeded) {
-        if(overlay)
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Failed"), false, current_tick, false);
-        else
-            render_current_route(false);
-        if(!overlay)
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Failed"), false,
-                current_tick, false);
-        return true;
-    }
-    if(organizer.navigation ==
-       CRAZYPOD_ORGANIZER_CONFIRMATION_SHOW_CALENDAR_DAY) {
-        crazypod_route_actions_show_calendar_day(
-            organizer.date);
-    }
-    else {
-        crazypod_ui_routes_reset(WORKOUT_ROUTE_MENU, -1, 1);
-        if(organizer.navigation ==
-           CRAZYPOD_ORGANIZER_CONFIRMATION_SHOW_WORKOUT_HISTORY)
-            crazypod_ui_routes_push(
-                WORKOUT_ROUTE_HISTORY, -1, 0);
-    }
-    if(overlay) {
-        bool deleted =
-            state->route != WORKOUT_ROUTE_FINISH_CONFIRM;
-
-        crazypod_choice_coordinator_show_receipt(
-            deleted ? CP_TR("Deleted") : CP_TR("Saved"),
-            true, current_tick, true);
-    }
-    else {
-        render_current_route(true);
-        crazypod_choice_coordinator_show_receipt(
-            state->route != WORKOUT_ROUTE_FINISH_CONFIRM
-                ? CP_TR("Deleted") : CP_TR("Saved"),
-            true, current_tick, false);
-    }
-    return true;
+    /* Product route guard rejects retired Books/Notes/Photos/Organizer
+     * confirmation pages. Settings choices use the live overlay path. */
+    (void)state;
+    return false;
 }
 
- static void configure_feature_input(void)
+static void configure_feature_input(void)
 {
     const struct crazypod_feature_input_host host = {
         .now = ui_now,
