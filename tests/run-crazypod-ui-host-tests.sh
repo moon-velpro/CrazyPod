@@ -200,13 +200,13 @@ cc -std=c99 -Wall -Wextra -Werror \
 # Compile a synthetic private icon layer, without downloading or checking
 # in Apple artwork. Verify public fallback and private A8/RGB565A8 links.
 cat > "$test_root/crazypod_private_icon_fixture.inc" <<'END_PRIVATE_ICON_FIXTURE'
-static const uint8_t fixture_app[21 * 21 * 3] = { 0x42 };
+static const uint8_t fixture_app[35 * 35 * 3] = { 0x42 };
 static const lv_image_dsc_t fixture_app_image = {
     .header.magic = LV_IMAGE_HEADER_MAGIC,
     .header.cf = LV_COLOR_FORMAT_RGB565A8,
-    .header.w = 21,
-    .header.h = 21,
-    .header.stride = 42,
+    .header.w = 35,
+    .header.h = 35,
+    .header.stride = 70,
     .data_size = sizeof(fixture_app),
     .data = fixture_app,
 };
