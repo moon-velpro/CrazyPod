@@ -87,6 +87,27 @@ def test_original_system_glyphs() -> None:
     assert "CRAZYPOD_PRIVATE_ICONS_DIR" in (ROOT / "build-hw.sh").read_text()
     assert "CRAZYPOD_PRIVATE_ICONS_DIR" in (ROOT / "build-sim.sh").read_text()
 
+    # Playback controls and status/charging/missing-artwork symbols must
+    # also participate in private overrides, not just menu list rows.
+    widgets = (UI / "presentation/crazypod_ui_widgets.c").read_text(
+        encoding="utf-8"
+    )
+    status = (UI / "shell/crazypod_status_bar.c").read_text(
+        encoding="utf-8"
+    )
+    capsule = (UI / "shell/crazypod_now_capsule.c").read_text(
+        encoding="utf-8"
+    )
+    assert "crazypod_private_icon_menu(private_widget_icon(icon))" in widgets
+    assert "lv_obj_set_style_image_recolor(child" in widgets
+    assert "CRAZYPOD_MENU_ICON_FAVORITE" in widgets
+    assert "CRAZYPOD_MENU_ICON_SHUFFLE" in widgets
+    assert "CRAZYPOD_MENU_ICON_REPEAT" in widgets
+    assert "crazypod_private_icon_menu(semantic)" in status
+    assert "CRAZYPOD_MENU_ICON_NOW_PLAYING" in status
+    assert "CRAZYPOD_MENU_ICON_CHARGING" in status
+    assert "crazypod_private_icon_menu(CRAZYPOD_MENU_ICON_MUSIC)" in capsule
+
 
 def test_semantic_route_coverage() -> None:
     mapping_bodies = []
