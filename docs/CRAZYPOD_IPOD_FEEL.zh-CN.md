@@ -28,6 +28,7 @@
 
 - Home 选中变化仅更新**旧选中行、新选中行**的 LVGL 样式，不再重置全部四行标签或反复执行整个 Home 的布局循环；页面初建和外观刷新仍保持全部行初始化。
 - Select 的 `BUTTON_REPEAT` 不再重复启动页面，`BUTTON_REL` 也不会在 Home 被误认为新按键；加入 C99 宿主回归测试。
+- 新增 Home 档位触发至实际帧成功提交的微秒级计数：`home_selection_events`、`home_selection_presents`、`home_selection_last_latency_us`、`home_selection_max_latency_us` 和 `home_selection_over_50ms`。同帧连续档位按最早触发计时；LCD 同步失败不计为成功呈现。该计数只能用于实机/模拟器观测，不能当作当前性能已达标的证据。
 - 保留 Home 50fps 帧时钟、TE 同步、完整的音乐工作流、播放状态、USB 和存储。没有为了“视觉流畅”不经验证地提高全局 CPU 频率或加大动画内存。
 
 ## 上线放行门槛
