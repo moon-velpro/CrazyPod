@@ -39,6 +39,23 @@ def verify() -> None:
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
 
+    # MPEG-1/2 decoder + video catalog/engines are excluded from the ELF,
+    # not merely hidden from Home. The only linked compatibility layer is
+    # a no-I/O stub whose behavior has a separate compiled C99 host test.
+    assert "crazypod/crazypod_videos_disabled.c" in manifest
+    for retired_source in (
+        "crazypod/crazypod_videos.c",
+        "crazypod/crazypod_video_mpeg_misc.c",
+        "crazypod/video/",
+        "plugins/mpegplayer/",
+    ):
+        assert retired_source not in manifest, (
+            f"Removed video backend still linked: {retired_source}"
+        )
+    assert "crazypod_video_disabled_host_test.c" in source(
+        "tests/run-crazypod-ui-host-tests.sh"
+    )
+
     assert "crazypod/gameboy/" not in manifest, "Game Boy linked into firmware"
     assert "crazypod_gameboy_screen.c" not in manifest
     assert "/gameboy/crazypod_gameboy.make" not in apps_make
