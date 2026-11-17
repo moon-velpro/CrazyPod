@@ -2,6 +2,8 @@
 
 #ifdef IPOD_6G
 
+#include <stddef.h>
+
 #include "crazypod_private_icon_assets.h"
 
 #ifdef CRAZYPOD_PRIVATE_ICONS
