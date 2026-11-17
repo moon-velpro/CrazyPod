@@ -1,0 +1,4 @@
+#ifndef CRAZYPOD_VIDEO_STUB_CONFIG_H
+#define CRAZYPOD_VIDEO_STUB_CONFIG_H
+#define IPOD_6G 1
+#endif
