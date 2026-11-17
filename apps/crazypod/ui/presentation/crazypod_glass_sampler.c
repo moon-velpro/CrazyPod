@@ -20,6 +20,12 @@
 #define GLASS_HEADPHONE_TINT_OPA 48
 #define GLASS_BORDER_OPA 38
 #define GLASS_SHADOW_OPA 92
+/* Referenced from GlassVGL/light Liquid Glass: one static frosted
+ * background and a readable blue-white rim. No per-frame blur. */
+#define GLASS_HOME_TINT_COLOR 0xF0F7FF
+#define GLASS_HOME_TINT_OPA 204
+#define GLASS_HOME_BORDER_OPA 212
+#define GLASS_HOME_SHADOW_OPA 43
 
 static fb_data sample_pixels[
     GLASS_SAMPLE_WIDTH * GLASS_SAMPLE_HEIGHT]
@@ -31,7 +37,8 @@ static fb_data sample_scratch[
 uint32_t crazypod_glass_material_tint(
     enum crazypod_glass_material material)
 {
-    (void)material;
+    if(material == CRAZYPOD_GLASS_HOME_CONTROLS)
+        return GLASS_HOME_TINT_COLOR;
     return GLASS_TINT_COLOR;
 }
 
@@ -40,6 +47,8 @@ lv_opa_t crazypod_glass_material_tint_opa(
 {
     if(material == CRAZYPOD_GLASS_HEADPHONE_POPUP)
         return GLASS_HEADPHONE_TINT_OPA;
+    if(material == CRAZYPOD_GLASS_HOME_CONTROLS)
+        return GLASS_HOME_TINT_OPA;
     return GLASS_PANEL_TINT_OPA;
 }
 
@@ -49,6 +58,8 @@ lv_opa_t crazypod_glass_material_border_opa(
     if(material == CRAZYPOD_GLASS_MENU_PANEL ||
        material == CRAZYPOD_GLASS_MENU_TOPBAR)
         return LV_OPA_TRANSP;
+    if(material == CRAZYPOD_GLASS_HOME_CONTROLS)
+        return GLASS_HOME_BORDER_OPA;
     return GLASS_BORDER_OPA;
 }
 
@@ -58,6 +69,8 @@ lv_opa_t crazypod_glass_material_shadow_opa(
     if(material == CRAZYPOD_GLASS_MENU_PANEL ||
        material == CRAZYPOD_GLASS_MENU_TOPBAR)
         return LV_OPA_TRANSP;
+    if(material == CRAZYPOD_GLASS_HOME_CONTROLS)
+        return GLASS_HOME_SHADOW_OPA;
     return GLASS_SHADOW_OPA;
 }
 
