@@ -6,6 +6,7 @@
 #include "timefuncs.h"
 
 #include "../../crazypod_music.h"
+#include "../../crazypod_product_scope.h"
 #include "../../crazypod_organizer.h"
 #include "../../crazypod_photos.h"
 #include "../../crazypod_state.h"
@@ -114,6 +115,10 @@ void crazypod_app_launcher_open_books(void)
 
 void crazypod_app_launcher_open(enum crazypod_app_id id)
 {
+    /* Legacy IDs remain deserializable but must not resurrect retired apps.
+     * The actual implementation sources can be removed progressively. */
+    if(!crazypod_product_launcher_allowed(id))
+        return;
     if(id != CRAZYPOD_APP_SHUFFLE)
         shuffle_pending = false;
     switch(id) {

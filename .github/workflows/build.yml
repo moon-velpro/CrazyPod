@@ -36,6 +36,10 @@ jobs:
             tests/crazypod_music_root_menu_host_test.c \
             -o /tmp/music_root_test
           /tmp/music_root_test
+          cc -std=c99 -Wall -Wextra -Werror \
+            tests/crazypod_product_scope_host_test.c \
+            -o /tmp/product_scope_test
+          /tmp/product_scope_test
       - name: Check architecture and run UI host tests
         run: |
           set -eu
