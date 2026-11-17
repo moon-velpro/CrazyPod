@@ -48,26 +48,27 @@ def test_original_system_glyphs() -> None:
     assert expected <= explicit, f"Missing icon semantic mappings: {expected-explicit}"
     assert "return G_MENU;" in asset
 
-    # Main Home must not show a speaker for Podcasts or LVGL's generic
-    # Android-looking toolbar symbols in place of product glyphs.
+    # Home now uses the user's actual four uploaded PNG designs, resized
+    # to the panel's 21px native app tile. It does not reconstruct or
+    # recolor them as Material/LVGL/SF-style generic glyphs.
+    assert "crazypod_iphone_app_icons.h" in home
+    assert "crazypod_iphone_app_icon(" in home
+    assert "HOME_APP_TILE_SIZE CRAZYPOD_IPHONE_APP_ICON_SIZE" in home
     assert "home_entry_symbol(" not in home
+    assert "home_entry_gradient(" not in home
+    assert "home_entry_glyph_color(" not in home
     assert "LV_SYMBOL_VOLUME_MID" not in home
-    for semantic in ("NOW_PLAYING", "MUSIC", "PODCAST", "SETTINGS"):
-        assert f"CRAZYPOD_MENU_ICON_{semantic}" in home
-    assert "lv_image_set_src(" in home
-    assert "crazypod_menu_icon_asset(home_entry_icon(i))" in home
-
-    # App launch entries mirror the iPhone's *app-icon* visual grammar:
-    # rounded squares, a white Music face/red note, purple Podcasts and
-    # cool-gray Settings. Navigation list glyphs stay monochrome.
-    assert "#define HOME_APP_TILE_SIZE 21" in home
-    assert "#define HOME_APP_TILE_RADIUS 6" in home
-    assert "home_entry_gradient(i)" in home
-    assert "home_entry_glyph_color(i)" in home
-    assert "lv_obj_set_style_bg_grad_dir(" in home
-    assert "0xFFFFFF, 0xF33C63, 0xFFFFFF, 0x303840" in home
-    assert "0x253047, 0xFFFFFF, 0xB45BEA, 0xC9D1D8" in home
-    assert "LV_SYMBOL_VOLUME_MID" not in home
+    images = (UI / "presentation/crazypod_iphone_app_icons.c").read_text(
+        encoding="utf-8"
+    )
+    assert "LV_COLOR_FORMAT_RGB565A8" in images
+    assert "#define APP_SIDE CRAZYPOD_IPHONE_APP_ICON_SIZE" in images
+    assert "#define APP_BYTES (APP_PIXELS * 3)" in images
+    assert "app_ready[destination] = true;" in images
+    assert "image->header.stride = APP_SIDE * 2;" in images
+    assert "decode_icon(" in images
+    manifest = (ROOT / "apps/SOURCES").read_text()
+    assert "crazypod/ui/presentation/crazypod_iphone_app_icons.c" in manifest
 
 
 def test_semantic_route_coverage() -> None:
