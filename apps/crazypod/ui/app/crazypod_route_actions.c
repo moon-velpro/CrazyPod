@@ -312,7 +312,7 @@ static void show_setting_choices(int item, int selected)
 
 /* Reuse the already validated async Shuffle app path.  A Music menu
  * action does not reopen the retired 17-app Home or add a new route. */
-static void shuffle_all_from_music(void)
+static void shuffle_all_from_music_product(void)
 {
     if(crazypod_music_library_loaded() &&
        crazypod_music_track_count() == 0) {
@@ -346,7 +346,7 @@ static bool activate_music(
                 crazypod_route_actions_request_now_playing,
             .show_now_actions =
                 crazypod_now_playing_overlay_show_actions,
-            .shuffle_all = shuffle_all_from_music,
+            .shuffle_all = shuffle_all_from_music_product,
         };
 
         return crazypod_music_feature_activate(
