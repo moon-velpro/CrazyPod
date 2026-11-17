@@ -98,10 +98,10 @@ static const char *home_entry_title(int index)
 static const char *home_entry_subtitle(int index)
 {
     switch(index) {
-    case CRAZYPOD_HOME_NOW_PLAYING: return CP_TR("Playback controls");
-    case CRAZYPOD_HOME_MUSIC: return CP_TR("Albums and artists");
-    case CRAZYPOD_HOME_PODCASTS: return CP_TR("Your episodes");
-    case CRAZYPOD_HOME_SETTINGS: return CP_TR("Sound and display");
+    case CRAZYPOD_HOME_NOW_PLAYING: return CP_TR("Playback");
+    case CRAZYPOD_HOME_MUSIC: return CP_TR("Albums");
+    case CRAZYPOD_HOME_PODCASTS: return CP_TR("Continue");
+    case CRAZYPOD_HOME_SETTINGS: return CP_TR("Sound");
     default: return "";
     }
 }
