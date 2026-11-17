@@ -11,10 +11,12 @@
 #include "../../crazypod_music.h"
 #include "../../crazypod_playlist.h"
 #include "../../crazypod_state.h"
-#include "../features/music/crazypod_music_feature.h"
+#ifdef SIMULATOR
 #include "../features/notes/crazypod_notes_feature.h"
-#include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../features/organizer/crazypod_organizer_feature.h"
+#endif
+#include "../features/music/crazypod_music_feature.h"
+#include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../features/settings/crazypod_settings_feature.h"
 #include "../navigation/crazypod_render_scheduler.h"
 #include "../navigation/crazypod_route_registry.h"
@@ -190,23 +192,35 @@ static void play_selected_track(struct route_state *state)
 void crazypod_route_actions_begin_note(
     uint32_t id, bool resume_draft)
 {
+#ifdef SIMULATOR
     crazypod_notes_feature_begin_editor(id, resume_draft);
     crazypod_route_actions_push_selected(
         NOTES_ROUTE_COMPOSER, -1, 0);
+#else
+    (void)id;
+    (void)resume_draft;
+#endif
 }
 
 bool crazypod_route_actions_note_dirty(void)
 {
+#ifdef SIMULATOR
     return crazypod_notes_feature_editor_dirty();
+#else
+    return false;
+#endif
 }
 
 void crazypod_route_actions_service_notes(void)
 {
+#ifdef SIMULATOR
     crazypod_notes_feature_service_editor();
+#endif
 }
 
 void crazypod_route_actions_show_calendar_day(int date)
 {
+#ifdef SIMULATOR
     int root = -1;
     int i;
 
@@ -226,6 +240,9 @@ void crazypod_route_actions_show_calendar_day(int date)
     crazypod_ui_routes_truncate(root + 1);
     crazypod_ui_routes_push(
         CALENDAR_ROUTE_DAY_EVENTS, -1, 0);
+#else
+    (void)date;
+#endif
 }
 
 /* Legacy reorder state is still loadable, but it no longer controls the

@@ -6,7 +6,6 @@
 #include "general.h"
 #include "screendump.h"
 
-#include "crazypod_photos.h"
 #include "crazypod_screenshot.h"
 
 #define SCREENSHOT_ALBUM "/Pictures/Screenshots"
@@ -24,7 +23,6 @@ bool crazypod_screenshot_capture(void)
         return false;
     if(!screen_dump_to_file(path))
         return false;
-    crazypod_photos_note_file_added();
     return true;
 }
 

@@ -105,7 +105,19 @@ def verify() -> None:
     assert "crazypod_books_feature_configure_runtime(" not in composition
     assert "crazypod_photos_runtime_configure(" not in composition
     assert "crazypod_music_library_configure(&music);" in composition
-    assert "crazypod_wallpaper_crop_runtime_configure(&crop);" in composition
+    assert "crazypod_wallpaper_crop_runtime_configure(&crop);" not in composition
+    assert "crazypod_photos_note_file_added();" not in source(
+        "apps/crazypod/crazypod_screenshot.c"
+    )
+    assert "screen_dump_to_file(path)" in source(
+        "apps/crazypod/crazypod_screenshot.c"
+    )
+    assert "crazypod_photos_feature_poll_media(" not in source(
+        "apps/crazypod/ui/app/crazypod_playback.c"
+    )
+    assert "crazypod_customize_feature_poll_media(" not in source(
+        "apps/crazypod/ui/app/crazypod_playback.c"
+    )
     assert "crazypod_now_playing_overlay_configure(&overlay);" in composition
     for retired_preview in ("crazypod_books_feature_render_preview(",
                             "crazypod_notes_feature_render_preview(",

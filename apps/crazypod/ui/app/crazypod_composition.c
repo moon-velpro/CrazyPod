@@ -6,7 +6,6 @@
 #include "../../crazypod_coverflow.h"
 #include "../../crazypod_lcd.h"
 #include "../../crazypod_state.h"
-#include "../features/customize/crazypod_customize_feature.h"
 #include "../features/music/crazypod_music_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../shell/crazypod_notification.h"
@@ -54,12 +53,6 @@ static bool music_route_available(void)
     route = current_route()->route;
     return route <= MUSIC_ROUTE_NOW_PLAYING ||
         route == PODCASTS_ROUTE_MENU;
-}
-
-static enum crazypod_route current_route_id(void)
-{
-    return crazypod_ui_routes_depth() > 0
-        ? current_route()->route : MUSIC_ROUTE_MENU;
 }
 
 static void now_overlay_prepare(
@@ -251,16 +244,6 @@ void crazypod_composition_configure(
         .render_route = new_host->render,
         .route_visible = music_route_available,
     };
-    const struct crazypod_wallpaper_crop_runtime_host crop = {
-        .product_active = crazypod_shell_product_active,
-        .route_depth = crazypod_ui_routes_depth,
-        .current_route = current_route_id,
-        .render = new_host->render,
-        .truncate_routes = crazypod_ui_routes_truncate,
-        .pop = crazypod_route_actions_pop,
-        .appearance_changed =
-            crazypod_desktop_refresh_appearance,
-    };
     const struct crazypod_home_actions_callbacks home_actions = {
         .open_queue = crazypod_now_playing_overlay_show_queue,
         .toggle_playback = crazypod_playback_toggle,
@@ -276,7 +259,6 @@ void crazypod_composition_configure(
     crazypod_system_prompts_configure(&prompts);
     crazypod_choice_coordinator_configure(&choices);
     crazypod_music_library_configure(&music);
-    crazypod_wallpaper_crop_runtime_configure(&crop);
     crazypod_home_actions_configure(
         crazypod_desktop_screen(), &home_actions);
     configure_now_playing();

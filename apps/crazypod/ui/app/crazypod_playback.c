@@ -20,10 +20,8 @@
 #include "../../crazypod_playlist.h"
 #include "../../crazypod_runtime_font.h"
 #include "../../crazypod_state.h"
-#include "../features/customize/crazypod_customize_feature.h"
 #include "../features/music/crazypod_music_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
-#include "../features/photos/crazypod_photos_feature.h"
 #include "../navigation/crazypod_render_scheduler.h"
 #include "../navigation/crazypod_ui_routes.h"
 #include "../presentation/crazypod_menu_list.h"
@@ -955,28 +953,8 @@ void crazypod_playback_process_artwork(void)
 
 void crazypod_playback_process_media(void)
 {
-    enum crazypod_feature_media_update update =
-        CRAZYPOD_FEATURE_MEDIA_NONE;
-    enum crazypod_route route;
-
-    if(!crazypod_shell_product_active() ||
-       crazypod_ui_routes_depth() <= 0 ||
-       crazypod_choice_coordinator_visible())
-        return;
-    route = current_route()->route;
-    if(route >= PHOTOS_ROUTE_MENU &&
-       route <= PHOTOS_ROUTE_DETAIL)
-        update = crazypod_photos_feature_poll_media(
-            route, crazypod_render_scheduler_blocked(),
-            crazypod_preview_motion_active());
-    else if(route == DIY_ROUTE_WALLPAPER_FILES ||
-            route == DIY_ROUTE_WALLPAPER_CROP)
-        update = crazypod_customize_feature_poll_media(
-            route, crazypod_render_scheduler_blocked());
-    if(update == CRAZYPOD_FEATURE_MEDIA_PREVIEW)
-        crazypod_menu_preview_render(current_route(), false);
-    else if(update == CRAZYPOD_FEATURE_MEDIA_ROUTE)
-        playback.host.render(false);
+    /* No retired Photo/DIY route is admitted to the music product.
+     * Keep the API for callers but never poll an abandoned media catalog. */
 }
 
 void crazypod_playback_tick_wave(long now)
