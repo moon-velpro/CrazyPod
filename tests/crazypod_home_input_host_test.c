@@ -103,6 +103,12 @@ int main(void)
     assert(previous_calls == 1);
 
     send(BUTTON_SELECT, 0);
+    send(BUTTON_SELECT | BUTTON_REPEAT, 0);
+    send(BUTTON_SELECT | BUTTON_REL, 0);
+    send(BUTTON_SCROLL_FWD | BUTTON_REL, 1);
+    send(BUTTON_PLAY | BUTTON_REL, 0);
+    assert(open_calls == 1);
+    assert(selection_delta == 2);
     send(BUTTON_PLAY, 0);
     send(BUTTON_PLAY | BUTTON_REPEAT, 0);
     assert(open_calls == 1);
