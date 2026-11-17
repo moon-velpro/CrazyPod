@@ -103,12 +103,12 @@ static void update_selection_chrome(void)
         lv_obj_set_style_bg_color(
             home_rows[index], lv_color_hex(HOME_GLASS), 0);
         lv_obj_set_style_bg_opa(
-            home_rows[index], selected ? 76 : LV_OPA_TRANSP, 0);
+            home_rows[index], selected ? CRAZYPOD_LM_FOCUS_FILL_OPA : LV_OPA_TRANSP, 0);
         lv_obj_set_style_border_width(home_rows[index], 1, 0);
         lv_obj_set_style_border_color(
             home_rows[index], lv_color_hex(COLOR_WHITE), 0);
         lv_obj_set_style_border_opa(
-            home_rows[index], selected ? 93 : LV_OPA_TRANSP, 0);
+            home_rows[index], selected ? CRAZYPOD_LM_FOCUS_BORDER_OPA : LV_OPA_TRANSP, 0);
         lv_obj_set_style_text_color(
             home_labels[index],
             lv_color_hex(selected ? COLOR_WHITE : 0xD7DCE4), 0);
