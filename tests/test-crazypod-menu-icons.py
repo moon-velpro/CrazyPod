@@ -48,11 +48,15 @@ def test_original_system_glyphs() -> None:
     assert expected <= explicit, f"Missing icon semantic mappings: {expected-explicit}"
     assert "return G_MENU;" in asset
 
-    # Home now uses the user's actual four uploaded PNG designs, resized
-    # to the panel's 21px native app tile. It does not reconstruct or
-    # recolor them as Material/LVGL/SF-style generic glyphs.
+    # Home uses the uploaded Music, Podcasts and Settings PNG designs,
+    # with Voice Memos retained as a separate, correctly named asset.
+    # Now Playing keeps its own player symbol, not a recording icon.
     assert "crazypod_iphone_app_icons.h" in home
     assert "crazypod_iphone_app_icon(" in home
+    assert "CRAZYPOD_IPHONE_ICON_MUSIC" in home
+    assert "CRAZYPOD_IPHONE_ICON_PODCASTS" in home
+    assert "CRAZYPOD_IPHONE_ICON_SETTINGS" in home
+    assert "CRAZYPOD_IPHONE_ICON_VOICE_MEMOS" not in home
     assert "if(i == CRAZYPOD_HOME_NOW_PLAYING)" in home
     assert "CRAZYPOD_MENU_ICON_NOW_PLAYING" in home
     assert "Voice Memos is a recording app, not Now Playing." in home
