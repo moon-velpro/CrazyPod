@@ -54,7 +54,6 @@
 #include "crazypod_notes.h"
 #include "crazypod_organizer.h"
 #include "crazypod_playlist.h"
-#include "crazypod_photos.h"
 #include "crazypod_presets.h"
 #include "crazypod_state.h"
 #include "crazypod_ui.h"
@@ -83,7 +82,6 @@
 #include "ui/presentation/crazypod_alpha_jump_hud.h"
 #include "ui/features/books/crazypod_books_feature.h"
 #include "ui/features/notes/crazypod_notes_feature.h"
-#include "ui/features/photos/crazypod_photos_feature.h"
 #include "ui/shell/crazypod_app_catalog.h"
 #include "ui/shell/crazypod_desktop.h"
 #include "ui/shell/crazypod_desktop_native.h"
@@ -106,7 +104,6 @@
 #include "ui/presentation/crazypod_screen_corners.h"
 #include "ui/presentation/crazypod_glass_panel.h"
 #include "ui/presentation/crazypod_glass_sampler.h"
-#include "ui/features/customize/crazypod_customize_feature.h"
 #include "ui/shell/crazypod_lock_screen.h"
 #include "ui/shell/crazypod_now_capsule.h"
 #include "ui/shell/crazypod_power_prompt.h"
@@ -116,7 +113,6 @@
 #include "ui/shell/crazypod_system_event.h"
 #include "ui/shell/crazypod_system_prompts.h"
 #include "ui/shell/crazypod_usb_prompt.h"
-#include "crazypod_videos.h"
 #include "crazypod_wallpaper.h"
 #include "crazypod_workouts.h"
 
@@ -793,8 +789,6 @@ void crazypod_ui_run(void)
     crazypod_image_init();
     crazypod_artwork_init();
     crazypod_icons_init();
-    crazypod_photos_init();
-    crazypod_videos_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
     /* No CPK verification, MiniApp registry or theme runtime at boot. */
@@ -850,8 +844,6 @@ void crazypod_ui_run(void)
     crazypod_playback_initialize();
     crazypod_now_playing_navigation_initialize();
     crazypod_now_capsule_initialize_artwork();
-    crazypod_photos_feature_initialize_media();
-    crazypod_customize_feature_initialize_media();
 #ifdef SIMULATOR
     crazypod_scene_transition_demo_init();
     simulator_snapshot_pending =
@@ -1087,8 +1079,7 @@ void crazypod_ui_run(void)
 #endif
         if(lv_anim_count_running())
             keep_cpu_boosted(HZ / 10 > 0 ? HZ / 10 : 1);
-        if(crazypod_artwork_busy() || crazypod_photos_busy() ||
-           crazypod_videos_busy())
+        if(crazypod_artwork_busy())
             keep_cpu_boosted(HZ / 10);
         if(crazypod_music_is_scanning() && !locked)
             keep_cpu_boosted(HZ / 10);
@@ -1099,8 +1090,6 @@ void crazypod_ui_run(void)
                 crazypod_coverflow_motion_active())) &&
            (!crazypod_music_is_scanning() || locked) &&
            !crazypod_artwork_busy() &&
-           !crazypod_photos_busy() &&
-           !crazypod_videos_busy() &&
            !TIME_BEFORE(current_tick, boost_until))
             set_cpu_boost(false);
     }
