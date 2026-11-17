@@ -178,7 +178,7 @@ bool crazypod_music_feature_item_title(
     switch(state->route) {
     case MUSIC_ROUTE_MENU: {
         static const char *const titles[] = {
-            CP_TR("Now Playing"), CP_TR("Album Flow"), CP_TR("All Music"), CP_TR("Playlists"),
+            CP_TR("Now Playing"), CP_TR("Cover Flow"), CP_TR("All Music"), CP_TR("Playlists"),
             CP_TR("Artists"), CP_TR("Albums"), CP_TR("Songs"), CP_TR("Search")
         };
 
