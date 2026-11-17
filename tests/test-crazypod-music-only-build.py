@@ -93,6 +93,9 @@ def verify() -> None:
     )
     assert '#include "string-extra.h"' in snapshot_source
     assert "strlcpy(buffer, actions, sizeof(buffer));" in snapshot_source
+    legacy_photo = source("apps/crazypod/photos/crazypod_photo_catalog.c")
+    assert "#ifdef SIMULATOR\n#include <strings.h>" in legacy_photo
+    assert 'strcasecmp(extension, ".jpg")' in legacy_photo
     assert "name: Linux simulator link check" in workflow
     linux_job = workflow.split("  linux_simulator_link:", 1)[1].split(
         "  simulator:", 1

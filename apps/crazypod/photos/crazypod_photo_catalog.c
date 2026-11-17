@@ -6,6 +6,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef SIMULATOR
+#include <strings.h> /* POSIX strcasecmp in simulator libc. */
+#endif
 
 #include "dir.h"
 #include "file.h"

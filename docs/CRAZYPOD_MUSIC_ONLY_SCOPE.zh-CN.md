@@ -192,3 +192,8 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - Linux simulator link job 的实际第一处阻断是 `crazypod_simulator_snapshot.c` 使用 `strlcpy` 未包含 `string-extra.h`：Linux libc 不能像 macOS 一样隐式提供该函数。
 - 现改为显式包含 Rockbox 的 `string-extra.h`，不替换为语义不同的 `strncpy`，从而保持原来的 NUL 结尾行为和路径上限检查。
 - 日志里部分 `firmware/libc/include/endian.h` 的诊断来自 Linux 主机依赖探测，但实际让 make 失败的是 `strlcpy` 的隐式声明；继续以链接是否成功判断是否还存在真实源码问题。
+
+## 2026-11-18 · Linux 模拟器旧相册 POSIX 声明
+
+- 第二次 Linux simulator 编译推进到旧 Photos catalog 后发现 `strcasecmp` 隐式声明。旧模块实际只在模拟器编译，现显式在 `SIMULATOR` 路径包含标准 `<strings.h>`，保留原本扩展名大小写不敏感的判断语义。
+- 没有修改音频或实体机编译清单，也没有引入全局编译器参数绕过警告。
