@@ -36,7 +36,8 @@ REQUIRED_MENU = {
     "balance", "brightness", "backlight", "charging", "display_sleep",
     "motion_off", "power_timer", "usb", "storage", "sleep_timer",
     "timer_boot", "reset_timer", "beep", "keyclick", "speaker",
-    "repeat_clicks", "settings", "date", "menu",
+    "repeat_clicks", "settings", "date", "time", "menu",
+    "visibility", "move_up", "move_down", "lock",
 }
 
 
