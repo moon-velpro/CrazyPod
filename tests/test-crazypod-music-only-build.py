@@ -33,6 +33,12 @@ def verify() -> None:
     now_header = source(
         "apps/crazypod/ui/features/now_playing/crazypod_now_screen.h"
     )
+    now_presentation = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_presentation.c"
+    )
+    now_presentation_header = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_presentation.h"
+    )
     liquid = source("apps/crazypod/ui/presentation/crazypod_liquid_music.h")
     glass_overlay = source("apps/crazypod/ui/presentation/crazypod_overlay_glass.c")
     glass_panel = source("apps/crazypod/ui/presentation/crazypod_glass_panel.c")
@@ -198,6 +204,15 @@ def verify() -> None:
         assert glyph in now_screen
     assert "lv_obj_t *transport_status;" in now_header
     assert "update_transport_play_state();" in now_screen
+    assert "crazypod_lm_album_shade(palette.primary)" in now_presentation
+    assert "crazypod_artwork_palette_extract(artwork, &palette)" in now_presentation
+    assert "shade_colors[bank] = album_shade(artwork);" in now_presentation
+    assert "shade_colors[bank]" in now_presentation
+    assert "uint32_t *shade_color" in now_presentation_header
+    assert "uint32_t shade_color = CRAZYPOD_NOW_SHADE_COLOR;" in now_screen
+    assert "&content_color, &shade_color" in now_screen
+    assert "shade_color, CRAZYPOD_NOW_SHADE_OPA" in now_screen
+    assert "crazypod_lm_album_shade(" in liquid
     assert "lv_obj_add_event_cb(view->wave_surface" in now_screen
     assert "lv_obj_add_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN)" in capsule
     assert "capsule.play_symbol" in capsule
