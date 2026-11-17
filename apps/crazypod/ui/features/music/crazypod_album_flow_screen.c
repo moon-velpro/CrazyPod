@@ -73,7 +73,7 @@ void crazypod_album_flow_screen_render(
     /* Keep album covers unobstructed. Put only metadata in a quiet,
      * low-cost floating control surface below native Cover Flow. */
     caption_material = crazypod_ui_widget_box(
-        parent, 14, 176, 292, 45, 12,
+        parent, 14, 180, 292, 43, 12,
         CRAZYPOD_LM_GLASS, CRAZYPOD_LM_GLASS_FILL_OPA);
     lv_obj_set_style_border_width(caption_material, 1, 0);
     lv_obj_set_style_border_color(
