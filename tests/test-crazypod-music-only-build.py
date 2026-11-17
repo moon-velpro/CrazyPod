@@ -34,6 +34,12 @@ def verify() -> None:
                    "crazypod_workouts_init();"):
         assert legacy not in boot, f"Legacy boot hook still active: {legacy}"
     assert boot.count("crazypod_music_init();") == 2
+    assert boot.count("crazypod_appearance_load();") == 2, (
+        "Persisted appearance must still load in both startup paths"
+    )
+    assert "crazypod_presets_load();" not in boot, (
+        "Legacy DIY presets must not be scanned at boot"
+    )
     # These IDs persist for compatibility, but the launcher has no paths to
     # initialize any retired app from the product navigation.
     for legacy in ("CRAZYPOD_APP_PHOTOS", "CRAZYPOD_APP_CUSTOMIZE",
