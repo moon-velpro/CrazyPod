@@ -41,6 +41,13 @@
  * Keep the presentation's contrast model and fallback model synchronized. */
 #define CRAZYPOD_LM_SHADE_OPA              150
 
+/* Muted, real-device-friendly fallback colors only when cover data
+ * is absent. Cached artwork always takes priority over these tones. */
+#define CRAZYPOD_LM_FALLBACK_PALETTE { \
+    0x82796Fu, 0x60788Cu, 0x826F7Bu, 0x738478u, \
+    0x756E66u, 0x728396u, 0x8B7277u, 0x667C83u  \
+}
+
 /* Audio waveform and timer sit below the artwork; do not cover the cover. */
 #define CRAZYPOD_LM_WAVE_X                 16
 #define CRAZYPOD_LM_WAVE_Y                 181

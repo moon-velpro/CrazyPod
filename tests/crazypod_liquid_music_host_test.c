@@ -58,6 +58,19 @@ int main(void)
     assert(((CRAZYPOD_LM_HOME_GLASS >> 16) & 255u) -
            ((CRAZYPOD_LM_HOME_TEXT >> 16) & 255u) > 160u);
 
+    /* Placeholder art must remain a quiet backdrop, not neon UI. */
+    {
+        static const unsigned fallback[] = CRAZYPOD_LM_FALLBACK_PALETTE;
+        unsigned i;
+
+        assert(sizeof(fallback) / sizeof(fallback[0]) == 8u);
+        for(i = 0; i < 8u; ++i) {
+            assert(((fallback[i] >> 16) & 255u) < 160u);
+            assert(((fallback[i] >> 8) & 255u) < 160u);
+            assert((fallback[i] & 255u) < 160u);
+        }
+    }
+
     /* The "glass" control material should be subtle rather than opaque. */
     assert(CRAZYPOD_LM_GLASS_FILL_OPA > 0);
     assert(CRAZYPOD_LM_GLASS_FILL_OPA < 64);
