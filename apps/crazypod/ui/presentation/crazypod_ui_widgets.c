@@ -1,4 +1,5 @@
 #include "crazypod_ui_widgets.h"
+#include "crazypod_private_icon_assets.h"
 
 #include "../../crazypod_l10n.h"
 #include "../../crazypod_runtime_font.h"
@@ -201,6 +202,33 @@ static void make_normalized_glyph(
     lv_obj_align(label, LV_ALIGN_CENTER, x_offset, y_offset);
 }
 
+/* One opt-in private material source for Now Playing buttons and
+ * action popups. Public builds retain the original minimal LVGL glyphs. */
+static enum crazypod_menu_icon private_widget_icon(
+    enum crazypod_ui_icon icon)
+{
+    switch(icon) {
+    case CRAZYPOD_UI_ICON_HEART:
+        return CRAZYPOD_MENU_ICON_FAVORITE;
+    case CRAZYPOD_UI_ICON_PLAY:
+        return CRAZYPOD_MENU_ICON_NOW_PLAYING;
+    case CRAZYPOD_UI_ICON_SHUFFLE:
+        return CRAZYPOD_MENU_ICON_SHUFFLE;
+    case CRAZYPOD_UI_ICON_REPEAT:
+    case CRAZYPOD_UI_ICON_REPEAT_ONE:
+        return CRAZYPOD_MENU_ICON_REPEAT;
+    case CRAZYPOD_UI_ICON_FILE:
+        return CRAZYPOD_MENU_ICON_SONG;
+    case CRAZYPOD_UI_ICON_BARS:
+        return CRAZYPOD_MENU_ICON_EQUALIZER;
+    case CRAZYPOD_UI_ICON_LIST:
+        return CRAZYPOD_MENU_ICON_QUEUE;
+    case CRAZYPOD_UI_ICON_AUDIO:
+        return CRAZYPOD_MENU_ICON_MUSIC;
+    }
+    return CRAZYPOD_MENU_ICON_NONE;
+}
+
 void crazypod_ui_widget_icon_set(lv_obj_t *obj,
                                  enum crazypod_ui_icon icon)
 {
@@ -211,6 +239,27 @@ void crazypod_ui_widget_icon_set(lv_obj_t *obj,
     color = lv_color_to_u32(
         lv_obj_get_style_text_color(obj, LV_PART_MAIN));
     lv_obj_clean(obj);
+    {
+        const lv_image_dsc_t *private_icon =
+            crazypod_private_icon_menu(private_widget_icon(icon));
+
+        if(private_icon != NULL) {
+            lv_obj_t *image = lv_image_create(obj);
+
+            lv_image_set_src(image, private_icon);
+            lv_obj_set_style_image_recolor(
+                image, lv_color_hex(color), 0);
+            lv_obj_set_style_image_recolor_opa(
+                image, LV_OPA_COVER, 0);
+            lv_obj_center(image);
+            lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
+            if(icon == CRAZYPOD_UI_ICON_REPEAT_ONE) {
+                make_normalized_glyph(
+                    obj, "1", &lv_font_montserrat_8, color, 0, 0);
+            }
+            return;
+        }
+    }
     switch(icon) {
     case CRAZYPOD_UI_ICON_HEART:
         make_normalized_heart(obj, color);
@@ -289,5 +338,7 @@ void crazypod_ui_widget_icon_set_color(lv_obj_t *obj, uint32_t color)
 
         lv_obj_set_style_bg_color(child, lv_color_hex(color), 0);
         lv_obj_set_style_text_color(child, lv_color_hex(color), 0);
+        lv_obj_set_style_image_recolor(child, lv_color_hex(color), 0);
+        lv_obj_set_style_image_recolor_opa(child, LV_OPA_COVER, 0);
     }
 }
