@@ -10,13 +10,7 @@
 #include "../../crazypod_artwork.h"
 #include "../../crazypod_music.h"
 #include "../../crazypod_playlist.h"
-#include "../features/books/crazypod_books_feature.h"
-#include "../features/customize/crazypod_customize_feature.h"
-#include "../features/miniapps/crazypod_miniapps_feature.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../features/notes/crazypod_notes_feature.h"
-#include "../features/organizer/crazypod_organizer_feature.h"
-#include "../features/photos/crazypod_photos_feature.h"
 #include "../features/settings/crazypod_settings_feature.h"
 #include "../navigation/crazypod_route_registry.h"
 #include "../presentation/crazypod_glass_slots.h"
@@ -24,7 +18,6 @@
 #include "../presentation/crazypod_preview_motion.h"
 #include "../presentation/crazypod_preview_primitives.h"
 #include "../presentation/crazypod_ui_widgets.h"
-#include "../shell/crazypod_extras_preview.h"
 #include "crazypod_menu_preview.h"
 
 #define ARTWORK_CACHE_SIZE 72
@@ -113,25 +106,6 @@ static void render_editor(
         "", &lv_font_montserrat_8);
 }
 
-static void render_photos(
-    const struct route_state *state, bool videos)
-{
-    crazypod_photos_feature_render_preview(
-        state, preview_parent(), videos,
-        preview.defer_media,
-        crazypod_preview_motion_media_deferred_flag());
-}
-
-static void render_utility(
-    const struct route_state *state)
-{
-    crazypod_organizer_feature_render_preview(
-        preview_parent(), state,
-        preview.host.item_title(state, state->selected),
-        crazypod_miniapps_feature_last_error(),
-        preview.host.metadata_font);
-}
-
 void crazypod_menu_preview_configure(
     const struct crazypod_menu_preview_host *host)
 {
@@ -154,23 +128,10 @@ void crazypod_menu_preview_render(
         crazypod_menu_preview_is_skeuomorphic_route(
             state->route);
 
-    if(state->route == MUSIC_ROUTE_MENU)
-        crazypod_preview_motion_set_profile(
-            CRAZYPOD_PREVIEW_PROFILE_MUSIC);
-    else if(state->route == PHOTOS_ROUTE_MENU)
-        crazypod_preview_motion_set_profile(
-            CRAZYPOD_PREVIEW_PROFILE_PHOTOS);
-    else if(state->route >= NOTES_ROUTE_MENU &&
-            state->route <= NOTES_ROUTE_EMPTY_TRASH_CONFIRM)
-        crazypod_preview_motion_set_profile(
-            CRAZYPOD_PREVIEW_PROFILE_NOTES);
-    else if(state->route >= BOOKS_ROUTE_MENU &&
-            state->route <= BOOKS_ROUTE_INFO)
-        crazypod_preview_motion_set_profile(
-            CRAZYPOD_PREVIEW_PROFILE_BOOKS);
-    else
-        crazypod_preview_motion_set_profile(
-            CRAZYPOD_PREVIEW_PROFILE_DEFAULT);
+    crazypod_preview_motion_set_profile(
+        state->route == MUSIC_ROUTE_MENU
+            ? CRAZYPOD_PREVIEW_PROFILE_MUSIC
+            : CRAZYPOD_PREVIEW_PROFILE_DEFAULT);
 
     preview.defer_media = animate;
     *crazypod_preview_motion_media_deferred_flag() = false;
@@ -188,62 +149,6 @@ void crazypod_menu_preview_render(
             crazypod_music_search_query(), CP_TR("Any track"),
             CP_TR("Searches title, artist and album."));
     }
-    else if(state->route == CALENDAR_ROUTE_TITLE_EDITOR) {
-        static char cursor_text[98];
-
-        render_editor(
-            crazypod_organizer_feature_editor_title(
-                cursor_text, sizeof(cursor_text)),
-            CP_TR("Event title"),
-            CP_TR("Center inserts · Left/Right moves cursor."));
-    }
-    else if(state->route == MUSIC_ROUTE_MENU) {
-        crazypod_music_feature_render_root_preview(
-            preview_parent(), state->selected,
-            preview.defer_media);
-    }
-    else if(state->route == PHOTOS_ROUTE_MENU)
-        render_photos(state, false);
-    else if(state->route == PHOTOS_ROUTE_DELETE_MENU)
-        render_photos(state, state->selected == 1);
-    else if(state->route == PHOTOS_ROUTE_VIDEOS ||
-            state->route == PHOTOS_ROUTE_DELETE_VIDEOS)
-        render_photos(state, true);
-    else if(state->route == EXTRAS_ROUTE_MENU) {
-        crazypod_extras_preview_render(
-            preview_parent(), state,
-            preview.host.metadata_font);
-    }
-    else if(state->route >= NOTES_ROUTE_MENU &&
-            state->route <= NOTES_ROUTE_EMPTY_TRASH_CONFIRM) {
-        crazypod_notes_feature_render_preview(
-            preview_parent(), state,
-            preview.host.metadata_font);
-    }
-    else if(state->route >= BOOKS_ROUTE_MENU &&
-            state->route <= BOOKS_ROUTE_INFO) {
-        crazypod_books_feature_render_preview(
-            preview_parent(), state,
-            preview.host.metadata_font);
-    }
-    else if(state->route == UTILITIES_ROUTE_MENU ||
-            state->route == GAMEBOY_ROUTE_LIBRARY ||
-            state->route == CLOCK_ROUTE_MENU ||
-            state->route == CLOCK_ROUTE_SLEEP_TIMER ||
-            state->route == WORKOUT_ROUTE_MENU ||
-            state->route == WORKOUT_ROUTE_TYPES ||
-            state->route == WORKOUT_ROUTE_HISTORY ||
-            state->route == WORKOUT_ROUTE_FINISH_CONFIRM ||
-            state->route == WORKOUT_ROUTE_DELETE_CONFIRM ||
-            state->route == CALENDAR_ROUTE_MENU ||
-            state->route == CALENDAR_ROUTE_TODAY ||
-            state->route == CALENDAR_ROUTE_UPCOMING ||
-            state->route == CALENDAR_ROUTE_DAY_EVENTS ||
-            state->route == CALENDAR_ROUTE_EDITOR ||
-            state->route == CALENDAR_ROUTE_ACTIONS ||
-            state->route == CALENDAR_ROUTE_DELETE_CONFIRM ||
-            state->route == CONTACTS_ROUTE_LIST)
-        render_utility(state);
     else if(is_settings_route(state->route)) {
         crazypod_settings_feature_render_preview(
             preview_parent(), state,
@@ -253,14 +158,6 @@ void crazypod_menu_preview_render(
             global_settings.eq_enabled,
             global_settings.playlist_shuffle,
             crazypod_queue_repeat() != REPEAT_OFF);
-    }
-    else if(state->route >= DIY_ROUTE_MENU) {
-        crazypod_customize_feature_render_preview(
-            preview_parent(), state,
-            preview.host.item_title(
-                state, state->selected),
-            primary_color(), secondary_color(),
-            crazypod_customize_feature_preset_editor_value());
     }
     else {
         have_track = crazypod_music_feature_copy_route_track(
@@ -282,11 +179,6 @@ void crazypod_menu_preview_prefetch(
     bool have_track = false;
     if(state == NULL)
         return;
-    if(state->route >= PHOTOS_ROUTE_MENU &&
-       state->route <= PHOTOS_ROUTE_DETAIL) {
-        crazypod_photos_feature_prefetch_preview(state);
-        return;
-    }
     if(state->route == MUSIC_ROUTE_MENU ||
        state->route == SETTINGS_ROUTE_MENU) {
         /* No preview pane exists in these native full-width lists. */

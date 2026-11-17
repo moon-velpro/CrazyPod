@@ -982,11 +982,6 @@
         "apps/crazypod/ui/features/now_playing/crazypod_now_playing_overlay.c:319"
       ]
     },
-    "Center inserts · Left/Right moves cursor.": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_menu_preview.c:202"
-      ]
-    },
     "Center later · Left earlier": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_utility_preview.c:270"
@@ -1644,11 +1639,6 @@
     "Event Details": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:309"
-      ]
-    },
-    "Event title": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_menu_preview.c:201"
       ]
     },
     "Events on the current date": {

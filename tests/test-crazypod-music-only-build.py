@@ -85,6 +85,22 @@ def verify() -> None:
                    "CRAZYPOD_APP_LOCK"):
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
+    composition = source("apps/crazypod/ui/app/crazypod_composition.c")
+    # Discontinued feature hosts must not register callbacks at startup.
+    assert "crazypod_books_feature_configure_runtime(" not in composition
+    assert "crazypod_photos_runtime_configure(" not in composition
+    assert "crazypod_music_library_configure(&music);" in composition
+    assert "crazypod_wallpaper_crop_runtime_configure(&crop);" in composition
+    assert "crazypod_now_playing_overlay_configure(&overlay);" in composition
+    for retired_preview in ("crazypod_books_feature_render_preview(",
+                            "crazypod_notes_feature_render_preview(",
+                            "crazypod_photos_feature_render_preview(",
+                            "crazypod_organizer_feature_render_preview(",
+                            "crazypod_customize_feature_render_preview(",
+                            "crazypod_extras_preview_render("):
+        assert retired_preview not in preview, retired_preview
+    assert "crazypod_music_feature_render_item_preview(" in preview
+    assert "crazypod_settings_feature_render_preview(" in preview
 
     # Legacy routes stay addressable as old persisted enum values, but
     # can never dispatch into deleted-app activate/confirm paths.
