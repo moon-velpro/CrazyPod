@@ -1,4 +1,5 @@
 #include "config.h"
+#include "../../crazypod_l10n.h"
 
 #ifdef IPOD_6G
 
@@ -90,8 +91,12 @@ const char *crazypod_route_query_title(
     const struct crazypod_feature *feature =
         crazypod_route_registry_feature(state->route);
 
+    /* Preserve the existing localized shell label while its catalog
+     * is still shared with older branches. The music-only route gate
+     * prevents this retired shell route from being entered. */
     if(feature == NULL)
-        return "";
+        return crazypod_route_registry_is_shell(state->route)
+            ? CP_TR("MORE FEATURES") : "";
     switch(feature->id) {
     case CRAZYPOD_FEATURE_MUSIC:
         return crazypod_music_feature_title(state);
