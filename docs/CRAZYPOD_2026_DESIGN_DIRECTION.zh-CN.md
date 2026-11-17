@@ -151,3 +151,10 @@ CrazyPod 是一台**专注本地音乐的现代 iPod**：像经典 iPod 一样�
 - 复用原有异步全曲库随机播放实现，避免在 LVGL 回调中同步扫描文件；空曲库时反馈「No track available」。
 - 保留旧 Music 路由索引和持久化应用 ID；Shuffle 是独立动作而非伪造第九条路由。
 - 仍须在 ARM 构建、320×240 模拟器和 iPod Classic 6G 真机验证（包括无媒体、首次扫描、持续播放和 Menu 返回）。
+
+## 12. 2026-11-17 · 正式包移除非音乐应用资源
+
+- `build-hw.sh` 的默认 `CRAZYPOD_PACKAGE_EDITION=music` 只打包音乐、播客、壁纸目录和系统必需资源；不再向正式 ZIP 投递 Mini Apps/GB-GBC 游戏、测试 CPK、第三方播放主题、Books、Videos、Contacts 或 Calendars 空目录。
+- `CRAZYPOD_PACKAGE_EDITION=lab ./build-hw.sh` 可以生成供兼容性测试使用的旧资源包；两者维持独立的 **打包策略**，不改变持久化应用 ID、Rockbox 音频/USB/引导器或用户文件。
+- 升级安装是**增量复制而不是删除同步**：旧文件和用户数据不会被自动清除。此步是真正的安装资源裁剪，但**尚未**将遗留应用源码从固件 ELF 中剔除；必须另行进行依赖解耦、构建裁剪和 ARM 链接验证后，才能声称完成二进制精简。
+- 构建 CI 新增 ZIP 内容检查，确保被淘汰的应用资源不意外重返正式包。
