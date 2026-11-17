@@ -15,27 +15,28 @@
 #include "../../../crazypod_lyrics.h"
 #include "../../../crazypod_playlist.h"
 #include "../../presentation/crazypod_glass_sampler.h"
+#include "../../presentation/crazypod_liquid_music.h"
 #include "../../presentation/crazypod_marquee.h"
 #include "../../presentation/crazypod_ui_widgets.h"
 #include "crazypod_now_presentation.h"
 #include "crazypod_now_screen.h"
 
-#define COLOR_CYAN 0x55D6E7
+#define COLOR_CYAN 0xB2D8F1
 #define COLOR_FAVORITE 0xFF375F
 #define COLOR_WHITE 0xFFFFFF
-#define CRAZYPOD_NOW_COVER_X 24
-#define CRAZYPOD_NOW_COVER_Y 55
-#define CRAZYPOD_NOW_LYRICS_COVER_SIZE 108
+#define CRAZYPOD_NOW_COVER_X CRAZYPOD_LM_ARTWORK_X
+#define CRAZYPOD_NOW_COVER_Y CRAZYPOD_LM_ARTWORK_Y
+#define CRAZYPOD_NOW_LYRICS_COVER_SIZE CRAZYPOD_LM_ARTWORK_SIZE
 #define CRAZYPOD_NOW_COVER_CAPTION_HEIGHT \
     (CRAZYPOD_NOW_LYRICS_COVER_SIZE / 3)
 #define CRAZYPOD_NOW_COVER_CAPTION_Y \
     (CRAZYPOD_NOW_COVER_Y + CRAZYPOD_NOW_LYRICS_COVER_SIZE - \
      CRAZYPOD_NOW_COVER_CAPTION_HEIGHT)
 #define CRAZYPOD_NOW_SHADE_COLOR 0x05070A
-#define CRAZYPOD_NOW_SHADE_OPA 96
-#define CRAZYPOD_NOW_LYRICS_X 144
+#define CRAZYPOD_NOW_SHADE_OPA CRAZYPOD_LM_SHADE_OPA
+#define CRAZYPOD_NOW_LYRICS_X 161
 #define CRAZYPOD_NOW_LYRICS_Y 61
-#define CRAZYPOD_NOW_LYRICS_WIDTH 158
+#define CRAZYPOD_NOW_LYRICS_WIDTH 143
 #define CRAZYPOD_NOW_LYRICS_HEIGHT 96
 #define CRAZYPOD_NOW_LYRICS_CONTEXT_HEIGHT 16
 #define CRAZYPOD_NOW_LYRICS_CURRENT_LINE_SPACE 4
@@ -275,6 +276,8 @@ void crazypod_now_screen_render(
     uint32_t content_color = COLOR_WHITE;
     lv_obj_t *backdrop;
     lv_obj_t *shade;
+    lv_obj_t *material;
+    lv_obj_t *artwork_frame;
     lv_obj_t *title;
     lv_obj_t *artist;
     enum crazypod_ui_icon mode_icon;
@@ -326,7 +329,32 @@ void crazypod_now_screen_render(
     shade = make_box(
         context->parent, 0, 0, 320, 240, 0,
         CRAZYPOD_NOW_SHADE_COLOR, CRAZYPOD_NOW_SHADE_OPA);
-    (void)shade;
+    lv_obj_remove_flag(shade, LV_OBJ_FLAG_CLICKABLE);
+
+    /* The material belongs to navigation/metadata, not to the cover.
+     * Opa and border are static: no framebuffer blur per animation frame. */
+    material = make_box(
+        context->parent, 154, 52, 154, 117, 14,
+        CRAZYPOD_LM_GLASS, CRAZYPOD_LM_GLASS_FILL_OPA);
+    lv_obj_set_style_border_width(material, 1, 0);
+    lv_obj_set_style_border_color(
+        material, lv_color_hex(COLOR_WHITE), 0);
+    lv_obj_set_style_border_opa(
+        material, CRAZYPOD_LM_GLASS_BORDER_OPA, 0);
+    lv_obj_remove_flag(material, LV_OBJ_FLAG_CLICKABLE);
+
+    /* The artwork is content and stays visually above the decoration. */
+    artwork_frame = make_box(
+        context->parent,
+        CRAZYPOD_NOW_COVER_X - 2, CRAZYPOD_NOW_COVER_Y - 2,
+        CRAZYPOD_NOW_LYRICS_COVER_SIZE + 4,
+        CRAZYPOD_NOW_LYRICS_COVER_SIZE + 4,
+        8, CRAZYPOD_LM_GLASS, 54);
+    lv_obj_set_style_border_width(artwork_frame, 1, 0);
+    lv_obj_set_style_border_color(
+        artwork_frame, lv_color_hex(COLOR_WHITE), 0);
+    lv_obj_set_style_border_opa(artwork_frame, 80, 0);
+    lv_obj_remove_flag(artwork_frame, LV_OBJ_FLAG_CLICKABLE);
 
     {
         const char *previous = "";
@@ -344,8 +372,6 @@ void crazypod_now_screen_render(
             CRAZYPOD_NOW_COVER_X, CRAZYPOD_NOW_COVER_Y,
             CRAZYPOD_NOW_LYRICS_COVER_SIZE,
             lyrics_artwork, false);
-        make_box(context->parent, 134, 55, 1, 106, 0,
-                 content_color, 38);
         if(lyrics_available) {
             if(cover_caption != NULL) {
                 caption_material = lv_image_create(context->parent);
@@ -378,24 +404,24 @@ void crazypod_now_screen_render(
                 track != NULL ? track->title : CP_TR("No Track"),
                 context->lyrics_current_font,
                 COLOR_WHITE, LV_OPA_COVER);
-            lv_obj_set_size(title, 96, 20);
+            lv_obj_set_size(title, 112, 20);
             lv_obj_set_style_text_align(
                 title, LV_TEXT_ALIGN_CENTER, 0);
             crazypod_marquee_configure(title, true);
             lv_obj_set_pos(
-                title, CRAZYPOD_NOW_COVER_X + 6,
+                title, CRAZYPOD_NOW_COVER_X + 8,
                 CRAZYPOD_NOW_COVER_CAPTION_Y + 3);
             artist = make_label(
                 context->parent,
                 track != NULL ? track->artist : CP_TR("Local Music"),
                 context->lyrics_context_font,
                 COLOR_WHITE, 180);
-            lv_obj_set_size(artist, 96, 16);
+            lv_obj_set_size(artist, 112, 16);
             lv_obj_set_style_text_align(
                 artist, LV_TEXT_ALIGN_CENTER, 0);
             crazypod_marquee_configure(artist, true);
             lv_obj_set_pos(
-                artist, CRAZYPOD_NOW_COVER_X + 6,
+                artist, CRAZYPOD_NOW_COVER_X + 8,
                 CRAZYPOD_NOW_COVER_CAPTION_Y + 20);
 
             view->lyrics_viewport = make_box(
@@ -435,37 +461,40 @@ void crazypod_now_screen_render(
                 track != NULL ? track->title : CP_TR("No Track"),
                 context->metadata_font,
                 content_color, LV_OPA_COVER);
-            lv_obj_set_size(title, 158, 23);
+            lv_obj_set_size(
+                title, CRAZYPOD_LM_INFO_WIDTH - 12, 25);
             lv_obj_set_style_text_align(
-                title, LV_TEXT_ALIGN_CENTER, 0);
+                title, LV_TEXT_ALIGN_LEFT, 0);
             crazypod_marquee_configure(title, true);
-            lv_obj_set_pos(title, 144, 71);
+            lv_obj_set_pos(title, CRAZYPOD_LM_INFO_X + 1, 70);
 
             artist = make_label(
                 context->parent,
                 track != NULL ? track->artist : CP_TR("Local Music"),
                 context->metadata_font,
                 content_color, 220);
-            lv_obj_set_size(artist, 158, 23);
+            lv_obj_set_size(
+                artist, CRAZYPOD_LM_INFO_WIDTH - 12, 23);
             lv_obj_set_style_text_align(
-                artist, LV_TEXT_ALIGN_CENTER, 0);
+                artist, LV_TEXT_ALIGN_LEFT, 0);
             crazypod_marquee_configure(artist, true);
-            lv_obj_set_pos(artist, 144, 95);
+            lv_obj_set_pos(artist, CRAZYPOD_LM_INFO_X + 1, 101);
 
             album = make_label(
                 context->parent,
                 track != NULL && track->album[0] != '\0'
                     ? track->album : "",
                 context->metadata_font,
-                content_color, 190);
-            lv_obj_set_size(album, 158, 23);
+                content_color, 146);
+            lv_obj_set_size(
+                album, CRAZYPOD_LM_INFO_WIDTH - 12, 23);
             lv_obj_set_style_text_align(
-                album, LV_TEXT_ALIGN_CENTER, 0);
+                album, LV_TEXT_ALIGN_LEFT, 0);
             crazypod_marquee_configure(album, true);
-            lv_obj_set_pos(album, 144, 119);
+            lv_obj_set_pos(album, CRAZYPOD_LM_INFO_X + 1, 126);
 
             crazypod_ui_widget_icon(
-                context->parent, 190, 143,
+                context->parent, 181, 146,
                 CRAZYPOD_UI_ICON_HEART,
                 favorite ? COLOR_FAVORITE : content_color,
                 favorite ? LV_OPA_COVER : 120);
@@ -478,7 +507,7 @@ void crazypod_now_screen_render(
             else
                 mode_icon = CRAZYPOD_UI_ICON_PLAY;
             crazypod_ui_widget_icon(
-                context->parent, 215, 143, mode_icon,
+                context->parent, 209, 146, mode_icon,
                 crazypod_queue_repeat() != REPEAT_OFF ||
                 crazypod_queue_shuffle() ? COLOR_CYAN : content_color,
                 220);
@@ -487,9 +516,22 @@ void crazypod_now_screen_render(
 
     view->wave_surface = lv_obj_create(context->parent);
     crazypod_ui_widget_make_plain(view->wave_surface);
-    lv_obj_set_pos(view->wave_surface, 16, 181);
-    lv_obj_set_size(view->wave_surface, 288, 34);
-    lv_obj_set_style_bg_opa(view->wave_surface, LV_OPA_TRANSP, 0);
+    lv_obj_set_pos(
+        view->wave_surface, CRAZYPOD_LM_WAVE_X, CRAZYPOD_LM_WAVE_Y);
+    lv_obj_set_size(
+        view->wave_surface, CRAZYPOD_LM_WAVE_WIDTH,
+        CRAZYPOD_LM_WAVE_HEIGHT);
+    lv_obj_set_style_radius(
+        view->wave_surface, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(
+        view->wave_surface, lv_color_hex(CRAZYPOD_LM_GLASS), 0);
+    lv_obj_set_style_bg_opa(
+        view->wave_surface, CRAZYPOD_LM_GLASS_FILL_OPA, 0);
+    lv_obj_set_style_border_width(view->wave_surface, 1, 0);
+    lv_obj_set_style_border_color(
+        view->wave_surface, lv_color_hex(COLOR_WHITE), 0);
+    lv_obj_set_style_border_opa(
+        view->wave_surface, CRAZYPOD_LM_GLASS_BORDER_OPA, 0);
     lv_obj_remove_flag(view->wave_surface, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(view->wave_surface, context->draw_wave,
                         LV_EVENT_DRAW_MAIN, NULL);
@@ -500,10 +542,10 @@ void crazypod_now_screen_render(
     view->progress_marker = make_box(
         view->wave_surface, 0, 14, 7, 7,
         LV_RADIUS_CIRCLE, COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_set_style_shadow_width(view->progress_marker, 6, 0);
+    lv_obj_set_style_shadow_width(view->progress_marker, 3, 0);
     lv_obj_set_style_shadow_color(
         view->progress_marker, lv_color_hex(context->primary_color), 0);
-    lv_obj_set_style_shadow_opa(view->progress_marker, 190, 0);
+    lv_obj_set_style_shadow_opa(view->progress_marker, 100, 0);
     lv_obj_remove_flag(view->progress_marker, LV_OBJ_FLAG_CLICKABLE);
     view->elapsed = make_label(context->parent, "0:00",
                              &lv_font_montserrat_8,
