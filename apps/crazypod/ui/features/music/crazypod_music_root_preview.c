@@ -106,7 +106,7 @@ static void render_liquid_music_root_preview(
         lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
     }
     else {
-        const char *glyph = selected == 7 ? LV_SYMBOL_SEARCH :
+        const char *glyph = selected == 7 ? LV_SYMBOL_EYE_OPEN :
             selected == 4 ? LV_SYMBOL_DIRECTORY :
             selected == 1 || selected == 5 ? LV_SYMBOL_IMAGE :
             selected == 2 || selected == 6 ? LV_SYMBOL_LIST :
