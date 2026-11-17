@@ -12,6 +12,10 @@ ASSET_SOURCE = UI / "presentation/crazypod_menu_icon_assets.c"
 HOME_SOURCE = UI / "shell/crazypod_desktop.c"
 
 
+def source_gitignore() -> str:
+    return (ROOT / ".gitignore").read_text(encoding="utf-8")
+
+
 def enum_names() -> list[str]:
     text = HEADER.read_text(encoding="utf-8")
     body = re.search(
@@ -48,34 +52,40 @@ def test_original_system_glyphs() -> None:
     assert expected <= explicit, f"Missing icon semantic mappings: {expected-explicit}"
     assert "return G_MENU;" in asset
 
-    # Home uses the uploaded Music, Podcasts and Settings PNG designs,
-    # with Voice Memos retained as a separate, correctly named asset.
-    # Now Playing keeps its own player symbol, not a recording icon.
+    # Home supports local images when supplied, but public builds have
+    # working original fallback tiles and never embed uploaded PNG bytes.
     assert "crazypod_iphone_app_icons.h" in home
     assert "crazypod_iphone_app_icon(" in home
     assert "CRAZYPOD_IPHONE_ICON_MUSIC" in home
     assert "CRAZYPOD_IPHONE_ICON_PODCASTS" in home
     assert "CRAZYPOD_IPHONE_ICON_SETTINGS" in home
     assert "CRAZYPOD_IPHONE_ICON_VOICE_MEMOS" not in home
-    assert "if(i == CRAZYPOD_HOME_NOW_PLAYING)" in home
     assert "CRAZYPOD_MENU_ICON_NOW_PLAYING" in home
-    assert "Voice Memos is a recording app, not Now Playing." in home
+    assert "const lv_image_dsc_t *private_image" in home
+    assert "if(private_image != NULL)" in home
+    assert "tile_colors[]" in home
     assert "HOME_APP_TILE_SIZE CRAZYPOD_IPHONE_APP_ICON_SIZE" in home
-    assert "home_entry_symbol(" not in home
-    assert "home_entry_gradient(" not in home
-    assert "home_entry_glyph_color(" not in home
     assert "LV_SYMBOL_VOLUME_MID" not in home
+
     images = (UI / "presentation/crazypod_iphone_app_icons.c").read_text(
         encoding="utf-8"
     )
-    assert "LV_COLOR_FORMAT_RGB565A8" in images
-    assert "#define APP_SIDE CRAZYPOD_IPHONE_APP_ICON_SIZE" in images
-    assert "#define APP_BYTES (APP_PIXELS * 3)" in images
-    assert "app_ready[destination] = true;" in images
-    assert "image->header.stride = APP_SIDE * 2;" in images
-    assert "decode_icon(" in images
+    private = (UI / "presentation/crazypod_private_icon_assets.c").read_text(
+        encoding="utf-8"
+    )
+    assert "crazypod_private_icon_app(icon)" in images
+    assert "app_base64" not in images
+    assert "crazypod_private_icon_menu(icon)" in asset
+    assert "#ifdef CRAZYPOD_PRIVATE_ICONS" in private
+    assert '#include "crazypod_private_icon_assets.inc"' in private
+    assert "crazypod_local_menu_icons[icon]" in private
+    assert "crazypod_local_app_icons[icon]" in private
     manifest = (ROOT / "apps/SOURCES").read_text()
     assert "crazypod/ui/presentation/crazypod_iphone_app_icons.c" in manifest
+    assert "crazypod/ui/presentation/crazypod_private_icon_assets.c" in manifest
+    assert "crazypod_private_icon_assets.inc" in source_gitignore()
+    assert "CRAZYPOD_PRIVATE_ICONS_DIR" in (ROOT / "build-hw.sh").read_text()
+    assert "CRAZYPOD_PRIVATE_ICONS_DIR" in (ROOT / "build-sim.sh").read_text()
 
 
 def test_semantic_route_coverage() -> None:
