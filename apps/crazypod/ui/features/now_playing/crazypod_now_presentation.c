@@ -13,6 +13,7 @@
 #include "src/misc/cache/instance/lv_image_cache.h"
 
 #include "../../../crazypod_image.h"
+#include "../../../crazypod_artwork_palette.h"
 #include "../../presentation/crazypod_glass_sampler.h"
 #include "../../presentation/crazypod_liquid_music.h"
 #include "crazypod_now_presentation.h"
@@ -43,6 +44,7 @@ static fb_data cover_caption_pixels[
     CACHEALIGN_AT_LEAST_ATTR(16);
 static lv_image_dsc_t cover_caption_descriptors[PRESENTATION_BANKS];
 static uint32_t text_colors[PRESENTATION_BANKS];
+static uint32_t shade_colors[PRESENTATION_BANKS];
 static bool valid[PRESENTATION_BANKS];
 static int active_bank = -1;
 
@@ -263,12 +265,30 @@ static bool prepare_backdrop(const lv_image_dsc_t *artwork, int bank)
     return true;
 }
 
-static unsigned shaded_luminance(
-    unsigned red, unsigned green, unsigned blue)
+/* A real cover, rather than its file name, determines each background
+ * color. This runs only when a new cover/generation reaches the cache. */
+static uint32_t album_shade(const lv_image_dsc_t *artwork)
 {
-    red = (red * (255 - SHADE_OPA) + 5 * SHADE_OPA + 127) / 255;
-    green = (green * (255 - SHADE_OPA) + 5 * SHADE_OPA + 127) / 255;
-    blue = (blue * (255 - SHADE_OPA) + 8 * SHADE_OPA + 127) / 255;
+    struct crazypod_artwork_palette palette;
+
+    if(crazypod_artwork_palette_extract(artwork, &palette))
+        return crazypod_lm_album_shade(palette.primary);
+    return 0x050708u;
+}
+
+static unsigned shaded_luminance(
+    unsigned red, unsigned green, unsigned blue, uint32_t shade)
+{
+    unsigned tint_r = (shade >> 16) & 255u;
+    unsigned tint_g = (shade >> 8) & 255u;
+    unsigned tint_b = shade & 255u;
+
+    red = (red * (255 - SHADE_OPA) +
+           tint_r * SHADE_OPA + 127) / 255;
+    green = (green * (255 - SHADE_OPA) +
+             tint_g * SHADE_OPA + 127) / 255;
+    blue = (blue * (255 - SHADE_OPA) +
+            tint_b * SHADE_OPA + 127) / 255;
     return (54 * red + 183 * green + 19 * blue) >> 8;
 }
 
@@ -286,7 +306,7 @@ static uint32_t contrast_color(int bank)
             luminance += shaded_luminance(
                 RGB_UNPACK_RED(pixel),
                 RGB_UNPACK_GREEN(pixel),
-                RGB_UNPACK_BLUE(pixel));
+                RGB_UNPACK_BLUE(pixel), shade_colors[bank]);
             ++samples;
         }
     }
@@ -318,6 +338,7 @@ bool crazypod_now_presentation_prepare(
        !prepare_cover_caption(bank) ||
        !prepare_backdrop(artwork, bank))
         return false;
+    shade_colors[bank] = album_shade(artwork);
     text_colors[bank] = contrast_color(bank);
     snprintf(track_paths[bank], sizeof(track_paths[bank]),
              "%s", track_path);
@@ -332,7 +353,8 @@ bool crazypod_now_presentation_get(
     const lv_image_dsc_t **cover,
     const lv_image_dsc_t **cover_caption,
     const lv_image_dsc_t **backdrop,
-    uint32_t *text_color)
+    uint32_t *text_color,
+    uint32_t *shade_color)
 {
     if(!crazypod_now_presentation_matches(track_path, generation))
         return false;
@@ -344,6 +366,8 @@ bool crazypod_now_presentation_get(
         *backdrop = &backdrop_descriptors[active_bank];
     if(text_color != NULL)
         *text_color = text_colors[active_bank];
+    if(shade_color != NULL)
+        *shade_color = shade_colors[active_bank];
     return true;
 }
 
