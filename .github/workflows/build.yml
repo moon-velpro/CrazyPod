@@ -24,6 +24,9 @@ jobs:
       - name: Run S5L8702 I2C timeout host test
         run: tests/run-s5l8702-i2c-host-test.sh
 
+      - name: Check iPod 6G SSD power-rail safety policy
+        run: python3 tests/test-ipod6g-ssd-power-policy.py
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
