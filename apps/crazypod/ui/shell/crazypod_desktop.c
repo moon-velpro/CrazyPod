@@ -112,16 +112,12 @@ static void queue_touched_home_selection(void)
 #endif
 }
 
-static void update_selection_chrome(void)
+static void update_selection_row(int index)
 {
-    int index;
+    bool selected = index == selected_app;
 
-    for(index = 0; index < CRAZYPOD_HOME_DESTINATION_COUNT; ++index) {
-        bool selected = index == selected_app;
-
-        if(home_rows[index] == NULL || home_labels[index] == NULL)
-            continue;
-        CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
+    if(home_rows[index] == NULL || home_labels[index] == NULL)
+        return;
         /* A cool, quiet white material with a dark-ink hierarchy.
          * No continuous blur/refraction work on the ARM5 playback path. */
         lv_obj_set_style_bg_color(
@@ -148,9 +144,17 @@ static void update_selection_chrome(void)
         if(home_chevrons[index] != NULL)
             lv_obj_set_style_opa(
                 home_chevrons[index], selected ? 190 : 110, 0);
-    }
 }
 
+static void update_selection_chrome(void)
+{
+    int index;
+
+    for(index = 0; index < CRAZYPOD_HOME_DESTINATION_COUNT; ++index) {
+        CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
+        update_selection_row(index);
+    }
+}
 static void layout(void)
 {
     update_selection_chrome();
@@ -176,8 +180,14 @@ static bool set_selected_target(int selected)
 
     if(selected == selected_app)
         return false;
-    selected_app = selected;
-    update_selection_chrome();
+    {
+        int previous = selected_app;
+        selected_app = selected;
+        /* Only two rows change when a detent lands. Avoid relaying out
+         * and invalidating all four translated Home labels on each tick. */
+        update_selection_row(previous);
+        update_selection_row(selected);
+    }
     queue_touched_home_selection();
     return true;
 }
@@ -349,9 +359,11 @@ void crazypod_desktop_set_selected(int selected, bool animated)
     changed = selected != selected_app;
     wheel_tracking = false;
     wheel_detent_accumulator = 0;
-    selected_app = selected;
     if(changed) {
-        update_selection_chrome();
+        int previous = selected_app;
+        selected_app = selected;
+        update_selection_row(previous);
+        update_selection_row(selected);
         queue_touched_home_selection();
     }
 }
