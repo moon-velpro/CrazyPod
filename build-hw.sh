@@ -69,6 +69,20 @@ verify_removed_runtime_absent() {
     done
 }
 
+# Fail closed if a future source-list change links removed MPEG/video code
+# into the music-only iPod. These symbol families belong only to the retired
+# player and must be absent from rockbox.elf, not merely unused in the UI.
+verify_retired_video_absent() {
+    matches=$("${CROSS_COMPILE}nm" -a rockbox.elf 2>/dev/null |
+        awk '{ print $3 }' |
+        grep -E 'crazypod_video_engine_|crazypod_video_catalog_|mpeg2_' || true)
+    if [ -n "$matches" ]; then
+        echo "Error: retired video decoder symbols in music firmware:" >&2
+        echo "$matches" >&2
+        exit 1
+    fi
+}
+
 INCREMENTAL=0
 case "${CRAZYPOD_INCREMENTAL:-}" in
     1|yes|true|YES|TRUE) INCREMENTAL=1 ;;
@@ -189,6 +203,7 @@ if [ ! -f rockbox.ipod ]; then
 fi
 verify_stack_alignment
 verify_removed_runtime_absent
+verify_retired_video_absent
 # MiniApps/CPK packages are retired from the music-only distribution.
 # The native audio firmware is still built using the existing SDK build.
 PACKAGE_DIR="$(mktemp -d)"
