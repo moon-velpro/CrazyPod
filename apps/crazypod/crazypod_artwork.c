@@ -25,7 +25,9 @@
 #include "crazypod_artwork.h"
 #include "crazypod_image.h"
 
-#define CRAZYPOD_ARTWORK_MAX_SIZE CRAZYPOD_NOW_ARTWORK_MAX_SIZE
+/* Do not reduce the JPEG/BMP decode work area with the music-only 128px
+ * image banks. Large embedded JPEGs still need the original scratch budget. */
+#define CRAZYPOD_ARTWORK_MAX_SIZE 320
 #define CRAZYPOD_ARTWORK_BANKS 2
 #define CRAZYPOD_ARTWORK_PIXELS \
     (CRAZYPOD_ARTWORK_MAX_SIZE * CRAZYPOD_ARTWORK_MAX_SIZE)

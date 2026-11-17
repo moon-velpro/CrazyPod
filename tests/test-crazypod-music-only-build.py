@@ -245,6 +245,21 @@ def verify() -> None:
     artwork = source("apps/crazypod/crazypod_artwork.c")
     assert "static fb_data coverflow_pixels[CRAZYPOD_COVERFLOW_ARTWORK_SLOTS]" in artwork
     assert "[CRAZYPOD_ARTWORK_BANKS][CRAZYPOD_COVERFLOW_ARTWORK_SIZE *" in artwork
+    # Native Now Playing's requested size is exactly the canonical 128px.
+    # Shrink only the published double-buffer banks, never JPEG scratch.
+    now_theme = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_playing_theme.c"
+    )
+    now_feature = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_playing_feature.c"
+    )
+    assert "CRAZYPOD_ARTWORK_CACHE_SIZE);" in now_theme
+    assert "static int configured_source_size = CRAZYPOD_ARTWORK_CACHE_SIZE;" in now_feature
+    assert "#define CRAZYPOD_NOW_ARTWORK_MAX_SIZE CRAZYPOD_ARTWORK_CACHE_SIZE" in art_header
+    assert "#ifdef SIMULATOR\n#define CRAZYPOD_NOW_ARTWORK_MAX_SIZE 320" in art_header
+    assert "#define CRAZYPOD_ARTWORK_MAX_SIZE 320" in artwork
+    assert "static unsigned char decode_buffer[CRAZYPOD_DECODE_BUFFER_SIZE]" in artwork
+    assert "static fb_data now_pixels[3][CRAZYPOD_ARTWORK_BANKS]" in artwork
     assert "crazypod/wallpaper/crazypod_wallpaper_store.c" in manifest
     for retired_source in (
         "crazypod/crazypod_videos.c",

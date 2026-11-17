@@ -22,7 +22,13 @@
 #define CRAZYPOD_ARTWORK_SLOTS \
     (CRAZYPOD_CAPSULE_ARTWORK_SLOT + 1)
 #define CRAZYPOD_ARTWORK_CACHE_SIZE 128
+/* The native music edition always displays the 128px disk-canonical cover.
+ * Legacy simulator themes can still exercise their old 320px requests. */
+#ifdef SIMULATOR
 #define CRAZYPOD_NOW_ARTWORK_MAX_SIZE 320
+#else
+#define CRAZYPOD_NOW_ARTWORK_MAX_SIZE CRAZYPOD_ARTWORK_CACHE_SIZE
+#endif
 #define CRAZYPOD_COVERFLOW_ARTWORK_SIZE 128
 #define CRAZYPOD_PREVIEW_ARTWORK_SIZE 120
 #define CRAZYPOD_CAPSULE_ARTWORK_SIZE 42
