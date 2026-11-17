@@ -21,6 +21,7 @@
 #include "../presentation/crazypod_liquid_music.h"
 #include "../presentation/crazypod_marquee.h"
 #include "../presentation/crazypod_ui_widgets.h"
+#include "../presentation/crazypod_private_icon_assets.h"
 #include "crazypod_now_capsule.h"
 
 #define COLOR_WHITE 0xFFFFFF
@@ -369,10 +370,30 @@ void crazypod_now_capsule_create(
     lv_obj_center(capsule.artwork_image);
     lv_obj_remove_flag(capsule.artwork_image, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(capsule.artwork_image, LV_OBJ_FLAG_HIDDEN);
-    capsule.artwork_symbol = crazypod_ui_widget_label(
-        capsule.artwork, LV_SYMBOL_AUDIO,
-        &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_center(capsule.artwork_symbol);
+    {
+        const lv_image_dsc_t *private_symbol =
+            crazypod_private_icon_menu(CRAZYPOD_MENU_ICON_MUSIC);
+
+        if(private_symbol != NULL) {
+            capsule.artwork_symbol = lv_image_create(capsule.artwork);
+            lv_image_set_src(capsule.artwork_symbol, private_symbol);
+            lv_image_set_scale(
+                capsule.artwork_symbol,
+                18 * LV_SCALE_NONE / private_symbol->header.w);
+            lv_obj_set_style_image_recolor(
+                capsule.artwork_symbol, lv_color_hex(COLOR_WHITE), 0);
+            lv_obj_set_style_image_recolor_opa(
+                capsule.artwork_symbol, LV_OPA_COVER, 0);
+            lv_obj_remove_flag(
+                capsule.artwork_symbol, LV_OBJ_FLAG_CLICKABLE);
+        }
+        else {
+            capsule.artwork_symbol = crazypod_ui_widget_label(
+                capsule.artwork, LV_SYMBOL_AUDIO,
+                &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
+        }
+        lv_obj_center(capsule.artwork_symbol);
+    }
 
     capsule.track = crazypod_ui_widget_label(
         capsule.root, CP_TR("No Track"), metadata_font,
