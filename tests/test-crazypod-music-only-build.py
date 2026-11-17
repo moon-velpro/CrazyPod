@@ -19,6 +19,8 @@ def verify() -> None:
     boot = source("apps/crazypod/crazypod_main.c")
     launcher = source("apps/crazypod/ui/app/crazypod_app_launcher.c")
     desktop = source("apps/crazypod/ui/shell/crazypod_desktop.c")
+    present = source("apps/crazypod/crazypod_frameclock.c")
+    present_header = source("apps/crazypod/crazypod_frameclock.h")
     home_input = source("apps/crazypod/ui/shell/crazypod_home_input.c")
     runtime = source("apps/crazypod/ui/app/crazypod_runtime_services.c")
     feature_input = source("apps/crazypod/ui/app/crazypod_feature_input.c")
@@ -87,6 +89,12 @@ def verify() -> None:
     assert "#define CRAZYPOD_TARGET_FPS 50" in source(
         "apps/crazypod/crazypod_frameclock.h"
     )
+    assert desktop.count("crazypod_present_note_home_selection();") == 2
+    assert "home_selection_last_latency_us" in present_header
+    assert "home_selection_over_50ms" in present_header
+    assert "home_selection_start_us = crazypod_monotonic_usec();" in present
+    assert "if(!submitted)" in present and "if(home_selection_pending)" in present
+
 
     # The route ABI is stable, but all retired dispatch paths are inert.
     assert "crazypod_route_registry_product_allowed(" in registry
