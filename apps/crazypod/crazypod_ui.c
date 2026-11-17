@@ -731,6 +731,14 @@ static void platform_queue_present(
 {
     if(crazypod_scene_transition_owns_framebuffer())
         crazypod_present_queue_full();
+    else if(!crazypod_shell_product_active() &&
+            !crazypod_lock_screen_is_locked() &&
+            !modal_prompt_visible() &&
+            crazypod_present_home_selection_waiting_for_flush()) {
+        /* LVGL's final flush has already copied the selected Home row
+         * pixels. Only now may the synchronized full-frame DMA begin. */
+        crazypod_present_home_selection_frame_flushed();
+    }
     else
         crazypod_present_queue_rect(x, y, width, height);
 }
