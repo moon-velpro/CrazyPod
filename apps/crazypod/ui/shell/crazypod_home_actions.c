@@ -46,7 +46,7 @@ struct home_actions_state {
     lv_obj_t *icons[HOME_ACTION_COUNT];
     lv_obj_t *names[HOME_ACTION_COUNT];
     lv_obj_t *detail;
-    lv_obj_t *level_arc;
+    lv_obj_t *level_bar;
     lv_obj_t *level_value;
     enum home_action selected;
     bool adjusting;
@@ -105,7 +105,7 @@ static void clear_objects(void)
     memset(actions.icons, 0, sizeof(actions.icons));
     memset(actions.names, 0, sizeof(actions.names));
     actions.detail = NULL;
-    actions.level_arc = NULL;
+    actions.level_bar = NULL;
     actions.level_value = NULL;
 }
 
@@ -292,14 +292,14 @@ static void refresh_adjustment(void)
     if(value > 100)
         value = 100;
     snprintf(percent, sizeof(percent), "%d%%", value);
-    lv_arc_set_value(actions.level_arc, value);
+    lv_bar_set_value(actions.level_bar, value, LV_ANIM_OFF);
     CP_LV_LABEL_SET_TEXT(actions.level_value, percent);
 }
 
 static void show_adjustment(void)
 {
-    const int width = 198;
-    const int height = 190;
+    const int width = 238;
+    const int height = 154;
     lv_obj_t *title;
     lv_obj_t *icon;
     const lv_image_dsc_t *asset =
@@ -309,55 +309,54 @@ static void show_adjustment(void)
     begin_overlay(width, height);
     title = make_label(
         actions.panel, action_title(actions.selected),
-        &lv_font_montserrat_10, COLOR_MUTED, 210);
-    lv_obj_set_pos(title, 12, 12);
-    lv_obj_set_width(title, width - 24);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-
-    actions.level_arc = lv_arc_create(actions.panel);
-    lv_obj_set_pos(actions.level_arc, (width - 112) / 2, 38);
-    lv_obj_set_size(actions.level_arc, 112, 112);
-    lv_arc_set_range(actions.level_arc, 0, 100);
-    lv_arc_set_bg_angles(actions.level_arc, 0, 360);
-    lv_arc_set_rotation(actions.level_arc, 270);
-    lv_obj_remove_flag(actions.level_arc, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_arc_width(actions.level_arc, 8, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(
-        actions.level_arc, lv_color_hex(COLOR_INK), LV_PART_MAIN);
-    lv_obj_set_style_arc_opa(actions.level_arc, 36, LV_PART_MAIN);
-    lv_obj_set_style_arc_width(actions.level_arc, 8, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_color(
-        actions.level_arc, lv_color_hex(COLOR_ACCENT),
-        LV_PART_INDICATOR);
-    lv_obj_set_style_arc_rounded(
-        actions.level_arc, true, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_opa(
-        actions.level_arc, LV_OPA_TRANSP, LV_PART_KNOB);
+        &lv_font_montserrat_16, COLOR_INK, LV_OPA_COVER);
+    lv_obj_set_pos(title, 14, 12);
+    lv_obj_set_width(title, width - 28);
 
     if(asset != NULL) {
         icon = lv_image_create(actions.panel);
         lv_image_set_src(icon, asset);
+        lv_image_set_scale(
+            icon, 21 * LV_SCALE_NONE / asset->header.w);
         lv_obj_set_style_image_recolor(
-            icon, lv_color_hex(COLOR_ACCENT), 0);
+            icon, lv_color_hex(COLOR_INK), 0);
         lv_obj_set_style_image_recolor_opa(icon, LV_OPA_COVER, 0);
-        lv_obj_set_style_opa(icon, 220, 0);
-        lv_obj_align(icon, LV_ALIGN_CENTER, 0, -14);
+        lv_obj_set_pos(icon, 20, 53);
     }
+    /* A horizontal, readable iOS-style level. Click Wheel remains the
+     * only adjustment input: no touch slider or polling is introduced. */
+    actions.level_bar = lv_bar_create(actions.panel);
+    lv_obj_set_pos(actions.level_bar, 51, 60);
+    lv_obj_set_size(actions.level_bar, width - 77, 12);
+    lv_bar_set_range(actions.level_bar, 0, 100);
+    lv_obj_remove_flag(actions.level_bar, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_radius(actions.level_bar, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(
+        actions.level_bar, lv_color_hex(0xC8D2E0), 0);
+    lv_obj_set_style_bg_opa(
+        actions.level_bar, LV_OPA_COVER, 0);
+    lv_obj_set_style_bg_color(
+        actions.level_bar, lv_color_hex(COLOR_ACCENT),
+        LV_PART_INDICATOR);
+    lv_obj_set_style_bg_opa(
+        actions.level_bar, LV_OPA_COVER, LV_PART_INDICATOR);
+    lv_obj_set_style_radius(
+        actions.level_bar, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
+
     actions.level_value = make_label(
         actions.panel, "", &lv_font_montserrat_24,
         COLOR_INK, LV_OPA_COVER);
-    lv_obj_set_width(actions.level_value, 86);
+    lv_obj_set_pos(actions.level_value, 14, 82);
+    lv_obj_set_width(actions.level_value, width - 28);
     lv_obj_set_style_text_align(
         actions.level_value, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(actions.level_value, LV_ALIGN_CENTER, 0, 13);
     actions.detail = make_label(
         actions.panel, CP_TR("Wheel adjusts"),
-        &lv_font_montserrat_8, COLOR_MUTED, 200);
-    lv_obj_set_pos(actions.detail, 10, 163);
+        &lv_font_montserrat_8, COLOR_MUTED, 210);
+    lv_obj_set_pos(actions.detail, 10, 131);
     lv_obj_set_width(actions.detail, width - 20);
     lv_obj_set_style_text_align(
         actions.detail, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_long_mode(actions.detail, LV_LABEL_LONG_MODE_DOTS);
     refresh_adjustment();
 }
 
