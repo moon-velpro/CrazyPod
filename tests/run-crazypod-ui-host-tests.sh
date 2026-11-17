@@ -67,6 +67,12 @@ cc -std=c99 -Wall -Wextra -Werror \
 "$test_root/crazypod_liquid_music_host_test"
 
 cc -std=c99 -Wall -Wextra -Werror \
+    "$repo_root/tests/crazypod_music_root_menu_host_test.c" \
+    -o "$test_root/crazypod_music_root_menu_host_test"
+
+"$test_root/crazypod_music_root_menu_host_test"
+
+cc -std=c99 -Wall -Wextra -Werror \
     "$repo_root/tests/crazypod_home_model_host_test.c" \
     -o "$test_root/crazypod_home_model_host_test"
 
