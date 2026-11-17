@@ -12,8 +12,6 @@ crazypod/crazypod_photos.c
 crazypod/crazypod_videos_disabled.c
 crazypod/crazypod_screenshot.c
 crazypod/crazypod_screen_recording.c
-#ifdef SIMULATOR
-#endif
 crazypod/photos/crazypod_photo_catalog.c
 crazypod/photos/crazypod_photo_cache.c
 crazypod/photos/crazypod_photo_viewport.c
