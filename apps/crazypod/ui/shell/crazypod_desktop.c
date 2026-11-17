@@ -109,15 +109,10 @@ static void update_selection_row(int index)
 
     /* A detent only changes the old row and new row. Avoid touching the
      * other labels or rebuilding Home graphics on the playback thread. */
-    lv_obj_set_style_bg_color(
-        home_rows[index], lv_color_hex(HOME_GLASS), 0);
     lv_obj_set_style_bg_opa(
         home_rows[index], selected
             ? CRAZYPOD_LM_HOME_SELECTED_OPA :
               CRAZYPOD_LM_HOME_IDLE_OPA, 0);
-    lv_obj_set_style_border_width(home_rows[index], 1, 0);
-    lv_obj_set_style_border_color(
-        home_rows[index], lv_color_hex(COLOR_WHITE), 0);
     lv_obj_set_style_border_opa(
         home_rows[index], selected
             ? CRAZYPOD_LM_HOME_RIM_OPA : 96, 0);
@@ -126,7 +121,6 @@ static void update_selection_row(int index)
         lv_color_hex(selected
             ? CRAZYPOD_LM_HOME_TEXT :
               CRAZYPOD_LM_HOME_MUTED), 0);
-    lv_obj_set_style_opa(home_labels[index], LV_OPA_COVER, 0);
     if(home_badges[index] != NULL)
         lv_obj_set_style_opa(
             home_badges[index], selected ? 255 : 229, 0);
@@ -140,10 +134,19 @@ static void update_selection_chrome(void)
     int index;
 
     for(index = 0; index < CRAZYPOD_HOME_DESTINATION_COUNT; ++index) {
+        /* Immutable row chrome is configured once or on appearance change,
+         * never for each physical wheel detent. */
+        lv_obj_set_style_bg_color(
+            home_rows[index], lv_color_hex(HOME_GLASS), 0);
+        lv_obj_set_style_border_width(home_rows[index], 1, 0);
+        lv_obj_set_style_border_color(
+            home_rows[index], lv_color_hex(COLOR_WHITE), 0);
         CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
+        lv_obj_set_style_opa(home_labels[index], LV_OPA_COVER, 0);
         update_selection_row(index);
     }
 }
+
 static void layout(void)
 {
     update_selection_chrome();
