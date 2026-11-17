@@ -10,6 +10,7 @@
 #include "kernel.h"
 
 #include "../../crazypod_wallpaper.h"
+#include "../../crazypod_product_geometry.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_liquid_music.h"
 #include "../presentation/crazypod_ui_widgets.h"
@@ -22,11 +23,11 @@
 #define COLOR_WHITE 0xFFFFFF
 #define HOME_INK CRAZYPOD_LM_CANVAS
 #define HOME_GLASS CRAZYPOD_LM_GLASS
-#define HOME_ROW_X 13
-#define HOME_ROW_TOP 65
+#define HOME_ROW_X CRAZYPOD_PRODUCT_HOME_ROW_X
+#define HOME_ROW_TOP CRAZYPOD_PRODUCT_HOME_ROW_TOP
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
-#define HOME_ROW_HEIGHT 25
-#define HOME_ROW_GAP 2
+#define HOME_ROW_HEIGHT CRAZYPOD_PRODUCT_HOME_ROW_HEIGHT
+#define HOME_ROW_GAP CRAZYPOD_PRODUCT_HOME_ROW_GAP
 #define HOME_WHEEL_POSITIONS 96
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
 #define HOME_WHEEL_RELEASE_TICKS \
