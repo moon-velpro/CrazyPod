@@ -21,13 +21,13 @@
 #include "crazypod_app_catalog.h"
 #include "crazypod_desktop.h"
 #include "crazypod_desktop_native.h"
+#include "crazypod_home_model.h"
 #include "crazypod_now_capsule.h"
 #include "crazypod_status_bar.h"
 
 #define COLOR_WHITE 0xFFFFFF
 #define HOME_INK 0x101217
 #define HOME_ACCENT 0xE9E2D7
-#define HOME_ENTRY_COUNT 4
 #define HOME_ROW_X 15
 #define HOME_ROW_TOP 36
 #define HOME_ROW_HEIGHT 30
@@ -48,8 +48,8 @@
 static struct crazypod_desktop_host desktop_host;
 static lv_obj_t *screen;
 static lv_obj_t *wallpaper;
-static lv_obj_t *home_rows[HOME_ENTRY_COUNT];
-static lv_obj_t *home_labels[HOME_ENTRY_COUNT];
+static lv_obj_t *home_rows[CRAZYPOD_HOME_DESTINATION_COUNT];
+static lv_obj_t *home_labels[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *preview_title;
 static lv_obj_t *preview_index;
 static int selected_app;
@@ -83,12 +83,24 @@ static void hold_feedback_teardown_ready(lv_event_t *event)
 static const char *home_entry_title(int index)
 {
     switch(index) {
-    case 0: return CP_TR("Now Playing");
-    case 1: return CP_TR("Music");
-    case 2: return CP_TR("Podcasts");
-    case 3: return CP_TR("Settings");
+    case CRAZYPOD_HOME_NOW_PLAYING: return CP_TR("Now Playing");
+    case CRAZYPOD_HOME_MUSIC: return CP_TR("Music");
+    case CRAZYPOD_HOME_PODCASTS: return CP_TR("Podcasts");
+    case CRAZYPOD_HOME_SETTINGS: return CP_TR("Settings");
     default: return "";
     }
+}
+
+/* A four-row LVGL Home has no native moving band. Request a full,
+ * hardware-synchronized present only when selection changes while the
+ * physical wheel is touched. Keep unrelated partial LVGL work deferred until
+ * release, preserving the Home interaction gate and avoiding unsynced DMA. */
+static void queue_touched_home_selection(void)
+{
+#ifdef HAVE_WHEEL_POSITION
+    if(desktop_active && wheel_touch_status())
+        crazypod_present_queue_full();
+#endif
 }
 
 static void update_selection_chrome(void)
@@ -96,7 +108,7 @@ static void update_selection_chrome(void)
     char index_text[12];
     int index;
 
-    for(index = 0; index < HOME_ENTRY_COUNT; ++index) {
+    for(index = 0; index < CRAZYPOD_HOME_DESTINATION_COUNT; ++index) {
         bool selected = index == selected_app;
 
         if(home_rows[index] == NULL || home_labels[index] == NULL)
@@ -117,7 +129,7 @@ static void update_selection_chrome(void)
         CP_LV_LABEL_SET_TEXT(preview_title, home_entry_title(selected_app));
     if(preview_index != NULL) {
         snprintf(index_text, sizeof(index_text),
-                 "%02d / %02d", selected_app + 1, HOME_ENTRY_COUNT);
+                 "%02d / %02d", selected_app + 1, CRAZYPOD_HOME_DESTINATION_COUNT);
         CP_LV_LABEL_SET_TEXT(preview_index, index_text);
     }
 }
@@ -131,7 +143,7 @@ static void layout(void)
 
 static int clamp_selected(int selected)
 {
-    int count = HOME_ENTRY_COUNT;
+    int count = CRAZYPOD_HOME_DESTINATION_COUNT;
 
     if(selected < 0)
         return 0;
@@ -162,6 +174,7 @@ static bool set_selected_target(int selected)
         return false;
     selected_app = selected;
     update_selection_chrome();
+    queue_touched_home_selection();
     start_spring();
     return true;
 }
@@ -171,7 +184,7 @@ static void advance_spring_tick(void)
 {
     int32_t target = selected_position_q16();
     int64_t acceleration;
-    int32_t maximum = (HOME_ENTRY_COUNT - 1) * HOME_POSITION_ONE;
+    int32_t maximum = (CRAZYPOD_HOME_DESTINATION_COUNT - 1) * HOME_POSITION_ONE;
 
     if(!springing)
         return;
@@ -307,7 +320,7 @@ lv_obj_t *crazypod_desktop_create(
     crazypod_status_bar_create(0, screen);
 
     /* Four legible destinations, with no app-carousel icon decoding. */
-    for(i = 0; i < HOME_ENTRY_COUNT; ++i) {
+    for(i = 0; i < CRAZYPOD_HOME_DESTINATION_COUNT; ++i) {
         home_rows[i] = crazypod_ui_widget_box(
             screen, HOME_ROW_X,
             HOME_ROW_TOP + i * (HOME_ROW_HEIGHT + HOME_ROW_GAP),
@@ -378,21 +391,26 @@ void crazypod_desktop_set_selected(int selected, bool animated)
         if(selected != selected_app) {
             selected_app = selected;
             update_selection_chrome();
+            queue_touched_home_selection();
         }
         start_spring();
     }
     else {
+        bool changed = selected != selected_app;
+
         selected_app = selected;
         position_q16 = selected * HOME_POSITION_ONE;
         spring_velocity_q16 = 0;
         springing = false;
         layout();
+        if(changed)
+            queue_touched_home_selection();
     }
 }
 
 void crazypod_desktop_move_selection(int direction)
 {
-    int count = HOME_ENTRY_COUNT;
+    int count = CRAZYPOD_HOME_DESTINATION_COUNT;
     int selected = selected_app + direction;
 
     if(count <= 1 || direction == 0 ||
@@ -441,8 +459,7 @@ bool crazypod_desktop_motion_active(void)
 bool crazypod_desktop_wheel_touch_active(void)
 {
 #ifdef HAVE_WHEEL_POSITION
-    /* This Home is LVGL-owned; native-only present deferral must stay off. */
-    return false;
+    return desktop_active && wheel_touch_status();
 #else
     return false;
 #endif
