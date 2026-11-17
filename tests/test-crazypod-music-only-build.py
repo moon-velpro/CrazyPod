@@ -137,6 +137,21 @@ def verify() -> None:
     # not merely hidden from Home. The only linked compatibility layer is
     # a no-I/O stub whose behavior has a separate compiled C99 host test.
     assert "crazypod/crazypod_videos_disabled.c" in manifest
+    # Books/EPUB must not compile into the real iPod firmware. Keep
+    # simulator-only sources and legacy disk content intact.
+    reader_guard = manifest.split(
+        "/* Retired reader compatibility: compiled only into the legacy simulator,", 1
+    )[1].split("#endif", 1)[0]
+    for reader_source in (
+        "crazypod/crazypod_books.c",
+        "crazypod/crazypod_epub.c",
+        "crazypod/crazypod_book_cover.c",
+        "crazypod/epub/crazypod_epub_html.c",
+        "crazypod/ui/features/books/crazypod_books_feature.c",
+        "crazypod/ui/features/books/crazypod_books_screen.c",
+    ):
+        assert reader_source in reader_guard, reader_source
+    assert "#ifdef SIMULATOR\n/* Retired reader compatibility:" in manifest
     for retired_source in (
         "crazypod/crazypod_videos.c",
         "crazypod/crazypod_video_mpeg_misc.c",

@@ -125,3 +125,9 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - `crazypod_choice_coordinator.c` 只保留设置选项、原生 Now Playing 单一主题及固定主菜单操作。移除废弃 Books 书签/阅读选项、Photos 文件选择与 Customize 外观编辑分支，并禁止旧确认路由经弹窗长按执行删除。
 - 不再让产品公共选项控件直接调用 `crazypod_books_*`、`crazypod_photos_*`、`crazypod_customize_*` 或壁纸改写入口；保存状态、Now Playing、音频和设置选项保留原有回调。
 - 旧接口仍可无操作地返回，不改变持久化菜单编号，也不访问/删除磁盘上的旧用户内容。相关废弃本地化键从全语言目录同步清理。
+
+## 2026-11-18 · 将 Books/EPUB 模块从实体机编译清单排除
+
+- 把 `apps/SOURCES` 中的 18 个 Books/EPUB 旧源文件移入 `#ifdef SIMULATOR` 兼容区，实体机不再编译电子书扫描、EPUB 解析／缓存／提取、阅读交互、书籍封面和预览。
+- 这些源码依然留在 Git，模拟器的旧诊断路径可继续使用；不会修改或删除 iPod 上的任何书籍、笔记、音乐或用户配置文件。
+- 仅在 ARM 链接成功后确认裁剪生效；若仍存在旧模块引用，应先消除该编译链接依赖，不引入假桩替代完整的音乐/USB/显示行为。

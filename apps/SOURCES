@@ -87,15 +87,6 @@ crazypod/crazypod_miniapps.c
 crazypod/crazypod_miniapp_input.c
 crazypod/crazypod_miniapp_font.c
 crazypod/crazypod_notes.c
-crazypod/crazypod_books.c
-crazypod/epub/crazypod_epub_html.c
-crazypod/epub/crazypod_epub_navigation.c
-crazypod/epub/crazypod_epub_parser.c
-crazypod/epub/cache/crazypod_epub_cache.c
-crazypod/epub/cache/crazypod_epub_cover_store.c
-crazypod/epub/extraction/crazypod_epub_extraction.c
-crazypod/crazypod_epub.c
-crazypod/crazypod_book_cover.c
 crazypod/crazypod_organizer.c
 crazypod/crazypod_workouts.c
 crazypod/crazypod_state.c
@@ -138,9 +129,6 @@ crazypod/ui/features/now_playing/crazypod_now_playing_feature.c
 crazypod/ui/features/now_playing/crazypod_now_playing_theme.c
 crazypod/ui/features/now_playing/crazypod_now_playing_render.c
 crazypod/ui/features/now_playing/crazypod_now_playing_overlay.c
-crazypod/ui/features/books/crazypod_books_feature.c
-crazypod/ui/features/books/crazypod_book_session.c
-crazypod/ui/features/books/crazypod_books_workflow.c
 crazypod/ui/features/notes/crazypod_notes_feature.c
 crazypod/ui/features/photos/crazypod_photos_feature.c
 crazypod/ui/features/photos/crazypod_photos_runtime.c
@@ -154,7 +142,6 @@ crazypod/ui/shell/crazypod_notification.c
 crazypod/ui/shell/crazypod_screenshot_feedback.c
 crazypod/ui/features/organizer/crazypod_calendar_controller.c
 crazypod/ui/features/organizer/crazypod_activity_controller.c
-crazypod/ui/features/books/crazypod_books_actions.c
 crazypod/ui/features/notes/crazypod_notes_controller.c
 crazypod/ui/features/notes/crazypod_notes_actions.c
 crazypod/ui/features/organizer/crazypod_organizer_actions.c
@@ -172,8 +159,6 @@ crazypod/ui/features/music/crazypod_music_activation.c
 crazypod/ui/features/music/crazypod_music_input.c
 crazypod/ui/features/notes/crazypod_notes_confirmation.c
 crazypod/ui/features/notes/crazypod_notes_input.c
-crazypod/ui/features/books/crazypod_books_confirmation.c
-crazypod/ui/features/books/crazypod_book_reader_input.c
 crazypod/ui/features/organizer/crazypod_organizer_confirmation.c
 crazypod/ui/features/organizer/crazypod_activity_input.c
 crazypod/ui/features/organizer/crazypod_calendar_input.c
@@ -187,7 +172,6 @@ crazypod/ui/presentation/crazypod_menu_list.c
 crazypod/ui/presentation/crazypod_menu_preview_motion.c
 crazypod/ui/features/now_playing/crazypod_now_presentation.c
 crazypod/ui/features/now_playing/crazypod_now_screen.c
-crazypod/ui/features/books/crazypod_books_screen.c
 crazypod/ui/features/music/crazypod_album_flow_screen.c
 crazypod/ui/features/organizer/crazypod_calendar_screen.c
 crazypod/ui/features/organizer/crazypod_clock_screen.c
@@ -213,11 +197,31 @@ crazypod/ui/presentation/crazypod_empty_state.c
 crazypod/ui/features/photos/crazypod_photos_preview.c
 crazypod/ui/shell/crazypod_extras_preview.c
 crazypod/ui/features/notes/crazypod_notes_preview.c
-crazypod/ui/features/books/crazypod_book_preview_cover.c
-crazypod/ui/features/books/crazypod_books_preview.c
 crazypod/ui/features/organizer/crazypod_utility_preview.c
 crazypod/ui/features/music/crazypod_music_preview_cover.c
 crazypod/ui/features/music/crazypod_music_item_preview.c
+#ifdef SIMULATOR
+/* Retired reader compatibility: compiled only into the legacy simulator,
+ * not the music-only iPod firmware; preserve existing user book data. */
+crazypod/crazypod_books.c
+crazypod/epub/crazypod_epub_html.c
+crazypod/epub/crazypod_epub_navigation.c
+crazypod/epub/crazypod_epub_parser.c
+crazypod/epub/cache/crazypod_epub_cache.c
+crazypod/epub/cache/crazypod_epub_cover_store.c
+crazypod/epub/extraction/crazypod_epub_extraction.c
+crazypod/crazypod_epub.c
+crazypod/crazypod_book_cover.c
+crazypod/ui/features/books/crazypod_books_feature.c
+crazypod/ui/features/books/crazypod_book_session.c
+crazypod/ui/features/books/crazypod_books_workflow.c
+crazypod/ui/features/books/crazypod_books_actions.c
+crazypod/ui/features/books/crazypod_books_confirmation.c
+crazypod/ui/features/books/crazypod_book_reader_input.c
+crazypod/ui/features/books/crazypod_books_screen.c
+crazypod/ui/features/books/crazypod_book_preview_cover.c
+crazypod/ui/features/books/crazypod_books_preview.c
+#endif
 crazypod/crazypod_ui.c
 
 #if INPUT_SRC_CAPS != 0
