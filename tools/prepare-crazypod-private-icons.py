@@ -129,10 +129,10 @@ def generate(source: Path, destination: Path, allow_partial: bool) -> None:
         if not filename.is_file():
             continue
         with Image.open(filename) as image:
-            raw = rgba565a8(image, 21)
+            raw = rgba565a8(image, 35)
         symbol = "private_app_" + slug
         entries.append(
-            emit_image(symbol, raw, 21, "LV_COLOR_FORMAT_RGB565A8", 42)
+            emit_image(symbol, raw, 35, "LV_COLOR_FORMAT_RGB565A8", 70)
         )
         app_table.append(
             f"    [CRAZYPOD_IPHONE_ICON_{enum_name}] = &{symbol},"
