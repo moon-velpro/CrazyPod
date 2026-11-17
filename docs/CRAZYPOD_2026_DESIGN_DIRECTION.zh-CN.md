@@ -1,6 +1,6 @@
 # CrazyPod 2026 · 产品设计方向 v0.1
 
-> 状态：设计基线 / 待原型验证。适用目标：iPod Classic 6G/6.5G/7G，320×240、Click Wheel、64 MiB RAM。  
+> 状态：设计基线 / 待原型验证。适用目标：iPod Classic 6G/6.5G/7G，320×240、Click Wheel、64 MiB RAM。
 > 原则：先定义体验，再决定实现；本文不宣称通过真机测试。
 
 ## 1. 一句话定义
@@ -87,7 +87,7 @@ CrazyPod 是一台**专注本地音乐的现代 iPod**：像经典 iPod 一样�
 
 ## 7. 代码层面必须先保护的事实
 
-当前 `crazypod_apps.h` 的应用 ID 已持久化，`CRAZYPOD_APP_COUNT` 为 17。 
+当前 `crazypod_apps.h` 的应用 ID 已持久化，`CRAZYPOD_APP_COUNT` 为 17。
 `crazypod_apps.c` 的 `default_order`、`menu_enabled_mask`、`crazypod_apps_restore()` 与 `crazypod_apps_is_fixed()` 都会影响可见应用；特别是 Music、Customize、More Features、Settings、GB/GBC 属于强制可见类型。
 
 因此：
