@@ -22,8 +22,8 @@
 #include "crazypod_status_bar.h"
 
 #define COLOR_WHITE 0xFFFFFF
-#define HOME_INK CRAZYPOD_LM_CANVAS
-#define HOME_GLASS CRAZYPOD_LM_GLASS
+#define HOME_INK CRAZYPOD_LM_HOME_TOP
+#define HOME_GLASS CRAZYPOD_LM_HOME_GLASS
 #define HOME_ROW_X CRAZYPOD_PRODUCT_HOME_ROW_X
 #define HOME_ROW_TOP CRAZYPOD_PRODUCT_HOME_ROW_TOP
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
@@ -39,6 +39,8 @@ static lv_obj_t *screen;
 static lv_obj_t *wallpaper;
 static lv_obj_t *wallpaper_dim;
 static lv_obj_t *home_headline;
+static lv_obj_t *home_badges[CRAZYPOD_HOME_DESTINATION_COUNT];
+static lv_obj_t *home_symbols[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_chevrons[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_rows[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_labels[CRAZYPOD_HOME_DESTINATION_COUNT];
@@ -77,6 +79,27 @@ static const char *home_entry_title(int index)
     }
 }
 
+static const char *home_entry_symbol(int index)
+{
+    switch(index) {
+    case CRAZYPOD_HOME_NOW_PLAYING: return LV_SYMBOL_PLAY;
+    case CRAZYPOD_HOME_MUSIC: return LV_SYMBOL_AUDIO;
+    case CRAZYPOD_HOME_PODCASTS: return LV_SYMBOL_VOLUME_MID;
+    case CRAZYPOD_HOME_SETTINGS: return LV_SYMBOL_SETTINGS;
+    default: return LV_SYMBOL_RIGHT;
+    }
+}
+
+static uint32_t home_entry_color(int index)
+{
+    static const uint32_t colors[] = {
+        0x527FC0, 0xF24E82, 0x855ED5, 0x63758B
+    };
+
+    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
+        ? colors[index] : colors[0];
+}
+
 /* A four-row LVGL Home has no native moving band. Request a full,
  * hardware-synchronized present only when selection changes while the
  * physical wheel is touched. Keep unrelated partial LVGL work deferred until
@@ -99,25 +122,32 @@ static void update_selection_chrome(void)
         if(home_rows[index] == NULL || home_labels[index] == NULL)
             continue;
         CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
-        /* The selection is an interactive material, not content artwork.
-         * iPod hardware uses a contrast-first, static translucent fallback. */
+        /* A cool, quiet white material with a dark-ink hierarchy.
+         * No continuous blur/refraction work on the ARM5 playback path. */
         lv_obj_set_style_bg_color(
             home_rows[index], lv_color_hex(HOME_GLASS), 0);
         lv_obj_set_style_bg_opa(
-            home_rows[index], selected ? CRAZYPOD_LM_FOCUS_FILL_OPA : LV_OPA_TRANSP, 0);
+            home_rows[index], selected
+                ? CRAZYPOD_LM_HOME_SELECTED_OPA :
+                  CRAZYPOD_LM_HOME_IDLE_OPA, 0);
         lv_obj_set_style_border_width(home_rows[index], 1, 0);
         lv_obj_set_style_border_color(
             home_rows[index], lv_color_hex(COLOR_WHITE), 0);
         lv_obj_set_style_border_opa(
-            home_rows[index], selected ? CRAZYPOD_LM_FOCUS_BORDER_OPA : LV_OPA_TRANSP, 0);
+            home_rows[index], selected
+                ? CRAZYPOD_LM_HOME_RIM_OPA : 96, 0);
         lv_obj_set_style_text_color(
             home_labels[index],
-            lv_color_hex(selected ? COLOR_WHITE : 0xD7DCE4), 0);
-        lv_obj_set_style_opa(
-            home_labels[index], selected ? 255 : 222, 0);
+            lv_color_hex(selected
+                ? CRAZYPOD_LM_HOME_TEXT :
+                  CRAZYPOD_LM_HOME_MUTED), 0);
+        lv_obj_set_style_opa(home_labels[index], LV_OPA_COVER, 0);
+        if(home_badges[index] != NULL)
+            lv_obj_set_style_opa(
+                home_badges[index], selected ? 255 : 229, 0);
         if(home_chevrons[index] != NULL)
             lv_obj_set_style_opa(
-                home_chevrons[index], selected ? 230 : 105, 0);
+                home_chevrons[index], selected ? 190 : 110, 0);
     }
 }
 
@@ -222,6 +252,9 @@ lv_obj_t *crazypod_desktop_create(
     screen = lv_obj_create(NULL);
     crazypod_ui_widget_make_plain(screen);
     lv_obj_set_style_bg_color(screen, lv_color_hex(HOME_INK), 0);
+    lv_obj_set_style_bg_grad_color(
+        screen, lv_color_hex(CRAZYPOD_LM_HOME_BOTTOM), 0);
+    lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_VER, 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
     wallpaper = lv_image_create(screen);
     if(image != NULL)
@@ -230,17 +263,21 @@ lv_obj_t *crazypod_desktop_create(
         lv_obj_add_flag(wallpaper, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_pos(wallpaper, 0, 0);
     lv_obj_remove_flag(wallpaper, LV_OBJ_FLAG_CLICKABLE);
-    /* Wallpaper is content. Darken it so navigation remains readable. */
+    /* Soft white scrim preserves the dark-text contrast over any user's
+     * wallpaper. Leave the clean gradient visible when no art is set. */
     wallpaper_dim = crazypod_ui_widget_box(
         screen, 0, 0, LCD_WIDTH, LCD_HEIGHT, 0,
-        HOME_INK, image != NULL ? 172 : LV_OPA_TRANSP);
+        HOME_GLASS, image != NULL
+            ? CRAZYPOD_LM_HOME_WALLPAPER_SCRIM : LV_OPA_TRANSP);
     lv_obj_remove_flag(wallpaper_dim, LV_OBJ_FLAG_CLICKABLE);
     crazypod_status_bar_create(0, screen);
+    crazypod_status_bar_set_palette(
+        0, CRAZYPOD_LM_HOME_TEXT, CRAZYPOD_LM_HOME_GLASS);
 
     /* A new iPod: type-first identity, not a miniature iPhone launcher. */
     home_headline = crazypod_ui_widget_label(
         screen, "iPod", &lv_font_montserrat_24,
-        CRAZYPOD_LM_TEXT, LV_OPA_COVER);
+        CRAZYPOD_LM_HOME_TEXT, LV_OPA_COVER);
     lv_obj_set_pos(home_headline, HOME_ROW_X + 7, 32);
     lv_obj_remove_flag(home_headline, LV_OBJ_FLAG_CLICKABLE);
 
@@ -251,15 +288,26 @@ lv_obj_t *crazypod_desktop_create(
             HOME_ROW_TOP + i * (HOME_ROW_HEIGHT + HOME_ROW_GAP),
             HOME_ROW_WIDTH, HOME_ROW_HEIGHT, 14,
             HOME_GLASS, LV_OPA_TRANSP);
+        home_badges[i] = crazypod_ui_widget_box(
+            home_rows[i], 7, 3, 19, 19, 6,
+            home_entry_color(i), LV_OPA_COVER);
+        lv_obj_remove_flag(
+            home_badges[i], LV_OBJ_FLAG_CLICKABLE);
+        home_symbols[i] = crazypod_ui_widget_label(
+            home_badges[i], home_entry_symbol(i),
+            &lv_font_montserrat_12, COLOR_WHITE, LV_OPA_COVER);
+        lv_obj_center(home_symbols[i]);
+        lv_obj_remove_flag(
+            home_symbols[i], LV_OBJ_FLAG_CLICKABLE);
         home_labels[i] = crazypod_ui_widget_label(
             home_rows[i], home_entry_title(i),
-            body_font, COLOR_WHITE, LV_OPA_COVER);
-        lv_obj_set_pos(home_labels[i], 15, 3);
-        lv_obj_set_width(home_labels[i], HOME_ROW_WIDTH - 61);
+            body_font, CRAZYPOD_LM_HOME_TEXT, LV_OPA_COVER);
+        lv_obj_set_pos(home_labels[i], 35, 3);
+        lv_obj_set_width(home_labels[i], HOME_ROW_WIDTH - 79);
         lv_label_set_long_mode(home_labels[i], LV_LABEL_LONG_MODE_DOTS);
         home_chevrons[i] = crazypod_ui_widget_label(
             home_rows[i], LV_SYMBOL_RIGHT, &lv_font_montserrat_12,
-            COLOR_WHITE, 150);
+            CRAZYPOD_LM_HOME_TEXT, 150);
         lv_obj_set_pos(home_chevrons[i], HOME_ROW_WIDTH - 27, 6);
         lv_obj_remove_flag(
             home_chevrons[i], LV_OBJ_FLAG_CLICKABLE);
@@ -433,8 +481,11 @@ void crazypod_desktop_refresh_appearance(void)
         lv_obj_add_flag(wallpaper, LV_OBJ_FLAG_HIDDEN);
     if(wallpaper_dim != NULL)
         lv_obj_set_style_bg_opa(
-            wallpaper_dim, custom != NULL ? 172 : LV_OPA_TRANSP, 0);
+            wallpaper_dim, custom != NULL
+                ? CRAZYPOD_LM_HOME_WALLPAPER_SCRIM : LV_OPA_TRANSP, 0);
     lv_obj_set_style_bg_color(screen, lv_color_hex(HOME_INK), 0);
+    crazypod_status_bar_set_palette(
+        0, CRAZYPOD_LM_HOME_TEXT, CRAZYPOD_LM_HOME_GLASS);
     crazypod_now_capsule_refresh_material();
     crazypod_now_capsule_refresh_appearance();
     layout();

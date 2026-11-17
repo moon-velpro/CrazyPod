@@ -17,6 +17,18 @@
 #define CRAZYPOD_LM_FOCUS_FILL_OPA         76
 #define CRAZYPOD_LM_FOCUS_BORDER_OPA       93
 
+/* iPod 2026 Home: airy blue-white background, dark readable text,
+ * frosted white navigation cards; Now Playing stays artwork-led/dark. */
+#define CRAZYPOD_LM_HOME_TOP               0xF2F8FFu
+#define CRAZYPOD_LM_HOME_BOTTOM            0xBCDDF6u
+#define CRAZYPOD_LM_HOME_TEXT              0x202C3Cu
+#define CRAZYPOD_LM_HOME_MUTED             0x4D6074u
+#define CRAZYPOD_LM_HOME_GLASS             0xFFFFFFu
+#define CRAZYPOD_LM_HOME_SELECTED_OPA      228
+#define CRAZYPOD_LM_HOME_IDLE_OPA          154
+#define CRAZYPOD_LM_HOME_RIM_OPA           208
+#define CRAZYPOD_LM_HOME_WALLPAPER_SCRIM   200
+
 /* One artwork dimension is shared by the screen and its RGB565 cache.
  * Keep the presentation's double-bank allocation in the memory budget. */
 #define CRAZYPOD_LM_ARTWORK_SIZE           128

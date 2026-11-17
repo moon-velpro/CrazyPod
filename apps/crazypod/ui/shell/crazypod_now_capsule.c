@@ -24,9 +24,11 @@
 
 #define COLOR_WHITE 0xFFFFFF
 #define COLOR_CYAN 0xAFCBE5
-#define CAPSULE_TINT_COLOR 0x111319
-#define CAPSULE_TINT_OPA 96
-#define CAPSULE_FALLBACK_OPA 53
+#define CAPSULE_TINT_COLOR 0xE6F2FF
+#define CAPSULE_TINT_OPA 182
+#define CAPSULE_FALLBACK_OPA 218
+#define CAPSULE_TEXT 0x223044
+#define CAPSULE_SUBTEXT 0x536375
 #define CAPSULE_SIDE_MARGIN CRAZYPOD_PRODUCT_MINIPLAYER_MARGIN
 #define CAPSULE_BOTTOM_MARGIN CRAZYPOD_PRODUCT_MINIPLAYER_BOTTOM
 #define CAPSULE_X CAPSULE_SIDE_MARGIN
@@ -262,7 +264,7 @@ void crazypod_now_capsule_refresh_material(void)
                     capsule.glass[index], LV_OBJ_FLAG_HIDDEN);
             lv_obj_set_style_bg_color(
                 capsule.material[index],
-                lv_color_hex(0xB7C5D7), 0);
+                lv_color_hex(0xF7FAFF), 0);
             lv_obj_set_style_bg_opa(
                 capsule.material[index], CAPSULE_FALLBACK_OPA, 0);
         }
@@ -376,7 +378,7 @@ void crazypod_now_capsule_create(
 
     capsule.track = crazypod_ui_widget_label(
         capsule.root, CP_TR("No Track"), metadata_font,
-        COLOR_WHITE, LV_OPA_COVER);
+        CAPSULE_TEXT, LV_OPA_COVER);
     lv_obj_set_pos(
         capsule.track,
         CAPSULE_TRACK_X, 6 + CAPSULE_CONTENT_Y_OFFSET);
@@ -386,7 +388,7 @@ void crazypod_now_capsule_create(
     crazypod_marquee_configure(capsule.track, false);
     capsule.artist = crazypod_ui_widget_label(
         capsule.root, CP_TR("Local Music"), &lv_font_montserrat_8,
-        COLOR_WHITE, 190);
+        CAPSULE_SUBTEXT, LV_OPA_COVER);
     lv_obj_set_pos(
         capsule.artist,
         CAPSULE_TRACK_X, 26 + CAPSULE_CONTENT_Y_OFFSET);
@@ -399,10 +401,10 @@ void crazypod_now_capsule_create(
         capsule.root,
         CAPSULE_TRACK_X, 44 + CAPSULE_CONTENT_Y_OFFSET,
         CAPSULE_TRACK_WIDTH, 2,
-        LV_RADIUS_CIRCLE, COLOR_WHITE, 31);
+        LV_RADIUS_CIRCLE, CAPSULE_TEXT, 38);
     capsule.progress = crazypod_ui_widget_box(
         progress_track, 0, 0, 6, 2, LV_RADIUS_CIRCLE,
-        COLOR_WHITE, LV_OPA_COVER);
+        CAPSULE_TEXT, LV_OPA_COVER);
     lv_obj_set_style_bg_grad_color(
         capsule.progress, lv_color_hex(COLOR_CYAN), 0);
     lv_obj_set_style_bg_grad_dir(

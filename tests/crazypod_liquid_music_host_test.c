@@ -47,6 +47,17 @@ int main(void)
     assert(CRAZYPOD_PRODUCT_MINIPLAYER_Y +
            CRAZYPOD_PRODUCT_MINIPLAYER_BOTTOM < 240);
 
+    /* The airy concept Home still uses dark ink and readable soft glass. */
+    assert(CRAZYPOD_LM_HOME_TOP != CRAZYPOD_LM_CANVAS);
+    assert(CRAZYPOD_LM_HOME_SELECTED_OPA > CRAZYPOD_LM_HOME_IDLE_OPA);
+    assert(CRAZYPOD_LM_HOME_SELECTED_OPA <= 240);
+    assert(CRAZYPOD_LM_HOME_WALLPAPER_SCRIM >= 190);
+    assert(CRAZYPOD_LM_HOME_WALLPAPER_SCRIM <= 230);
+    /* Simple integer RGB channel gap; full visual contrast remains a
+     * 320x240 simulator + physical LCD verification requirement. */
+    assert(((CRAZYPOD_LM_HOME_GLASS >> 16) & 255u) -
+           ((CRAZYPOD_LM_HOME_TEXT >> 16) & 255u) > 160u);
+
     /* The "glass" control material should be subtle rather than opaque. */
     assert(CRAZYPOD_LM_GLASS_FILL_OPA > 0);
     assert(CRAZYPOD_LM_GLASS_FILL_OPA < 64);
