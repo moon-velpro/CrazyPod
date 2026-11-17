@@ -48,16 +48,12 @@
 #include "crazypod_audio_shims.h"
 #include "crazypod_audio_reserve.h"
 #include "crazypod_appearance.h"
-#include "crazypod_books.h"
 #include "crazypod_lcd.h"
 #include "crazypod_music.h"
-#include "crazypod_notes.h"
-#include "crazypod_organizer.h"
 #include "crazypod_presets.h"
 #include "crazypod_runtime_limits.h"
 #include "crazypod_state.h"
 #include "crazypod_ui.h"
-#include "crazypod_workouts.h"
 
 #if (CONFIG_PLATFORM & PLATFORM_HOSTED)
 
@@ -103,9 +99,7 @@ static void crazypod_platform_init(void)
     crazypod_state_load();
     crazypod_appearance_load();
     crazypod_presets_load();
-    crazypod_notes_init();
-    crazypod_books_init();
-    crazypod_workouts_init();
+    /* Music-first boot: do not load retired notes/books/workout state. */
     crazypod_music_init();
 
 #ifndef USB_NONE
@@ -214,9 +208,7 @@ static void crazypod_platform_init(void)
     crazypod_state_load();
     crazypod_appearance_load();
     crazypod_presets_load();
-    crazypod_notes_init();
-    crazypod_books_init();
-    crazypod_workouts_init();
+    /* Music-first boot: do not load retired notes/books/workout state. */
     crazypod_music_init();
 
 #ifndef USB_NONE
