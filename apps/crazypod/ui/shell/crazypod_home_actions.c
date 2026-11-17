@@ -144,6 +144,30 @@ static void begin_overlay(int width, int height)
     crazypod_popup_animate(actions.panel, geometry.y);
 }
 
+static int action_level_percent(enum home_action action)
+{
+    int value;
+    int minimum;
+    int maximum;
+
+    if(action == HOME_ACTION_BRIGHTNESS) {
+        value = global_settings.brightness;
+        minimum = MIN_BRIGHTNESS_SETTING;
+        maximum = MAX_BRIGHTNESS_SETTING;
+    }
+    else if(action == HOME_ACTION_VOLUME) {
+        value = global_status.volume;
+        minimum = sound_min(SOUND_VOLUME);
+        maximum = sound_max(SOUND_VOLUME);
+    }
+    else
+        return 0;
+
+    if(maximum <= minimum)
+        return 0;
+    return (value - minimum) * 100 / (maximum - minimum);
+}
+
 static void refresh_action_selection(void)
 {
     int index;
@@ -151,38 +175,33 @@ static void refresh_action_selection(void)
     for(index = 0; index < HOME_ACTION_COUNT; ++index) {
         bool selected = index == (int)actions.selected;
 
+        /* A selected iOS-style setting row replaces Android-like circles
+         * and individual glass cards. No blur or re-layout on detents. */
         lv_obj_set_style_bg_color(
             actions.cells[index],
-            lv_color_hex(selected ? COLOR_WHITE : COLOR_SKY), 0);
+            lv_color_hex(selected ? 0xE2ECFC : COLOR_WHITE), 0);
         lv_obj_set_style_bg_opa(
-            actions.cells[index], selected ? 255 : 190, 0);
+            actions.cells[index], selected ? 235 : 160, 0);
         lv_obj_set_style_border_width(actions.cells[index], 1, 0);
         lv_obj_set_style_border_color(
-            actions.cells[index],
-            lv_color_hex(selected ? COLOR_WHITE : 0xCCDCEC), 0);
+            actions.cells[index], lv_color_hex(COLOR_WHITE), 0);
         lv_obj_set_style_border_opa(
-            actions.cells[index], selected ? 255 : 120, 0);
+            actions.cells[index], selected ? 220 : 120, 0);
         lv_obj_set_style_opa(
-            actions.icons[index], selected ? 255 : 215, 0);
+            actions.icons[index], selected ? 255 : 205, 0);
         if(actions.names[index] != NULL)
             lv_obj_set_style_text_color(
-                actions.names[index],
-                lv_color_hex(selected ? COLOR_INK : COLOR_MUTED), 0);
+                actions.names[index], lv_color_hex(COLOR_INK), 0);
     }
 }
 
 static void show_action_list(void)
 {
     const int width = 272;
-    const int height = 160;
+    const int height = 196;
     const int inset = 12;
-    const int gap = 7;
-    const int cells_y = 42;
-    const int cell_height = 91;
-    const int cells_width = width - 2 * inset;
-    const int cell_width =
-        (cells_width - gap * (HOME_ACTION_COUNT - 1)) /
-        HOME_ACTION_COUNT;
+    const int row_height = 43;
+    const int row_gap = 3;
     lv_obj_t *title;
     int index;
 
@@ -191,51 +210,67 @@ static void show_action_list(void)
     title = make_label(
         actions.panel, CP_TR("Controls"),
         &lv_font_montserrat_16, COLOR_INK, LV_OPA_COVER);
-    lv_obj_set_pos(title, inset + 2, 11);
+    lv_obj_set_pos(title, inset + 3, 10);
     lv_obj_set_width(title, width - 2 * inset);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_LEFT, 0);
 
     for(index = 0; index < HOME_ACTION_COUNT; ++index) {
         const enum home_action action = (enum home_action)index;
         const lv_image_dsc_t *asset =
             crazypod_menu_icon_asset(action_icon(action));
-        lv_obj_t *circle;
-        int x = inset + index * (cell_width + gap);
+        lv_obj_t *icon_back;
+        int y = 43 + index * (row_height + row_gap);
 
         actions.cells[index] = make_box(
-            actions.panel, x, cells_y,
-            cell_width, cell_height, 14,
-            COLOR_SKY, 190);
-        circle = make_box(
-            actions.cells[index], 0, 0,
-            HOME_ACTION_ICON_CIRCLE_SIZE,
-            HOME_ACTION_ICON_CIRCLE_SIZE,
-            LV_RADIUS_CIRCLE, COLOR_ACCENT, LV_OPA_COVER);
-        lv_obj_center(circle);
-        actions.icons[index] = lv_image_create(circle);
+            actions.panel, inset, y, width - 2 * inset,
+            row_height, 13, COLOR_WHITE, 165);
+        icon_back = make_box(
+            actions.cells[index], 8, 5, 32, 32, 9,
+            0xF0F4FA, LV_OPA_COVER);
+        actions.icons[index] = lv_image_create(icon_back);
         lv_image_set_src(actions.icons[index], asset);
         lv_image_set_scale(
             actions.icons[index],
-            HOME_ACTION_ICON_SIZE * LV_SCALE_NONE / asset->header.w);
+            20 * LV_SCALE_NONE / asset->header.w);
         lv_obj_set_style_image_recolor(
-            actions.icons[index], lv_color_hex(COLOR_WHITE), 0);
+            actions.icons[index], lv_color_hex(COLOR_INK), 0);
         lv_obj_set_style_image_recolor_opa(
             actions.icons[index], LV_OPA_COVER, 0);
         lv_obj_center(actions.icons[index]);
         actions.names[index] = make_label(
             actions.cells[index], action_title(action),
-            &lv_font_montserrat_10, COLOR_INK, LV_OPA_COVER);
-        lv_obj_set_pos(actions.names[index], 4, 71);
-        lv_obj_set_width(actions.names[index], cell_width - 8);
-        lv_obj_set_style_text_align(
-            actions.names[index], LV_TEXT_ALIGN_CENTER, 0);
+            &lv_font_montserrat_12, COLOR_INK, LV_OPA_COVER);
+        lv_obj_set_pos(actions.names[index], 48, 11);
+        lv_obj_set_width(actions.names[index], 122);
         lv_label_set_long_mode(
             actions.names[index], LV_LABEL_LONG_MODE_DOTS);
+
+        if(action == HOME_ACTION_QUEUE) {
+            lv_obj_t *chevron = make_label(
+                actions.cells[index], LV_SYMBOL_RIGHT,
+                &lv_font_montserrat_10, COLOR_MUTED, 185);
+            lv_obj_set_pos(chevron, 226, 11);
+        }
+        else {
+            int fill_width;
+            int percent = action_level_percent(action);
+
+            if(percent < 0)
+                percent = 0;
+            if(percent > 100)
+                percent = 100;
+            make_box(actions.cells[index], 176, 20, 61, 4,
+                     LV_RADIUS_CIRCLE, 0xCBD4E2, LV_OPA_COVER);
+            fill_width = 61 * percent / 100;
+            if(fill_width > 0)
+                make_box(actions.cells[index], 176, 20,
+                         fill_width, 4, LV_RADIUS_CIRCLE,
+                         COLOR_ACCENT, LV_OPA_COVER);
+        }
     }
     actions.detail = make_label(
         actions.panel, CP_TR("Wheel selects"),
         &lv_font_montserrat_8, COLOR_MUTED, 210);
-    lv_obj_set_pos(actions.detail, 14, 140);
+    lv_obj_set_pos(actions.detail, 14, 181);
     lv_obj_set_width(actions.detail, width - 28);
     lv_obj_set_style_text_align(
         actions.detail, LV_TEXT_ALIGN_CENTER, 0);
@@ -244,23 +279,7 @@ static void show_action_list(void)
 
 static int current_level_percent(void)
 {
-    int value;
-    int minimum;
-    int maximum;
-
-    if(actions.selected == HOME_ACTION_BRIGHTNESS) {
-        value = global_settings.brightness;
-        minimum = MIN_BRIGHTNESS_SETTING;
-        maximum = MAX_BRIGHTNESS_SETTING;
-    }
-    else {
-        value = global_status.volume;
-        minimum = sound_min(SOUND_VOLUME);
-        maximum = sound_max(SOUND_VOLUME);
-    }
-    if(maximum <= minimum)
-        return 0;
-    return (value - minimum) * 100 / (maximum - minimum);
+    return action_level_percent(actions.selected);
 }
 
 static void refresh_adjustment(void)
