@@ -246,6 +246,12 @@
         "apps/crazypod/ui/features/organizer/crazypod_workout_screen.c:150"
       ]
     },
+    "%s  %d/%d": {
+      "locations": [
+        "apps/crazypod/ui/presentation/crazypod_choice_overlay.c:155"
+      ],
+      "keepEnglish": true
+    },
     "%s  ·  MPEG": {
       "locations": [
         "apps/crazypod/ui/features/photos/crazypod_photos_preview.c:158"
@@ -256,12 +262,6 @@
         "apps/crazypod/ui/features/organizer/crazypod_calendar_screen.c:62",
         "apps/crazypod/ui/features/organizer/crazypod_calendar_screen.c:68"
       ]
-    },
-    "%s  %d/%d": {
-      "locations": [
-        "apps/crazypod/ui/presentation/crazypod_choice_overlay.c:155"
-      ],
-      "keepEnglish": true
     },
     "%s · %s": {
       "locations": [
@@ -464,6 +464,17 @@
       ],
       "keepEnglish": true
     },
+    "Add .gb or .gbc files to /MiniApps/Games": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+      ]
+    },
+    "Add Bookmark": {
+      "locations": [
+        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:251"
+      ]
+    },
     "Add EPUB, TXT or Markdown files to /Books.": {
       "locations": [
         "apps/crazypod/ui/presentation/crazypod_menu_screen.c:151"
@@ -508,10 +519,10 @@
         "apps/crazypod/ui/features/settings/crazypod_eq_studio_controller.c:162"
       ]
     },
-    "Album Flow": {
+    "AirPods": {
+      "keepEnglish": true,
       "locations": [
-        "apps/crazypod/ui/features/music/crazypod_music_feature.c:166",
-        "apps/crazypod/ui/features/music/crazypod_music_root_preview.c:27"
+        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
       ]
     },
     "Albums": {
@@ -1120,6 +1131,11 @@
         "apps/crazypod/ui/features/books/crazypod_books_preview.c:399"
       ]
     },
+    "Choose the insert animation": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_customize_preview.c"
+      ]
+    },
     "Classic": {
       "locations": [
         "apps/crazypod/crazypod_presets.c:254"
@@ -1146,6 +1162,16 @@
         "apps/crazypod/ui/shell/crazypod_app_catalog.c"
       ]
     },
+    "Connected": {
+      "locations": [
+        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
+      ]
+    },
+    "Connecting...": {
+      "locations": [
+        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
+      ]
+    },
     "Contact Details": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:326"
@@ -1169,6 +1195,12 @@
     "Controls": {
       "locations": [
         "apps/crazypod/ui/features/settings/crazypod_settings_catalog.c:13"
+      ]
+    },
+    "Controls: /MiniApps/Games/README.txt": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
       ]
     },
     "Convert MPG or MPEG files into /Videos.": {
@@ -1272,6 +1304,12 @@
         "apps/crazypod/ui/features/customize/crazypod_wallpaper_crop_screen.c:80"
       ]
     },
+    "Cover Flow": {
+      "locations": [
+        "apps/crazypod/ui/features/music/crazypod_music_feature.c:181",
+        "apps/crazypod/ui/features/music/crazypod_music_root_preview.c:23"
+      ]
+    },
     "CrazyPod": {
       "locations": [
         "apps/crazypod/ui/features/music/crazypod_music_preview_cover.c:65",
@@ -1332,6 +1370,11 @@
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:23",
         "apps/crazypod/ui/features/notes/crazypod_notes_feature.c:19",
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:66"
+      ]
+    },
+    "DATE & TIME": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_feature.c"
       ]
     },
     "DEC": {
@@ -1405,9 +1448,19 @@
         "apps/crazypod/ui/shell/crazypod_usb_prompt.c:146"
       ]
     },
+    "Date & Time": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_catalog.c"
+      ]
+    },
     "Date: %04d-%02d-%02d": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:286"
+      ]
+    },
+    "Day": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
       ]
     },
     "December": {
@@ -1815,6 +1868,12 @@
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:66"
       ]
     },
+    "GB / GBC": {
+      "keepEnglish": true,
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c"
+      ]
+    },
     "GLOW": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:229"
@@ -1824,6 +1883,30 @@
       "locations": [
         "apps/crazypod/ui/features/settings/crazypod_eq_studio_controller.c:149",
         "apps/crazypod/ui/features/settings/crazypod_eq_studio_screen.c:186"
+      ]
+    },
+    "Game emulation stopped": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+      ]
+    },
+    "Game file or save could not be written/read": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+      ]
+    },
+    "Game save failed": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+      ]
+    },
+    "Game save is damaged; original preserved": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
       ]
     },
     "Glow": {
@@ -1850,6 +1933,11 @@
       ],
       "keepEnglish": true
     },
+    "HEADPHONES": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c"
+      ]
+    },
     "HIGHLIGHT": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:230"
@@ -1873,6 +1961,11 @@
     "HOME PICTURE": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_feature.c:123"
+      ]
+    },
+    "Headphones": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c"
       ]
     },
     "Hidden from Main Menu": {
@@ -1910,9 +2003,10 @@
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:216"
       ]
     },
-    "Add Bookmark": {
+    "Hold Center for game menu": {
       "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:251"
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
       ]
     },
     "Hold Center to Delete": {
@@ -1938,11 +2032,6 @@
         "apps/crazypod/ui/features/notes/crazypod_notes_feature.c:205"
       ]
     },
-    "Remove Bookmark": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:250"
-      ]
-    },
     "Hold Center to Save": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:232"
@@ -1953,6 +2042,11 @@
         "apps/crazypod/ui/shell/crazypod_lock_screen.c:235",
         "apps/crazypod/ui/shell/crazypod_lock_screen.c:555",
         "apps/crazypod/ui/shell/crazypod_lock_screen.c:1215"
+      ]
+    },
+    "Hold PLAY to Reset": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_wallpaper_crop_screen.c:94"
       ]
     },
     "Hold Select on a photo to save it here.": {
@@ -1991,6 +2085,11 @@
     "Home, menu and lock pictures": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_preview.c:132"
+      ]
+    },
+    "Hour": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
       ]
     },
     "I": {
@@ -2032,6 +2131,11 @@
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:13"
       ]
     },
+    "Idle Power Off": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_model.c:59"
+      ]
+    },
     "Import": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_feature.c:191"
@@ -2050,11 +2154,6 @@
     "In More": {
       "locations": [
         "apps/crazypod/ui/features/settings/crazypod_settings_preview.c:74"
-      ]
-    },
-    "Idle Power Off": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c:59"
       ]
     },
     "Info": {
@@ -2188,6 +2287,11 @@
     "LOCK SCREEN": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:78"
+      ]
+    },
+    "Language": {
+      "locations": [
+        "apps/crazypod/ui/features/settings"
       ]
     },
     "Large  ·  16 pt": {
@@ -2485,6 +2589,11 @@
       ],
       "keepEnglish": true
     },
+    "Minute": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
+      ]
+    },
     "Missing Book": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_screen.c:141"
@@ -2741,6 +2850,12 @@
         "apps/crazypod/ui/features/customize/crazypod_wallpaper_crop_screen.c:74"
       ]
     },
+    "Not enough memory for this game": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+      ]
+    },
     "Not enough memory to build the music library": {
       "locations": [
         "apps/crazypod/ui/features/music/crazypod_music_library.c:39"
@@ -2777,13 +2892,6 @@
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:166",
         "apps/crazypod/ui/features/music/crazypod_music_root_preview.c:27",
         "apps/crazypod/ui/features/now_playing/crazypod_now_playing_feature.c:66"
-      ]
-    },
-    "Themes": {
-      "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:16",
-        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c:139",
-        "apps/crazypod/ui/features/customize/crazypod_customize_preview.c:138"
       ]
     },
     "O": {
@@ -2881,6 +2989,16 @@
     "Original iPod Music": {
       "locations": [
         "apps/crazypod/ui/features/settings/crazypod_settings_model.c:106"
+      ]
+    },
+    "Over-Ear": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c"
+      ]
+    },
+    "Over-Ear Headphones": {
+      "locations": [
+        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
       ]
     },
     "P": {
@@ -3297,9 +3415,9 @@
         "apps/crazypod/ui/features/customize/crazypod_wallpaper_crop_screen.c:94"
       ]
     },
-    "Hold PLAY to Reset": {
+    "Remove Bookmark": {
       "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_wallpaper_crop_screen.c:94"
+        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:250"
       ]
     },
     "Remove Favorite": {
@@ -3520,6 +3638,12 @@
         "apps/crazypod/ui/features/notes/crazypod_notes_feature.c:154"
       ]
     },
+    "Save and exit": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
+      ]
+    },
     "Save and reuse appearances": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_preview.c:129"
@@ -3552,6 +3676,11 @@
         "apps/crazypod/ui/features/photos/crazypod_photo_screen.c:83"
       ]
     },
+    "Saved to My Favorites  Center removes": {
+      "locations": [
+        "apps/crazypod/ui/features/now_playing/crazypod_now_playing_overlay.c:302"
+      ]
+    },
     "Saved to Photos": {
       "locations": [
         "apps/crazypod/ui/shell/crazypod_screenshot_feedback.c"
@@ -3560,11 +3689,6 @@
     "Saved to Videos": {
       "locations": [
         "apps/crazypod/ui/shell/crazypod_screenshot_feedback.c"
-      ]
-    },
-    "Saved to My Favorites  Center removes": {
-      "locations": [
-        "apps/crazypod/ui/features/now_playing/crazypod_now_playing_overlay.c:302"
       ]
     },
     "Saved workout history": {
@@ -3602,17 +3726,17 @@
         "apps/crazypod/ui/features/customize/crazypod_customize_preview.c:133"
       ]
     },
-    "Screen recording failed": {
-      "locations": [
-        "apps/crazypod/ui/shell/crazypod_screenshot_feedback.c"
-      ]
-    },
     "Screen recording cancelled": {
       "locations": [
         "apps/crazypod/ui/shell/crazypod_screenshot_feedback.c"
       ]
     },
     "Screen recording ended": {
+      "locations": [
+        "apps/crazypod/ui/shell/crazypod_screenshot_feedback.c"
+      ]
+    },
+    "Screen recording failed": {
       "locations": [
         "apps/crazypod/ui/shell/crazypod_screenshot_feedback.c"
       ]
@@ -3663,6 +3787,11 @@
     "Searches title, artist and album.": {
       "locations": [
         "apps/crazypod/ui/app/crazypod_menu_preview.c:193"
+      ]
+    },
+    "Second": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
       ]
     },
     "Secondary": {
@@ -3968,6 +4097,13 @@
         "apps/crazypod/ui/features/books/crazypod_books_workflow.c:203"
       ]
     },
+    "Themes": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:16",
+        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c:139",
+        "apps/crazypod/ui/features/customize/crazypod_customize_preview.c:138"
+      ]
+    },
     "This EPUB is damaged, encrypted, or unsupported.": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_workflow.c:263"
@@ -4125,6 +4261,12 @@
     "Unsaved": {
       "locations": [
         "apps/crazypod/ui/features/notes/crazypod_notes_screen.c:54"
+      ]
+    },
+    "Unsupported or damaged GB/GBC ROM": {
+      "locations": [
+        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
+        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
       ]
     },
     "Untitled": {
@@ -4331,6 +4473,16 @@
         "apps/crazypod/crazypod_appearance.c:85"
       ]
     },
+    "Wired Earphones": {
+      "locations": [
+        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
+      ]
+    },
+    "Wired In-Ear": {
+      "locations": [
+        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c"
+      ]
+    },
     "Workout": {
       "locations": [
         "apps/crazypod/crazypod_workouts.c:136"
@@ -4375,6 +4527,11 @@
       ],
       "keepEnglish": true
     },
+    "Year": {
+      "locations": [
+        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
+      ]
+    },
     "Yoga": {
       "locations": [
         "apps/crazypod/crazypod_workouts.c:37"
@@ -4396,163 +4553,6 @@
     "by ": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_screen.c:142"
-      ]
-    },
-    "AirPods": {
-      "keepEnglish": true,
-      "locations": [
-        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
-      ]
-    },
-    "Choose the insert animation": {
-      "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_customize_preview.c"
-      ]
-    },
-    "Connected": {
-      "locations": [
-        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
-      ]
-    },
-    "Connecting...": {
-      "locations": [
-        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
-      ]
-    },
-    "HEADPHONES": {
-      "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c"
-      ]
-    },
-    "Headphones": {
-      "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c"
-      ]
-    },
-    "Over-Ear Headphones": {
-      "locations": [
-        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
-      ]
-    },
-    "Over-Ear": {
-      "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c"
-      ]
-    },
-    "Wired Earphones": {
-      "locations": [
-        "apps/crazypod/ui/shell/crazypod_headphone_popup.c"
-      ]
-    },
-    "Wired In-Ear": {
-      "locations": [
-        "apps/crazypod/ui/features/customize/crazypod_customize_feature.c"
-      ]
-    },
-    "Language": {
-      "locations": [
-        "apps/crazypod/ui/features/settings"
-      ]
-    },
-    "DATE & TIME": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_feature.c"
-      ]
-    },
-    "Date & Time": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_catalog.c"
-      ]
-    },
-    "Day": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
-      ]
-    },
-    "Hour": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
-      ]
-    },
-    "Minute": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
-      ]
-    },
-    "Second": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
-      ]
-    },
-    "Year": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c"
-      ]
-    },
-    "Add .gb or .gbc files to /MiniApps/Games": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Save and exit": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Game save failed": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Hold Center for game menu": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Controls: /MiniApps/Games/README.txt": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Unsupported or damaged GB/GBC ROM": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Not enough memory for this game": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Game save is damaged; original preserved": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Game emulation stopped": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "Game file or save could not be written/read": {
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c",
-        "apps/crazypod/ui/features/miniapps/crazypod_miniapps_feature.c"
-      ]
-    },
-    "GB / GBC": {
-      "keepEnglish": true,
-      "locations": [
-        "apps/crazypod/ui/features/miniapps/crazypod_gameboy_screen.c"
       ]
     }
   }
