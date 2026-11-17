@@ -18,7 +18,7 @@
 #define CRAZYPOD_MENU_ARTWORK_PRIORITY 20
 
 static const char *const music_menu_titles[] = {
-    CP_TR("Now Playing"), CP_TR("Album Flow"),
+    CP_TR("Now Playing"), CP_TR("Cover Flow"),
     CP_TR("All Music"), CP_TR("Playlists"),
     CP_TR("Artists"), CP_TR("Albums"),
     CP_TR("Songs"), CP_TR("Search"),
