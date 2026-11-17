@@ -37,13 +37,6 @@
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
 #define HOME_WHEEL_RELEASE_TICKS \
     (((HZ * 6) / 100) > 0 ? ((HZ * 6) / 100) : 1)
-#define HOME_SPRING_STIFFNESS 503
-#define HOME_SPRING_DAMPING 37
-#define HOME_SPRING_POSITION_EPSILON (HOME_POSITION_ONE / 1024)
-#define HOME_SPRING_VELOCITY_EPSILON (HOME_POSITION_ONE / 64)
-#define HOME_INDICATOR_WIDTH 5
-#define HOME_SELECTED_INDICATOR_WIDTH 14
-#define HOME_INDICATOR_GAP 4
 
 static struct crazypod_desktop_host desktop_host;
 static lv_obj_t *screen;
@@ -159,10 +152,11 @@ static int32_t selected_position_q16(void)
 
 static void start_spring(void)
 {
-    springing = position_q16 != selected_position_q16() ||
-        spring_velocity_q16 != 0;
-    if(springing)
-        crazypod_desktop_native_invalidate(false);
+    /* The selected list row updates immediately; no invisible icon
+     * carousel animation should consume CPU time. */
+    position_q16 = selected_position_q16();
+    spring_velocity_q16 = 0;
+    springing = false;
 }
 
 #ifdef HAVE_WHEEL_POSITION
@@ -179,39 +173,6 @@ static bool set_selected_target(int selected)
     return true;
 }
 #endif
-
-static void advance_spring_tick(void)
-{
-    int32_t target = selected_position_q16();
-    int64_t acceleration;
-    int32_t maximum = (CRAZYPOD_HOME_DESTINATION_COUNT - 1) * HOME_POSITION_ONE;
-
-    if(!springing)
-        return;
-    acceleration =
-        (int64_t)(target - position_q16) * HOME_SPRING_STIFFNESS -
-        (int64_t)spring_velocity_q16 * HOME_SPRING_DAMPING;
-    spring_velocity_q16 += (int32_t)(acceleration / HZ);
-    position_q16 += spring_velocity_q16 / HZ;
-    if(position_q16 < 0) {
-        position_q16 = 0;
-        if(spring_velocity_q16 < 0)
-            spring_velocity_q16 = 0;
-    }
-    else if(position_q16 > maximum) {
-        position_q16 = maximum;
-        if(spring_velocity_q16 > 0)
-            spring_velocity_q16 = 0;
-    }
-    if(position_q16 >= target - HOME_SPRING_POSITION_EPSILON &&
-       position_q16 <= target + HOME_SPRING_POSITION_EPSILON &&
-       spring_velocity_q16 >= -HOME_SPRING_VELOCITY_EPSILON &&
-       spring_velocity_q16 <= HOME_SPRING_VELOCITY_EPSILON) {
-        position_q16 = target;
-        spring_velocity_q16 = 0;
-        springing = false;
-    }
-}
 
 #ifdef HAVE_WHEEL_POSITION
 static void apply_wheel_clicks(int delta)
@@ -274,22 +235,7 @@ static void sample_wheel(long now)
 
 static void advance_motion(long now)
 {
-    long elapsed = now - motion_last_tick;
-    long steps;
-
-    if(elapsed <= 0)
-        return;
     motion_last_tick = now;
-    if(elapsed > HZ / 2) {
-        position_q16 = selected_position_q16();
-        spring_velocity_q16 = 0;
-        springing = false;
-        return;
-    }
-    for(steps = 0; steps < elapsed; ++steps)
-        advance_spring_tick();
-    if(springing)
-        crazypod_desktop_native_invalidate(false);
 }
 
 lv_obj_t *crazypod_desktop_create(
