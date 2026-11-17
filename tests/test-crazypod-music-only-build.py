@@ -22,6 +22,14 @@ def verify() -> None:
     present = source("apps/crazypod/crazypod_frameclock.c")
     present_header = source("apps/crazypod/crazypod_frameclock.h")
     home_input = source("apps/crazypod/ui/shell/crazypod_home_input.c")
+    home_actions = source("apps/crazypod/ui/shell/crazypod_home_actions.c")
+    glass_overlay = source("apps/crazypod/ui/presentation/crazypod_overlay_glass.c")
+    glass_panel = source("apps/crazypod/ui/presentation/crazypod_glass_panel.c")
+    glass_sampler = source("apps/crazypod/ui/presentation/crazypod_glass_sampler.c")
+    glass_sampler_header = source(
+        "apps/crazypod/ui/presentation/crazypod_glass_sampler.h"
+    )
+    image = source("apps/crazypod/crazypod_image.c")
     runtime = source("apps/crazypod/ui/app/crazypod_runtime_services.c")
     feature_input = source("apps/crazypod/ui/app/crazypod_feature_input.c")
     query = source("apps/crazypod/ui/navigation/crazypod_route_query.c")
@@ -110,6 +118,27 @@ def verify() -> None:
         "tests/crazypod_frameclock_host_test.c"
     )
 
+
+    # Home quick controls reuse the existing static, two-pass RGB565
+    # backdrop sampler. The material is prepared once per modal change,
+    # never from wheel movement or rendering an animation frame.
+    assert "CRAZYPOD_GLASS_HOME_CONTROLS" in glass_sampler_header
+    assert "GLASS_HOME_TINT_COLOR" in glass_sampler
+    assert "lv_obj_t *crazypod_overlay_glass_home_controls_panel(" in glass_overlay
+    assert "crazypod_image_render_glass_rgb565(" in glass_overlay
+    assert "crazypod_overlay_glass_home_controls_panel(" in home_actions
+    assert "lv_obj_t *top_glint" in glass_panel
+    assert "lv_obj_t *bottom_rim" in glass_panel
+    assert "crazypod_image_render_glass_rgb565(" in image
+    assert "for(offset = -2; offset <= 2; ++offset)" in image
+    hot_path = home_actions.split("static void refresh_action_selection(void)", 1)[1].split(
+        "static void show_action_list(void)", 1
+    )[0]
+    assert "crazypod_overlay_glass" not in hot_path
+    assert "crazypod_image_render_glass_rgb565" not in desktop
+    assert "lv_obj_set_style_blur_backdrop" not in home_actions, (
+        "No per-frame software backdrop blur in Home controls"
+    )
 
     # The route ABI is stable, but all retired dispatch paths are inert.
     assert "crazypod_route_registry_product_allowed(" in registry
