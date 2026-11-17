@@ -100,7 +100,7 @@ static void update_selection_row(int index)
               CRAZYPOD_LM_HOME_IDLE_OPA, 0);
     lv_obj_set_style_border_opa(
         home_rows[index], selected
-            ? CRAZYPOD_LM_HOME_RIM_OPA : 96, 0);
+            ? CRAZYPOD_LM_HOME_RIM_OPA : LV_OPA_TRANSP, 0);
     lv_obj_set_style_text_color(
         home_labels[index],
         lv_color_hex(selected
@@ -122,10 +122,12 @@ static void update_selection_chrome(void)
         /* Immutable row chrome is configured once or on appearance change,
          * never for each physical wheel detent. */
         lv_obj_set_style_bg_color(
-            home_rows[index], lv_color_hex(HOME_GLASS), 0);
+            home_rows[index],
+            lv_color_hex(CRAZYPOD_LM_HOME_SELECTION_FILL), 0);
         lv_obj_set_style_border_width(home_rows[index], 1, 0);
         lv_obj_set_style_border_color(
-            home_rows[index], lv_color_hex(COLOR_WHITE), 0);
+            home_rows[index],
+            lv_color_hex(CRAZYPOD_LM_HOME_GLASS), 0);
         CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
         lv_obj_set_style_opa(home_labels[index], LV_OPA_COVER, 0);
         update_selection_row(index);
@@ -339,6 +341,15 @@ lv_obj_t *crazypod_desktop_create(
         lv_obj_set_pos(home_chevrons[i], HOME_ROW_WIDTH - 27, 6);
         lv_obj_remove_flag(
             home_chevrons[i], LV_OBJ_FLAG_CLICKABLE);
+        if(i + 1 < CRAZYPOD_HOME_DESTINATION_COUNT) {
+            /* One hairline between destinations replaces decorative
+             * borders around every list item. Immutable on wheel turns. */
+            lv_obj_t *separator = crazypod_ui_widget_box(
+                home_rows[i], 38, HOME_ROW_HEIGHT - 1,
+                HOME_ROW_WIDTH - 58, 1, 0,
+                CRAZYPOD_LM_NATIVE_HAIRLINE, 118);
+            lv_obj_remove_flag(separator, LV_OBJ_FLAG_CLICKABLE);
+        }
     }
     crazypod_now_capsule_create(screen, metadata_font);
     selected_app = 0;
