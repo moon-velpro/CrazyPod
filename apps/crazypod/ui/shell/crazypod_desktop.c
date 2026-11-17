@@ -363,12 +363,10 @@ void crazypod_desktop_set_selected(int selected, bool animated)
 
 void crazypod_desktop_move_selection(int direction)
 {
-    int count = CRAZYPOD_HOME_DESTINATION_COUNT;
-    int selected = selected_app + direction;
+    int selected = crazypod_home_selection_after_wheel(
+        selected_app, direction);
 
-    if(count <= 1 || direction == 0 ||
-       selected < 0 || selected >= count ||
-       selected == selected_app)
+    if(direction == 0 || selected == selected_app)
         return;
     crazypod_desktop_set_selected(selected, true);
 }
