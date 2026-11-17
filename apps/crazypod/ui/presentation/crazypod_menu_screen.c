@@ -55,9 +55,13 @@ void crazypod_menu_screen_render(
     int start;
     int row;
     lv_obj_t *header;
+    bool media_list =
+        (state->route >= MUSIC_ROUTE_MENU &&
+         state->route <= MUSIC_ROUTE_QUEUE) ||
+        state->route == PODCASTS_ROUTE_MENU;
 
     crazypod_menu_list_reset(state->route);
-    if(state->route == MUSIC_ROUTE_MENU) {
+    if(media_list) {
         lv_obj_set_style_bg_color(
             context->parent, lv_color_hex(CRAZYPOD_LM_CANVAS), 0);
         lv_obj_set_style_bg_opa(
@@ -66,7 +70,7 @@ void crazypod_menu_screen_render(
     header = make_label(context->parent, crazypod_route_query_title(state),
                         context->metadata_font,
                         COLOR_WHITE,
-                        state->route == MUSIC_ROUTE_MENU ? 210 : 85);
+                        media_list ? 210 : 85);
     lv_obj_set_pos(header, CRAZYPOD_MENU_HEADER_X,
                    CRAZYPOD_MENU_HEADER_Y);
     lv_obj_set_width(header, CRAZYPOD_MENU_HEADER_WIDTH);
@@ -171,11 +175,11 @@ void crazypod_menu_screen_render(
                            CRAZYPOD_MENU_ROW_X, y,
                            CRAZYPOD_MENU_ROW_WIDTH,
                            CRAZYPOD_MENU_ROW_HEIGHT, 8,
-                           state->route == MUSIC_ROUTE_MENU
+                           media_list
                                ? CRAZYPOD_LM_GLASS :
                                selected ? context->primary_color :
                                    context->panel_color,
-                           selected ? (state->route == MUSIC_ROUTE_MENU
+                           selected ? (media_list
                                ? CRAZYPOD_LM_FOCUS_FILL_OPA : 220) :
                                LV_OPA_TRANSP);
         if(selected) {
@@ -189,7 +193,7 @@ void crazypod_menu_screen_render(
             lv_obj_set_style_border_color(row_box,
                                            lv_color_hex(COLOR_WHITE), 0);
             lv_obj_set_style_border_opa(
-                row_box, state->route == MUSIC_ROUTE_MENU
+                row_box, media_list
                     ? CRAZYPOD_LM_FOCUS_BORDER_OPA : 90, 0);
         }
 

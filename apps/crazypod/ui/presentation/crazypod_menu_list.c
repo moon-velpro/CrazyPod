@@ -75,7 +75,10 @@ void crazypod_menu_list_refresh_row(
     lv_opa_t icon_opa, const char *marker_text, lv_opa_t marker_opa)
 {
     lv_obj_t *box;
-    bool music_root = view.route == MUSIC_ROUTE_MENU;
+    bool media_list =
+        (view.route >= MUSIC_ROUTE_MENU &&
+         view.route <= MUSIC_ROUTE_QUEUE) ||
+        view.route == PODCASTS_ROUTE_MENU;
 
     if(row < 0 || row >= CRAZYPOD_MENU_LIST_ROWS)
         return;
@@ -98,21 +101,21 @@ void crazypod_menu_list_refresh_row(
         lv_obj_set_style_text_opa(view.labels[row], label_opa, 0);
     }
     lv_obj_set_style_bg_color(
-        box, lv_color_hex(music_root ? CRAZYPOD_LM_GLASS :
+        box, lv_color_hex(media_list ? CRAZYPOD_LM_GLASS :
             selected ? primary_color : panel_color), 0);
     lv_obj_set_style_bg_opa(
-        box, selected ? (music_root ? CRAZYPOD_LM_FOCUS_FILL_OPA :
+        box, selected ? (media_list ? CRAZYPOD_LM_FOCUS_FILL_OPA :
             220) : LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(box, selected ? 1 : 0, 0);
     lv_obj_set_style_border_color(
         box, lv_color_hex(CRAZYPOD_LM_TEXT), 0);
     lv_obj_set_style_border_opa(
-        box, selected ? (music_root ?
+        box, selected ? (media_list ?
             CRAZYPOD_LM_FOCUS_BORDER_OPA : 90) : 0, 0);
     lv_obj_set_style_bg_grad_dir(
-        box, selected && gradient && !music_root ?
+        box, selected && gradient && !media_list ?
             LV_GRAD_DIR_HOR : LV_GRAD_DIR_NONE, 0);
-    if(selected && gradient && !music_root)
+    if(selected && gradient && !media_list)
         lv_obj_set_style_bg_grad_color(
             box, lv_color_hex(secondary_color), 0);
 
