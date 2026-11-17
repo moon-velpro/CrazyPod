@@ -24,6 +24,7 @@ struct crazypod_music_activation_host {
     int (*initial_album_index)(void);
     void (*request_now_playing)(void);
     void (*show_now_actions)(void);
+    void (*shuffle_all)(void);
 };
 
 typedef lv_obj_t *(*crazypod_music_panel_factory)(
