@@ -13,6 +13,7 @@
 
 #include "../../crazypod_screen_recording.h"
 #include "../presentation/crazypod_ui_widgets.h"
+#include "../presentation/crazypod_private_icon_assets.h"
 #include "crazypod_status_bar.h"
 
 #define STATUS_WHITE 0xFFFFFF
@@ -44,6 +45,33 @@ static struct status_bar *status_bar_at(int index)
     return &status_bars[index];
 }
 
+/* Draw a privately supplied Apple-reference symbol when explicitly
+ * linked. Otherwise keep the established label-based status bar. */
+static lv_obj_t *make_status_symbol(
+    lv_obj_t *parent, enum crazypod_menu_icon semantic,
+    const char *fallback, const lv_font_t *font,
+    int size, uint32_t color)
+{
+    const lv_image_dsc_t *private_icon =
+        crazypod_private_icon_menu(semantic);
+
+    if(private_icon != NULL) {
+        lv_obj_t *image = lv_image_create(parent);
+
+        lv_image_set_src(image, private_icon);
+        lv_image_set_scale(
+            image, size * LV_SCALE_NONE / private_icon->header.w);
+        lv_obj_set_style_image_recolor(
+            image, lv_color_hex(color), 0);
+        lv_obj_set_style_image_recolor_opa(
+            image, LV_OPA_COVER, 0);
+        lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
+        return image;
+    }
+    return crazypod_ui_widget_label(
+        parent, fallback, font, color, LV_OPA_COVER);
+}
+
 void crazypod_status_bar_create(int index, lv_obj_t *screen)
 {
     struct status_bar *bar = status_bar_at(index);
@@ -55,9 +83,10 @@ void crazypod_status_bar_create(int index, lv_obj_t *screen)
         STATUS_WHITE, LV_OPA_COVER);
     lv_obj_set_pos(bar->time, 34, 7);
 
-    bar->playing = crazypod_ui_widget_label(
-        screen, LV_SYMBOL_PLAY, &lv_font_montserrat_10,
-        STATUS_WHITE, LV_OPA_COVER);
+    bar->playing = make_status_symbol(
+        screen, CRAZYPOD_MENU_ICON_NOW_PLAYING,
+        LV_SYMBOL_PLAY, &lv_font_montserrat_10, 10,
+        STATUS_WHITE);
     lv_obj_set_pos(bar->playing, 241, 11);
     lv_obj_add_flag(bar->playing, LV_OBJ_FLAG_HIDDEN);
 
@@ -74,9 +103,10 @@ void crazypod_status_bar_create(int index, lv_obj_t *screen)
     bar->battery_fill = crazypod_ui_widget_box(
         bar->battery, 1, 1, 24, 10, 2,
         STATUS_WHITE, LV_OPA_COVER);
-    bar->charge = crazypod_ui_widget_label(
-        bar->battery, LV_SYMBOL_CHARGE, &lv_font_montserrat_8,
-        STATUS_DARK, LV_OPA_COVER);
+    bar->charge = make_status_symbol(
+        bar->battery, CRAZYPOD_MENU_ICON_CHARGING,
+        LV_SYMBOL_CHARGE, &lv_font_montserrat_8, 8,
+        STATUS_DARK);
     lv_obj_center(bar->charge);
     bar->battery_cap = crazypod_ui_widget_box(
         screen, 287, 15, 2, 5, 1, STATUS_WHITE, 128);
@@ -174,6 +204,8 @@ void crazypod_status_bar_set_palette(
         bar->time, lv_color_hex(foreground), 0);
     lv_obj_set_style_text_color(
         bar->playing, lv_color_hex(foreground), 0);
+    lv_obj_set_style_image_recolor(
+        bar->playing, lv_color_hex(foreground), 0);
     lv_obj_set_style_bg_color(
         bar->battery, lv_color_hex(foreground), 0);
     lv_obj_set_style_bg_color(
@@ -181,6 +213,8 @@ void crazypod_status_bar_set_palette(
     lv_obj_set_style_bg_color(
         bar->battery_cap, lv_color_hex(foreground), 0);
     lv_obj_set_style_text_color(
+        bar->charge, lv_color_hex(background), 0);
+    lv_obj_set_style_image_recolor(
         bar->charge, lv_color_hex(background), 0);
 }
 
