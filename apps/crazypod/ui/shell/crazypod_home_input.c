@@ -2,6 +2,8 @@
 
 #ifdef IPOD_6G
 
+#include <stddef.h>
+
 #include "button.h"
 
 #include "crazypod_home_input.h"
