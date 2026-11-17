@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - design/music-first-2026
+      - refactor/music-only-2026
   workflow_dispatch:
 
 permissions:

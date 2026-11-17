@@ -125,9 +125,6 @@ static void render_photos(
 static void render_utility(
     const struct route_state *state)
 {
-    if(crazypod_miniapps_feature_render_gameboy_preview(
-           state, preview_parent()))
-        return;
     crazypod_organizer_feature_render_preview(
         preview_parent(), state,
         preview.host.item_title(state, state->selected),
