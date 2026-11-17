@@ -122,26 +122,25 @@ static void begin_overlay(int width, int height)
 {
     struct crazypod_popup_geometry geometry =
         crazypod_popup_centered_geometry(width, height);
+    bool replacing = actions.root != NULL;
 
     delete_overlay();
+    /* When switching the quick controls to the adjustment dial, discard
+     * the previous modal before capturing its frosted Home backdrop.
+     * This redraw happens once per modal change, never during wheel scroll. */
+    if(replacing)
+        lv_refr_now(NULL);
     actions.root = make_box(
         actions.parent, 0, 0, LCD_WIDTH, LCD_HEIGHT,
         0, 0x365675, 65);
     lv_obj_remove_flag(actions.root, LV_OBJ_FLAG_CLICKABLE);
     (void)crazypod_desktop_native_create_modal_underlay(actions.root);
-    /* Static high-contrast frosted control panel; no live refraction. */
-    actions.panel = make_box(
+    /* GlassVGL-style cached blur + subtle Liquid Glass edge glints:
+     * render the RGB565 material once; keep audio and the wheel hot path
+     * free of live blur, displacement maps and shadow animations. */
+    actions.panel = crazypod_overlay_glass_home_controls_panel(
         actions.root, geometry.x, geometry.y,
-        geometry.width, geometry.height, 18, 0xF6FAFF, 245);
-    lv_obj_set_style_border_width(actions.panel, 1, 0);
-    lv_obj_set_style_border_color(
-        actions.panel, lv_color_hex(COLOR_WHITE), 0);
-    lv_obj_set_style_border_opa(actions.panel, 235, 0);
-    lv_obj_set_style_shadow_width(actions.panel, 10, 0);
-    lv_obj_set_style_shadow_offset_y(actions.panel, 4, 0);
-    lv_obj_set_style_shadow_color(
-        actions.panel, lv_color_hex(0x1C3A58), 0);
-    lv_obj_set_style_shadow_opa(actions.panel, 45, 0);
+        geometry.width, geometry.height);
     crazypod_popup_animate(actions.panel, geometry.y);
 }
 
