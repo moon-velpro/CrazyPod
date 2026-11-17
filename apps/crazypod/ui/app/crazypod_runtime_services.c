@@ -9,6 +9,7 @@
 
 #include "../../crazypod_artwork.h"
 #include "../../crazypod_coverflow.h"
+#include "../../crazypod_frameclock.h"
 #include "../../crazypod_music.h"
 #include "../../crazypod_state.h"
 #include "../features/music/crazypod_music_feature.h"
