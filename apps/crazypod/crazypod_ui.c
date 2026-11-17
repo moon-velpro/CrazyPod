@@ -724,11 +724,10 @@ static uint32_t rockbox_tick_ms(void)
 static bool platform_capture_desktop_native(
     const lv_area_t *area)
 {
-    return !crazypod_lock_screen_is_locked() &&
-        !crazypod_shell_product_active() && !modal_prompt_visible() &&
-        !crazypod_scene_transition_owns_framebuffer() &&
-        area->y1 < CRAZYPOD_DESKTOP_NATIVE_BOTTOM &&
-        area->y2 >= CRAZYPOD_DESKTOP_NATIVE_TOP;
+    /* Home v2 uses LVGL throughout. Its flushed list pixels must not be
+     * captured as the backdrop for the retired native icon compositor. */
+    (void)area;
+    return false;
 }
 
 static void platform_queue_present(

@@ -10,6 +10,7 @@
 #include "../../../crazypod_state.h"
 #include "../../presentation/crazypod_ui_text.h"
 #include "crazypod_music_activation.h"
+#include "crazypod_music_root_menu_model.h"
 
 #define SEARCH_QUERY_SIZE 33
 #define EDITOR_CHARACTER_COUNT 36
@@ -125,8 +126,14 @@ static struct crazypod_music_activation_result activate_search(
 struct crazypod_music_activation_result
 crazypod_music_activation_execute(const struct route_state *state)
 {
-    if(state->route == MUSIC_ROUTE_MENU)
-        return activate_menu(state->selected);
+    if(state->route == MUSIC_ROUTE_MENU) {
+        if(state->selected == CRAZYPOD_MUSIC_ROOT_SHUFFLE)
+            return result(
+                CRAZYPOD_MUSIC_ACTIVATION_SHUFFLE_ALL,
+                MUSIC_ROUTE_MENU, -1);
+        return activate_menu(
+            crazypod_music_root_legacy_index(state->selected));
+    }
     if(state->route == MUSIC_ROUTE_SEARCH)
         return activate_search(state->selected);
     if(state->route == MUSIC_ROUTE_PLAYLISTS)

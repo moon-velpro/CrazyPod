@@ -30,6 +30,7 @@
 #include "../presentation/crazypod_preview_motion.h"
 #include "../shell/crazypod_app_catalog.h"
 #include "../shell/crazypod_desktop.h"
+#include "../shell/crazypod_home_model.h"
 #include "../shell/crazypod_notification.h"
 #include "crazypod_app_launcher.h"
 #include "crazypod_choice_coordinator.h"
@@ -337,26 +338,29 @@ static bool commit_calendar_editor(void)
     return true;
 }
 
+/* Legacy reorder state is still loadable, but it no longer controls the
+ * fixed four-destination Home. Persist app order without changing its focus. */
 static void persist_main_menu(
     enum crazypod_app_id preferred)
 {
-    int next = crazypod_apps_visible_index(preferred);
-
-    if(next < 0)
-        next = crazypod_desktop_selected();
-    if(next >= crazypod_apps_visible_count())
-        next = crazypod_apps_visible_count() - 1;
-    if(next < 0)
-        next = 0;
-    crazypod_desktop_set_selected(next, false);
+    (void)preferred;
     crazypod_state_mark_dirty();
     crazypod_state_save(true);
 }
 
 enum crazypod_app_id crazypod_route_actions_selected_app(void)
 {
-    return crazypod_apps_visible_id(
-        crazypod_desktop_selected());
+    switch(crazypod_desktop_selected()) {
+    case CRAZYPOD_HOME_NOW_PLAYING:
+    case CRAZYPOD_HOME_MUSIC:
+        return CRAZYPOD_APP_MUSIC;
+    case CRAZYPOD_HOME_PODCASTS:
+        return CRAZYPOD_APP_PODCASTS;
+    case CRAZYPOD_HOME_SETTINGS:
+        return CRAZYPOD_APP_SETTINGS;
+    default:
+        return CRAZYPOD_APP_INVALID;
+    }
 }
 
 void crazypod_route_actions_main_menu_changed(
@@ -475,6 +479,20 @@ static void reset_open_note_reader(uint32_t id)
     open_note_reader(id);
 }
 
+/* Reuse the already validated async Shuffle app path.  A Music menu
+ * action does not reopen the retired 17-app Home or add a new route. */
+static void shuffle_all_from_music(void)
+{
+    if(crazypod_music_library_loaded() &&
+       crazypod_music_track_count() == 0) {
+        crazypod_notification_show(
+            CRAZYPOD_NOTIFICATION_ERROR,
+            CP_TR("No track available"));
+        return;
+    }
+    crazypod_app_launcher_open(CRAZYPOD_APP_SHUFFLE);
+}
+
 static bool activate_music(
     struct route_state *state, long now)
 {
@@ -497,6 +515,7 @@ static bool activate_music(
                 crazypod_route_actions_request_now_playing,
             .show_now_actions =
                 crazypod_now_playing_overlay_show_actions,
+            .shuffle_all = shuffle_all_from_music,
         };
 
         return crazypod_music_feature_activate(

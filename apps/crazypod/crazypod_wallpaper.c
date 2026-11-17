@@ -21,6 +21,7 @@
 #include "crazypod_appearance.h"
 #include "crazypod_image.h"
 #include "crazypod_wallpaper.h"
+#include "crazypod_product_geometry.h"
 #include "wallpaper/crazypod_wallpaper_crop_engine.h"
 #include "wallpaper/crazypod_wallpaper_store.h"
 #include "src/misc/cache/instance/lv_image_cache.h"
@@ -33,12 +34,12 @@
 #define WALLPAPER_DECODE_BYTES \
     (WALLPAPER_PIXEL_BYTES + 64 * 1024)
 #define WALLPAPER_PATH "/.rockbox/crazypod/default-home.bmp"
-#define FROSTED_CAPSULE_SIDE_MARGIN 0
-#define FROSTED_CAPSULE_BOTTOM_MARGIN 0
+#define FROSTED_CAPSULE_SIDE_MARGIN CRAZYPOD_PRODUCT_MINIPLAYER_MARGIN
+#define FROSTED_CAPSULE_BOTTOM_MARGIN CRAZYPOD_PRODUCT_MINIPLAYER_BOTTOM
 #define FROSTED_LOCK_MEDIA_SIDE_MARGIN 12
 #define FROSTED_LOCK_MEDIA_BOTTOM_MARGIN 12
 #define FROSTED_CAPSULE_X FROSTED_CAPSULE_SIDE_MARGIN
-#define FROSTED_CAPSULE_Y 174
+#define FROSTED_CAPSULE_Y CRAZYPOD_PRODUCT_MINIPLAYER_Y
 #define FROSTED_CAPSULE_WIDTH \
     (WALLPAPER_WIDTH - FROSTED_CAPSULE_SIDE_MARGIN * 2)
 #define FROSTED_CAPSULE_HEIGHT \

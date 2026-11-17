@@ -27,6 +27,7 @@
 #include "../shell/crazypod_desktop.h"
 #include "../shell/crazypod_home_actions.h"
 #include "../shell/crazypod_home_input.h"
+#include "../shell/crazypod_home_model.h"
 #include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_screenshot_feedback.h"
 #include "crazypod_app_input.h"
@@ -281,11 +282,26 @@ static void confirm_remote_down_hold(long now)
 #endif
 }
 
+/* Product Home selection is independent from legacy app ordering.
+ * Never reinterpret a persisted app ID as a product Home row index. */
 static void home_open_selected_app(void)
 {
-    crazypod_app_launcher_open(
-        crazypod_apps_visible_id(
-            crazypod_desktop_selected()));
+    switch(crazypod_desktop_selected()) {
+    case CRAZYPOD_HOME_NOW_PLAYING:
+        crazypod_app_launcher_open_now_playing();
+        break;
+    case CRAZYPOD_HOME_MUSIC:
+        crazypod_app_launcher_open(CRAZYPOD_APP_MUSIC);
+        break;
+    case CRAZYPOD_HOME_PODCASTS:
+        crazypod_app_launcher_open(CRAZYPOD_APP_PODCASTS);
+        break;
+    case CRAZYPOD_HOME_SETTINGS:
+        crazypod_app_launcher_open(CRAZYPOD_APP_SETTINGS);
+        break;
+    default:
+        break;
+    }
 }
 
 static bool home_play_can_start(void)

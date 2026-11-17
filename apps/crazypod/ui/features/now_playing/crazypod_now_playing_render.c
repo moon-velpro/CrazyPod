@@ -13,11 +13,12 @@
 #include "../../../crazypod_playlist.h"
 #include "../../../crazypod_runtime_font.h"
 #include "../../../crazypod_soundwave.h"
+#include "../../presentation/crazypod_liquid_music.h"
 #include "crazypod_now_playing_feature.h"
 #include "crazypod_now_presentation.h"
 #include "crazypod_now_screen.h"
 
-#define NOW_SHADE_OPA 118
+#define NOW_SHADE_OPA CRAZYPOD_LM_SHADE_OPA
 #define COLOR_WHITE 0xFFFFFF
 
 static struct crazypod_artwork_palette wave_palette;
@@ -41,10 +42,7 @@ static uint32_t text_hash(const char *text)
 static uint32_t artwork_color(
     const char *text, int variant)
 {
-    static const uint32_t palette[] = {
-        0x8A2BE2, 0x1D78F2, 0xE5446D, 0xE4812C,
-        0x13A48C, 0x5A55D6, 0xB0388E, 0x276A82
-    };
+    static const uint32_t palette[] = CRAZYPOD_LM_FALLBACK_PALETTE;
 
     return palette[
         (text_hash(text) + (uint32_t)variant * 3u) %

@@ -11,10 +11,11 @@
 #include "../../../crazypod_coverflow.h"
 #include "../../../crazypod_music.h"
 #include "../../presentation/crazypod_empty_state.h"
+#include "../../presentation/crazypod_liquid_music.h"
 #include "../../presentation/crazypod_ui_widgets.h"
 #include "crazypod_album_flow_screen.h"
 
-#define COLOR_WHITE 0xFFFFFF
+#define COLOR_WHITE CRAZYPOD_LM_TEXT
 
 static lv_obj_t *album_title;
 static lv_obj_t *album_artist;
@@ -58,8 +59,9 @@ void crazypod_album_flow_screen_render(
     const lv_font_t *metadata_font)
 {
     int count = crazypod_music_album_count();
+    lv_obj_t *caption_material;
 
-    lv_obj_set_style_bg_color(parent, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_color(parent, lv_color_hex(CRAZYPOD_LM_CANVAS), 0);
     lv_obj_set_style_bg_opa(parent, LV_OPA_COVER, 0);
     if(count <= 0) {
         crazypod_empty_state_render(
@@ -67,6 +69,18 @@ void crazypod_album_flow_screen_render(
             CP_TR("Add local music and rescan."));
         return;
     }
+
+    /* Keep album covers unobstructed. Put only metadata in a quiet,
+     * low-cost floating control surface below native Cover Flow. */
+    caption_material = crazypod_ui_widget_box(
+        parent, 14, 180, 292, 43, 12,
+        CRAZYPOD_LM_GLASS, CRAZYPOD_LM_GLASS_FILL_OPA);
+    lv_obj_set_style_border_width(caption_material, 1, 0);
+    lv_obj_set_style_border_color(
+        caption_material, lv_color_hex(CRAZYPOD_LM_TEXT), 0);
+    lv_obj_set_style_border_opa(
+        caption_material, CRAZYPOD_LM_GLASS_BORDER_OPA, 0);
+    lv_obj_remove_flag(caption_material, LV_OBJ_FLAG_CLICKABLE);
 
     album_title = make_label(
         parent, "", metadata_font, COLOR_WHITE, LV_OPA_COVER);
@@ -77,19 +91,19 @@ void crazypod_album_flow_screen_render(
     lv_label_set_long_mode(album_title, LV_LABEL_LONG_MODE_DOTS);
     lv_obj_set_pos(album_title, 30, 180);
     album_artist = make_label(
-        parent, "", &lv_font_montserrat_10, COLOR_WHITE, 145);
+        parent, "", &lv_font_montserrat_10, COLOR_WHITE, 180);
     lv_obj_set_width(album_artist, 260);
     lv_obj_set_height(album_artist, 19);
     lv_obj_set_style_text_align(
         album_artist, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_long_mode(album_artist, LV_LABEL_LONG_MODE_DOTS);
-    lv_obj_set_pos(album_artist, 30, 204);
+    lv_obj_set_pos(album_artist, 30, 203);
     album_position = make_label(
-        parent, "", &lv_font_montserrat_8, COLOR_WHITE, 70);
+        parent, "", &lv_font_montserrat_8, COLOR_WHITE, 126);
     lv_obj_set_width(album_position, 60);
     lv_obj_set_style_text_align(
         album_position, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(album_position, 130, 225);
+    lv_obj_set_pos(album_position, 130, 223);
 
     set_metadata(state->selected);
     crazypod_coverflow_enter(state->selected);

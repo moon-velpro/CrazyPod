@@ -28,9 +28,7 @@
 #include "crazypod_menu_preview.h"
 
 #define ARTWORK_CACHE_SIZE 72
-#define NOW_ARTWORK_SIZE 68
-#define FLOW_ARTWORK_SIZE 58
-#define ALBUM_ARTWORK_SIZE 67
+#define MUSIC_ROOT_ARTWORK_SIZE 96
 #define ARTWORK_PRIORITY 20
 #define COLOR_WHITE 0xFFFFFF
 
@@ -55,15 +53,6 @@ static uint32_t secondary_color(void)
 static lv_obj_t *preview_parent(void)
 {
     return crazypod_preview_motion_parent(preview.host.parent);
-}
-
-static bool copy_current_track(struct crazypod_track *track)
-{
-    char path[MAX_PATH];
-
-    return crazypod_queue_copy_path(
-            crazypod_queue_index(), path, sizeof(path)) &&
-        crazypod_music_copy_track(crazypod_music_find_track(path), track);
 }
 
 bool crazypod_menu_preview_is_music_route(
@@ -286,9 +275,6 @@ void crazypod_menu_preview_prefetch(
 {
     struct crazypod_track track;
     bool have_track = false;
-    int i;
-    int count;
-
     if(state == NULL)
         return;
     if(state->route >= PHOTOS_ROUTE_MENU &&
@@ -297,32 +283,14 @@ void crazypod_menu_preview_prefetch(
         return;
     }
     if(state->route == MUSIC_ROUTE_MENU) {
-        if(state->selected == 0) {
-            have_track = copy_current_track(&track);
-            if(have_track)
-                (void)crazypod_artwork_load_priority(
-                    CRAZYPOD_PREVIEW_ARTWORK_SLOT, &track,
-                    NOW_ARTWORK_SIZE, ARTWORK_PRIORITY);
-        }
-        else if(state->selected == 1) {
-            count = crazypod_music_album_count();
-            for(i = 0; i < 3 && i < count; ++i) {
-                have_track = crazypod_music_copy_album_track(i, 0, &track);
-                if(have_track)
-                    (void)crazypod_artwork_load_priority(
-                        CRAZYPOD_MENU_PREVIEW_FLOW_SLOT_BASE + i,
-                        &track, FLOW_ARTWORK_SIZE,
-                        ARTWORK_PRIORITY);
-            }
-        }
-        else if(state->selected == 5 &&
-                crazypod_music_album_count() > 0) {
-            have_track = crazypod_music_copy_album_track(0, 0, &track);
-            if(have_track)
-                (void)crazypod_artwork_load_priority(
-                    CRAZYPOD_PREVIEW_ARTWORK_SLOT, &track,
-                    ALBUM_ARTWORK_SIZE, ARTWORK_PRIORITY);
-        }
+        /* New Music order: Albums(0), Artists, Songs, Playlists,
+         * Cover Flow(4), Search. Only cover-bearing pages prefetch. */
+        if((state->selected == 0 || state->selected == 4) &&
+           crazypod_music_album_count() > 0 &&
+           crazypod_music_copy_album_track(0, 0, &track))
+            (void)crazypod_artwork_load_priority(
+                CRAZYPOD_PREVIEW_ARTWORK_SLOT, &track,
+                MUSIC_ROOT_ARTWORK_SIZE, ARTWORK_PRIORITY);
         return;
     }
     if(state->route == MUSIC_ROUTE_ALBUMS)

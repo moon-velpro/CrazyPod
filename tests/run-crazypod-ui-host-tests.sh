@@ -61,6 +61,24 @@ cc -std=c99 -Wall -Wextra -Werror \
 "$test_root/crazypod_notes_host_test" "$test_root/notes"
 
 cc -std=c99 -Wall -Wextra -Werror \
+    "$repo_root/tests/crazypod_liquid_music_host_test.c" \
+    -o "$test_root/crazypod_liquid_music_host_test"
+
+"$test_root/crazypod_liquid_music_host_test"
+
+cc -std=c99 -Wall -Wextra -Werror \
+    "$repo_root/tests/crazypod_music_root_menu_host_test.c" \
+    -o "$test_root/crazypod_music_root_menu_host_test"
+
+"$test_root/crazypod_music_root_menu_host_test"
+
+cc -std=c99 -Wall -Wextra -Werror \
+    "$repo_root/tests/crazypod_home_model_host_test.c" \
+    -o "$test_root/crazypod_home_model_host_test"
+
+"$test_root/crazypod_home_model_host_test"
+
+cc -std=c99 -Wall -Wextra -Werror \
     -I"$repo_root/tests/crazypod-home-input-stubs" \
     -I"$repo_root/apps/crazypod/ui" \
     "$repo_root/apps/crazypod/ui/navigation/crazypod_input_event.c" \

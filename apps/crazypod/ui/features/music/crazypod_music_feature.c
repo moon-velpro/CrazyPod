@@ -14,6 +14,7 @@
 #include "crazypod_music_input.h"
 #include "crazypod_music_item_preview.h"
 #include "crazypod_music_root_preview.h"
+#include "crazypod_music_root_menu_model.h"
 #include "crazypod_album_flow_screen.h"
 #include "crazypod_search_screen.h"
 #include "crazypod_music_feature.h"
@@ -84,7 +85,7 @@ int crazypod_music_feature_item_count(
 {
     switch(state->route) {
     case MUSIC_ROUTE_MENU:
-        return 8;
+        return CRAZYPOD_MUSIC_ROOT_COUNT;
     case MUSIC_ROUTE_ALBUM_FLOW:
     case MUSIC_ROUTE_ALBUMS:
         return crazypod_music_album_count();
@@ -176,11 +177,16 @@ bool crazypod_music_feature_item_title(
 
     switch(state->route) {
     case MUSIC_ROUTE_MENU: {
+        if(index == CRAZYPOD_MUSIC_ROOT_SHUFFLE) {
+            *title = CP_TR("Shuffle");
+            return true;
+        }
         static const char *const titles[] = {
-            CP_TR("Now Playing"), CP_TR("Album Flow"), CP_TR("All Music"), CP_TR("Playlists"),
+            CP_TR("Now Playing"), CP_TR("Cover Flow"), CP_TR("All Music"), CP_TR("Playlists"),
             CP_TR("Artists"), CP_TR("Albums"), CP_TR("Songs"), CP_TR("Search")
         };
 
+        index = crazypod_music_root_legacy_index(index);
         *title = index >= 0 && index < 8 ? titles[index] : "";
         return true;
     }
@@ -283,7 +289,11 @@ enum crazypod_menu_icon crazypod_music_feature_item_icon(
         return CRAZYPOD_MENU_ICON_NONE;
     switch(state->route) {
     case MUSIC_ROUTE_MENU:
-        return index < (int)(sizeof(root_icons) / sizeof(root_icons[0]))
+        if(index == CRAZYPOD_MUSIC_ROOT_SHUFFLE)
+            return CRAZYPOD_MENU_ICON_SHUFFLE;
+        index = crazypod_music_root_legacy_index(index);
+        return index >= 0 &&
+            index < (int)(sizeof(root_icons) / sizeof(root_icons[0]))
             ? root_icons[index] : CRAZYPOD_MENU_ICON_NONE;
     case MUSIC_ROUTE_ALBUM_FLOW:
     case MUSIC_ROUTE_ALBUMS:
@@ -385,6 +395,9 @@ bool crazypod_music_feature_activate(
     else if(action.kind ==
             CRAZYPOD_MUSIC_ACTIVATION_SHOW_NOW_ACTIONS)
         host->show_now_actions();
+    else if(action.kind ==
+            CRAZYPOD_MUSIC_ACTIVATION_SHUFFLE_ALL)
+        host->shuffle_all();
     return true;
 }
 
@@ -515,7 +528,9 @@ void crazypod_music_feature_render_root_preview(
     lv_obj_t *parent, int selected, bool defer_media)
 {
     crazypod_music_root_preview_render(
-        parent, selected, defer_media);
+        parent, selected == CRAZYPOD_MUSIC_ROOT_SHUFFLE
+            ? 8 : crazypod_music_root_legacy_index(selected),
+        defer_media);
 }
 
 void crazypod_music_feature_render_item_preview(

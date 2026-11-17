@@ -26,7 +26,6 @@ static enum crazypod_route settings_group_route(int index)
         SETTINGS_ROUTE_PLAYBACK,
         SETTINGS_ROUTE_POWER,
         SETTINGS_ROUTE_CONTROLS,
-        SETTINGS_ROUTE_MAIN_MENU,
     };
 
     if(index < 0 || index >= (int)(sizeof(routes) / sizeof(routes[0])))
