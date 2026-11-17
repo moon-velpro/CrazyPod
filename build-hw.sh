@@ -212,48 +212,8 @@ if [ ! -f rockbox.ipod ]; then
 fi
 verify_stack_alignment
 verify_removed_runtime_absent
-mkdir -p ../dist/miniapps
-find ../dist/miniapps -type f -name 'game2048-*.cpk' -delete
-find ../dist/miniapps -type f -name 'capability-lab-*.cpk' -delete
-find ../dist/miniapps -type f -name 'native-reference-*.cpk' -delete
-find ../dist/miniapps -type f -name 'now-playing-neon-*.cpk' -delete
-find ../dist/miniapps -type f -name 'now-playing-signal-*.cpk' -delete
-GAME2048_PACKAGE="game2048-$(node -p \
-    "require('../miniapps/apps/game2048/crazypod.config.json').manifest.version").cpk"
-CAPABILITY_LAB_PACKAGE="capability-lab-$(node -p \
-    "require('../miniapps/apps/capability-lab/crazypod.config.json').manifest.version").cpk"
-NATIVE_REFERENCE_PACKAGE="native-reference-$(node -p \
-    "require('../miniapps/apps/native-reference/crazypod.config.json').manifest.version").cpk"
-NOW_PLAYING_THEME_PACKAGE="now-playing-neon-$(node -p \
-    "require('../miniapps/themes/atelier-hifi/crazypod.config.json').manifest.version").cpk"
-SIGNAL_THEME_PACKAGE="now-playing-signal-$(node -p \
-    "require('../miniapps/themes/signal-one/crazypod.config.json').manifest.version").cpk"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/apps/game2048 \
-    --target ipod6g \
-    --binary miniapps/apps/game2048/app.arm \
-    --out "../dist/miniapps/$GAME2048_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/apps/capability-lab \
-    --target ipod6g \
-    --binary miniapps/apps/capability-lab/app.arm \
-    --out "../dist/miniapps/$CAPABILITY_LAB_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/apps/native-reference \
-    --target ipod6g \
-    --binary miniapps/apps/native-reference/app.arm \
-    --out "../dist/miniapps/$NATIVE_REFERENCE_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/themes/atelier-hifi \
-    --target ipod6g \
-    --binary miniapps/themes/atelier-hifi/app.arm \
-    --out "../dist/miniapps/$NOW_PLAYING_THEME_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/themes/signal-one \
-    --target ipod6g \
-    --binary miniapps/themes/signal-one/app.arm \
-    --out "../dist/miniapps/$SIGNAL_THEME_PACKAGE"
-
+# MiniApps/CPK packages are retired from the music-only distribution.
+# The native audio firmware is still built using the existing SDK build.
 PACKAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "$PACKAGE_DIR"' EXIT HUP INT TERM
 if [ ! -d ../assets/crazypod-icons ]; then
@@ -268,12 +228,9 @@ mkdir -p "$PACKAGE_DIR/.rockbox/codecs"
 mkdir -p "$PACKAGE_DIR/.rockbox/codepages"
 mkdir -p "$PACKAGE_DIR/.rockbox/fonts"
 mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/icons"
-mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages"
-for content_directory in Music Podcasts Books Pictures Videos Contacts \
-    Calendars MiniApps MiniApps/Games/GB MiniApps/Games/GBC; do
+for content_directory in Music Podcasts; do
     mkdir -p "$PACKAGE_DIR/$content_directory"
 done
-cp ../packaging/gameboy/README.txt "$PACKAGE_DIR/MiniApps/Games/README.txt"
 CODEPAGE_TOOL="$(cd .. && pwd)/tools/codepages"
 CODEPAGE_BUILD_DIR="$PACKAGE_DIR/generated-codepages"
 if [ ! -x "$CODEPAGE_TOOL" ]; then
@@ -294,24 +251,13 @@ if [ ! -x "$RUNTIME_FONT_BUILDER" ]; then
 fi
 "$RUNTIME_FONT_BUILDER" "$PACKAGE_DIR/.rockbox/fonts"
 python3 ../tools/crazypod_runtime_font_audit.py \
-    --font-dir "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot" \
-    ../dist/miniapps/*.cpk
+    --font-dir "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot"
 cp rockbox.ipod "$PACKAGE_DIR/.rockbox/rockbox.ipod"
 [ ! -f rockbox-info.txt ] || cp rockbox-info.txt "$PACKAGE_DIR/.rockbox/rockbox-info.txt"
 cp -R ../assets/crazypod-icons/. \
     "$PACKAGE_DIR/.rockbox/crazypod/icons/"
 cp ../assets/crazypod/default-home.bmp \
     "$PACKAGE_DIR/.rockbox/crazypod/default-home.bmp"
-cp "../dist/miniapps/$GAME2048_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$CAPABILITY_LAB_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$NATIVE_REFERENCE_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$NOW_PLAYING_THEME_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$SIGNAL_THEME_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
 for codec in lib/rbcodec/codecs/*.codec; do
     [ -f "$codec" ] || continue
     case "$codec" in
@@ -323,10 +269,10 @@ rm -f CrazyPod-6G.zip
 (
     cd "$PACKAGE_DIR"
     zip -q -r "$PACKAGE_DIR/../CrazyPod-6G.zip" \
-        .rockbox Music Podcasts Books Pictures Videos Contacts Calendars \
-        MiniApps
+        .rockbox Music Podcasts
 )
 mv "$PACKAGE_DIR/../CrazyPod-6G.zip" CrazyPod-6G.zip
 
+echo "CrazyPod: firmware bytes $(wc -c < rockbox.ipod)"
 echo "CrazyPod: built $(pwd)/rockbox.ipod"
 echo "CrazyPod: packaged $(pwd)/CrazyPod-6G.zip"

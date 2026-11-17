@@ -109,7 +109,6 @@ jobs:
           path: |
             build-hw-ipod6g/rockbox.ipod
             build-hw-ipod6g/CrazyPod-6G.zip
-            dist/miniapps/*.cpk
 
   simulator:
     name: macOS simulator
