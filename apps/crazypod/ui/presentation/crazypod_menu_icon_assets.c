@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "crazypod_menu_icon_assets.h"
+#include "crazypod_private_icon_assets.h"
 
 /*
  * Original CrazyPod monochrome symbols, built from small geometric strokes.
@@ -703,9 +704,14 @@ const lv_image_dsc_t *crazypod_menu_icon_asset(
     enum cp_glyph glyph;
     lv_image_dsc_t *image;
 
+    const lv_image_dsc_t *private_icon;
+
     if(icon <= CRAZYPOD_MENU_ICON_NONE ||
        icon >= CRAZYPOD_MENU_ICON_COUNT)
         return NULL;
+    private_icon = crazypod_private_icon_menu(icon);
+    if(private_icon != NULL)
+        return private_icon;
     glyph = menu_glyph(icon);
     image = &icon_images[glyph];
     if(!icon_built[glyph]) {
