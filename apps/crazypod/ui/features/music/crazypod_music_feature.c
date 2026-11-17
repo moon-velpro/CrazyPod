@@ -14,6 +14,7 @@
 #include "crazypod_music_input.h"
 #include "crazypod_music_item_preview.h"
 #include "crazypod_music_root_preview.h"
+#include "crazypod_music_root_menu_model.h"
 #include "crazypod_album_flow_screen.h"
 #include "crazypod_search_screen.h"
 #include "crazypod_music_feature.h"
@@ -84,7 +85,7 @@ int crazypod_music_feature_item_count(
 {
     switch(state->route) {
     case MUSIC_ROUTE_MENU:
-        return 8;
+        return CRAZYPOD_MUSIC_ROOT_COUNT;
     case MUSIC_ROUTE_ALBUM_FLOW:
     case MUSIC_ROUTE_ALBUMS:
         return crazypod_music_album_count();
@@ -181,6 +182,7 @@ bool crazypod_music_feature_item_title(
             CP_TR("Artists"), CP_TR("Albums"), CP_TR("Songs"), CP_TR("Search")
         };
 
+        index = crazypod_music_root_legacy_index(index);
         *title = index >= 0 && index < 8 ? titles[index] : "";
         return true;
     }
@@ -283,7 +285,9 @@ enum crazypod_menu_icon crazypod_music_feature_item_icon(
         return CRAZYPOD_MENU_ICON_NONE;
     switch(state->route) {
     case MUSIC_ROUTE_MENU:
-        return index < (int)(sizeof(root_icons) / sizeof(root_icons[0]))
+        index = crazypod_music_root_legacy_index(index);
+        return index >= 0 &&
+            index < (int)(sizeof(root_icons) / sizeof(root_icons[0]))
             ? root_icons[index] : CRAZYPOD_MENU_ICON_NONE;
     case MUSIC_ROUTE_ALBUM_FLOW:
     case MUSIC_ROUTE_ALBUMS:
@@ -515,7 +519,7 @@ void crazypod_music_feature_render_root_preview(
     lv_obj_t *parent, int selected, bool defer_media)
 {
     crazypod_music_root_preview_render(
-        parent, selected, defer_media);
+        parent, crazypod_music_root_legacy_index(selected), defer_media);
 }
 
 void crazypod_music_feature_render_item_preview(
