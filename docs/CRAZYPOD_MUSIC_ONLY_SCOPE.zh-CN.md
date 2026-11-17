@@ -119,3 +119,9 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - 将 Click Wheel 的 Play 按键还原为纯播放/暂停，不再进入已被产品路由守卫拒绝的 Notes 文本编辑器分支。
 - 关闭音乐产品界面不再调用 MiniApps 的关闭/重置操作；音乐播放、屏幕切换、资源回收等路径不变。
 - 音乐菜单行刷新和标题获取传入旧运动计时参数 `false, false`，保留 ABI/枚举兼容但不再在滚动过程中查询废弃 Organizer 运行状态。
+
+## 2026-11-18 · 旧应用弹窗从音乐核心断开
+
+- `crazypod_choice_coordinator.c` 只保留设置选项、原生 Now Playing 单一主题及固定主菜单操作。移除废弃 Books 书签/阅读选项、Photos 文件选择与 Customize 外观编辑分支，并禁止旧确认路由经弹窗长按执行删除。
+- 不再让产品公共选项控件直接调用 `crazypod_books_*`、`crazypod_photos_*`、`crazypod_customize_*` 或壁纸改写入口；保存状态、Now Playing、音频和设置选项保留原有回调。
+- 旧接口仍可无操作地返回，不改变持久化菜单编号，也不访问/删除磁盘上的旧用户内容。相关废弃本地化键从全语言目录同步清理。

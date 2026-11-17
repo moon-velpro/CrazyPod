@@ -4,20 +4,11 @@
 
 #ifdef IPOD_6G
 
-#include <string.h>
 
 #include "kernel.h"
 
-#include "../../crazypod_appearance.h"
-#include "../../crazypod_books.h"
 #include "../../crazypod_coverflow.h"
-#include "../../crazypod_icons.h"
-#include "../../crazypod_photos.h"
-#include "../../crazypod_playlist.h"
 #include "../../crazypod_state.h"
-#include "../../crazypod_wallpaper.h"
-#include "../features/books/crazypod_books_feature.h"
-#include "../features/customize/crazypod_customize_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../features/settings/crazypod_settings_feature.h"
 #include "../navigation/crazypod_route_query.h"
@@ -63,26 +54,6 @@ static const struct crazypod_app_descriptor *main_menu_app(int id)
         (enum crazypod_app_id)id);
 }
 
-static bool route_is_confirmation(enum crazypod_route route)
-{
-    switch(route) {
-    case PHOTOS_ROUTE_DELETE_PHOTO_CONFIRM:
-    case PHOTOS_ROUTE_DELETE_VIDEO_CONFIRM:
-    case NOTES_ROUTE_DISCARD_CONFIRM:
-    case NOTES_ROUTE_DELETE_CONFIRM:
-    case NOTES_ROUTE_PERMANENT_CONFIRM:
-    case NOTES_ROUTE_EMPTY_TRASH_CONFIRM:
-    case BOOKS_ROUTE_DELETE_CONFIRM:
-    case CLOCK_ROUTE_SLEEP_TIMER:
-    case WORKOUT_ROUTE_FINISH_CONFIRM:
-    case WORKOUT_ROUTE_DELETE_CONFIRM:
-    case CALENDAR_ROUTE_DELETE_CONFIRM:
-        return true;
-    default:
-        return false;
-    }
-}
-
 static void cancel_hold(bool restore)
 {
     hold_action = CHOICE_HOLD_NONE;
@@ -91,47 +62,19 @@ static void cancel_hold(bool restore)
         crazypod_choice_overlay_cancel_hold_feedback();
 }
 
-static void begin_hold(enum choice_hold_action action, long now)
-{
-    if(action == CHOICE_HOLD_NONE ||
-       hold_action != CHOICE_HOLD_NONE)
-        return;
-    hold_action = action;
-    hold_until = now + ACTION_HOLD_TICKS;
-    crazypod_choice_overlay_begin_hold_feedback(
-        ACTION_HOLD_MS);
-}
-
 static int choice_count(int kind_value, int id, void *context)
 {
-    enum crazypod_choice_kind kind =
-        (enum crazypod_choice_kind)kind_value;
-
+    enum crazypod_choice_kind kind = (enum crazypod_choice_kind)kind_value;
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return CRAZYPOD_ICON_THEME_COUNT;
-    case CRAZYPOD_CHOICE_APPEARANCE:
-        return crazypod_customize_feature_choice_count(
-            (enum crazypod_appearance_field)id);
-    case CRAZYPOD_CHOICE_BACKGROUND:
-        return CRAZYPOD_APPEARANCE_COLOR_COUNT + 2;
     case CRAZYPOD_CHOICE_SETTING:
         return crazypod_settings_feature_choice_count(id);
-    case CRAZYPOD_CHOICE_BOOK_FONT_SIZE:
-        return 3;
-    case CRAZYPOD_CHOICE_BOOK_THEME:
-        return 4;
-    case CRAZYPOD_CHOICE_BOOK_READER_ACTIONS:
-        return 2;
     case CRAZYPOD_CHOICE_NOW_PLAYING_THEME:
         return crazypod_now_playing_theme_choice_count();
     case CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS:
-        return crazypod_apps_is_fixed(
-            (enum crazypod_app_id)id) ? 1 : 2;
+        return crazypod_apps_is_fixed((enum crazypod_app_id)id) ? 1 : 2;
     case CRAZYPOD_CHOICE_ROUTE_ACTIONS: {
         const struct route_state *state = route_action_current();
-
         return state != NULL && host.item_count != NULL
             ? host.item_count(state) : 0;
     }
@@ -144,50 +87,23 @@ static int choice_count(int kind_value, int id, void *context)
 
 static int current_index(int kind_value, int id, void *context)
 {
-    enum crazypod_choice_kind kind =
-        (enum crazypod_choice_kind)kind_value;
-    const struct crazypod_appearance *appearance =
-        crazypod_appearance_get();
-
+    enum crazypod_choice_kind kind = (enum crazypod_choice_kind)kind_value;
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return appearance->icon_theme;
-    case CRAZYPOD_CHOICE_APPEARANCE:
-        return crazypod_customize_feature_choice_index(
-            (enum crazypod_appearance_field)id);
-    case CRAZYPOD_CHOICE_BACKGROUND: {
-        const char *path =
-            crazypod_customize_feature_background_wallpaper(id);
-
-        return path[0] != '\0'
-            ? CRAZYPOD_APPEARANCE_COLOR_COUNT + 1
-            : crazypod_customize_feature_field_value(id);
-    }
     case CRAZYPOD_CHOICE_SETTING:
         return crazypod_settings_feature_choice_index(id);
-    case CRAZYPOD_CHOICE_BOOK_FONT_SIZE:
-        return crazypod_books_font_size();
-    case CRAZYPOD_CHOICE_BOOK_THEME:
-        return crazypod_books_theme();
-    case CRAZYPOD_CHOICE_BOOK_READER_ACTIONS:
-        return -1;
     case CRAZYPOD_CHOICE_NOW_PLAYING_THEME: {
         int index;
         int count = crazypod_now_playing_theme_choice_count();
-
-        for(index = 0; index < count; ++index) {
+        for(index = 0; index < count; ++index)
             if(crazypod_now_playing_theme_choice_current(index))
                 return index;
-        }
         return 0;
     }
     case CRAZYPOD_CHOICE_ROUTE_ACTIONS: {
         const struct route_state *state = route_action_current();
-
         return state != NULL && host.item_is_current != NULL &&
-            host.item_is_current(state, state->selected)
-                ? state->selected : -1;
+            host.item_is_current(state, state->selected) ? state->selected : -1;
     }
     case CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS:
     case CRAZYPOD_CHOICE_RECEIPT:
@@ -197,97 +113,39 @@ static int current_index(int kind_value, int id, void *context)
     }
 }
 
-static const char *choice_title(
-    int kind_value, int id, void *context)
+static const char *choice_title(int kind_value, int id, void *context)
 {
-    enum crazypod_choice_kind kind =
-        (enum crazypod_choice_kind)kind_value;
-
+    enum crazypod_choice_kind kind = (enum crazypod_choice_kind)kind_value;
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return CP_TR("ICON THEME");
-    case CRAZYPOD_CHOICE_APPEARANCE:
-        return crazypod_customize_feature_field_title(id);
-    case CRAZYPOD_CHOICE_BACKGROUND:
-        return crazypod_customize_feature_background_title(id);
     case CRAZYPOD_CHOICE_SETTING:
         return crazypod_settings_feature_choice_item_title(id);
-    case CRAZYPOD_CHOICE_BOOK_FONT_SIZE:
-        return CP_TR("TEXT SIZE");
-    case CRAZYPOD_CHOICE_BOOK_THEME:
-        return CP_TR("PAGE THEME");
-    case CRAZYPOD_CHOICE_BOOK_READER_ACTIONS:
-        return CP_TR("BOOK ACTIONS");
     case CRAZYPOD_CHOICE_NOW_PLAYING_THEME:
         return CP_TR("Themes");
     case CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS: {
-        const struct crazypod_app_descriptor *app =
-            main_menu_app(id);
-
+        const struct crazypod_app_descriptor *app = main_menu_app(id);
         return app != NULL ? app->name : CP_TR("MAIN MENU");
     }
     case CRAZYPOD_CHOICE_ROUTE_ACTIONS: {
         const struct route_state *state = route_action_current();
-
-        return state != NULL
-            ? crazypod_route_query_title(state) : "";
+        return state != NULL ? crazypod_route_query_title(state) : "";
     }
-    case CRAZYPOD_CHOICE_RECEIPT:
-        return "";
     default:
         return "";
     }
 }
 
-static const char *item_title(
-    int kind_value, int id, int index, void *context)
+static const char *item_title(int kind_value, int id, int index, void *context)
 {
-    enum crazypod_choice_kind kind =
-        (enum crazypod_choice_kind)kind_value;
-
+    enum crazypod_choice_kind kind = (enum crazypod_choice_kind)kind_value;
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return crazypod_icon_theme_name(index);
-    case CRAZYPOD_CHOICE_APPEARANCE:
-        return crazypod_customize_feature_choice_title(
-            id, index);
-    case CRAZYPOD_CHOICE_BACKGROUND:
-        if(index == 0)
-            return CP_TR("Default");
-        return index <= CRAZYPOD_APPEARANCE_COLOR_COUNT
-            ? crazypod_appearance_color_name(index - 1)
-            : CP_TR("Choose Picture");
     case CRAZYPOD_CHOICE_SETTING:
         return crazypod_settings_feature_choice_title(id, index);
-    case CRAZYPOD_CHOICE_BOOK_FONT_SIZE: {
-        static const char *const sizes[] = {
-            CP_TR("Small  ·  12 pt"), CP_TR("Medium  ·  14 pt"),
-            CP_TR("Large  ·  16 pt")
-        };
-
-        return index >= 0 && index < 3 ? sizes[index] : "";
-    }
-    case CRAZYPOD_CHOICE_BOOK_THEME: {
-        static const char *const themes[] = {
-            CP_TR("Parchment"), CP_TR("Light"), CP_TR("Mint"), CP_TR("Dark")
-        };
-
-        return index >= 0 && index < 4 ? themes[index] : "";
-    }
-    case CRAZYPOD_CHOICE_BOOK_READER_ACTIONS:
-        if(index == 0)
-            return crazypod_books_feature_reader_page_bookmarked()
-                ? CP_TR("Remove Bookmark")
-                : CP_TR("Add Bookmark");
-        return index == 1 ? CP_TR("Playback Queue") : "";
     case CRAZYPOD_CHOICE_NOW_PLAYING_THEME:
         return crazypod_now_playing_theme_choice_title(index);
     case CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS: {
-        enum crazypod_app_id app_id =
-            (enum crazypod_app_id)id;
-
+        enum crazypod_app_id app_id = (enum crazypod_app_id)id;
         if(crazypod_apps_is_fixed(app_id))
             return index == 0 ? CP_TR("Move") : "";
         if(index == 0)
@@ -297,87 +155,27 @@ static const char *item_title(
     }
     case CRAZYPOD_CHOICE_ROUTE_ACTIONS: {
         const struct route_state *state = route_action_current();
-
         return state != NULL && host.item_title != NULL
             ? host.item_title(state, index) : "";
     }
-    case CRAZYPOD_CHOICE_RECEIPT:
-        return "";
     default:
         return "";
     }
 }
 
-static bool item_color(
-    int kind_value, int id, int index,
+static bool item_color(int kind_value, int id, int index,
     uint32_t *color, void *context)
 {
-    enum crazypod_choice_kind kind =
-        (enum crazypod_choice_kind)kind_value;
-
+    enum crazypod_choice_kind kind = (enum crazypod_choice_kind)kind_value;
     (void)context;
     if(color == NULL)
         return false;
-    if(kind == CRAZYPOD_CHOICE_APPEARANCE) {
-        enum crazypod_appearance_field field =
-            (enum crazypod_appearance_field)id;
-
-        if(field == CRAZYPOD_APPEARANCE_PRIMARY ||
-           field == CRAZYPOD_APPEARANCE_SECONDARY) {
-            *color = crazypod_appearance_color(
-                crazypod_customize_feature_choice_value(
-                    field, index));
-            return true;
-        }
-    }
-    if(kind == CRAZYPOD_CHOICE_BACKGROUND) {
-        *color = index > 0 &&
-            index <= CRAZYPOD_APPEARANCE_COLOR_COUNT
-                ? crazypod_appearance_color(index - 1)
-                : crazypod_customize_feature_background_color(id);
-        return true;
-    }
-    if(kind == CRAZYPOD_CHOICE_BOOK_THEME &&
-       index >= 0 && index < 4) {
-        *color =
-            crazypod_books_feature_page_colors()[index];
-        return true;
-    }
     if(kind == CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS) {
-        enum crazypod_app_id app_id =
-            (enum crazypod_app_id)id;
-
-        if(!crazypod_apps_is_fixed(app_id) && index == 0)
-            *color = crazypod_apps_is_enabled(app_id)
-                ? 0xFF4D59 : 0x47E69A;
-        else
-            *color = 0x2EBFFF;
+        enum crazypod_app_id app_id = (enum crazypod_app_id)id;
+        *color = !crazypod_apps_is_fixed(app_id) && index == 0
+            ? (crazypod_apps_is_enabled(app_id) ? 0xFF4D59 : 0x47E69A)
+            : 0x2EBFFF;
         return true;
-    }
-    if(kind == CRAZYPOD_CHOICE_BOOK_READER_ACTIONS) {
-        *color = index == 0 ? 0x47E69A : 0x2EBFFF;
-        return true;
-    }
-    if(kind == CRAZYPOD_CHOICE_ROUTE_ACTIONS) {
-        const struct route_state *state = route_action_current();
-
-        if(state == NULL)
-            return false;
-        if(route_is_confirmation(state->route) ||
-           (state->route == NOTES_ROUTE_EXIT_ACTIONS && index == 2) ||
-           (state->route == NOTES_ROUTE_ACTIONS && index == 3) ||
-           (state->route == NOTES_ROUTE_DELETED_ACTIONS && index == 1) ||
-           (state->route == BOOKS_ROUTE_ACTIONS && index == 5) ||
-           (state->route == CALENDAR_ROUTE_ACTIONS && index == 1) ||
-           (state->route == DIY_ROUTE_PRESET_EDIT && index == 2)) {
-            *color = 0xFF4D59;
-            return true;
-        }
-        if((state->route == NOTES_ROUTE_EXIT_ACTIONS && index == 0) ||
-           (state->route == NOTES_ROUTE_DELETED_ACTIONS && index == 0)) {
-            *color = 0x47E69A;
-            return true;
-        }
     }
     return false;
 }
@@ -390,8 +188,7 @@ static bool action_layout(
 
     (void)id;
     (void)context;
-    return kind == CRAZYPOD_CHOICE_BOOK_READER_ACTIONS ||
-        kind == CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS ||
+    return kind == CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS ||
         kind == CRAZYPOD_CHOICE_ROUTE_ACTIONS;
 }
 
@@ -416,19 +213,6 @@ static void animate_panel(
 {
     (void)context;
     crazypod_popup_animate(panel, target_y);
-}
-
-static int photo_index_for_path(const char *path)
-{
-    int index;
-
-    if(path == NULL || path[0] == '\0')
-        return 0;
-    for(index = 0; index < crazypod_photo_count(); ++index) {
-        if(strcmp(path, crazypod_photo_path(index)) == 0)
-            return index;
-    }
-    return 0;
 }
 
 void crazypod_choice_coordinator_configure(
@@ -497,24 +281,13 @@ void crazypod_choice_coordinator_show(
 
 void crazypod_choice_coordinator_show_book_reader_actions(void)
 {
-    crazypod_choice_coordinator_show(
-        CRAZYPOD_CHOICE_BOOK_READER_ACTIONS, -1, 0);
+    /* Old public API; the music edition has no reader modal. */
 }
 
 bool crazypod_choice_coordinator_handle_select_repeat(void)
 {
-    const struct route_state *state;
-
-    if(crazypod_choice_overlay_receipt_visible())
-        return false;
-    if(crazypod_choice_overlay_kind() ==
-           CRAZYPOD_CHOICE_BOOK_READER_ACTIONS)
-        return crazypod_choice_overlay_selected() == 0;
-    if(crazypod_choice_overlay_kind() !=
-           CRAZYPOD_CHOICE_ROUTE_ACTIONS)
-        return false;
-    state = route_action_current();
-    return state != NULL && route_is_confirmation(state->route);
+    /* No destructive long-press action is exposed by music routes. */
+    return false;
 }
 
 bool crazypod_choice_coordinator_cancel_select_hold(void)
@@ -615,8 +388,7 @@ void crazypod_choice_coordinator_move(int direction)
 void crazypod_choice_coordinator_activate(long now)
 {
     enum crazypod_choice_kind kind =
-        (enum crazypod_choice_kind)
-            crazypod_choice_overlay_kind();
+        (enum crazypod_choice_kind)crazypod_choice_overlay_kind();
     int id = crazypod_choice_overlay_id();
     int selected = crazypod_choice_overlay_selected();
 
@@ -626,11 +398,6 @@ void crazypod_choice_coordinator_activate(long now)
         return;
     if(kind == CRAZYPOD_CHOICE_ROUTE_ACTIONS) {
         struct route_state *state = route_action_current();
-
-        if(state != NULL && route_is_confirmation(state->route)) {
-            begin_hold(CHOICE_HOLD_CONFIRMATION, now);
-            return;
-        }
         if(state != NULL && host.activate_route != NULL) {
             state->selected = selected;
             host.activate_route(state, now);
@@ -638,25 +405,20 @@ void crazypod_choice_coordinator_activate(long now)
         return;
     }
     if(kind == CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS) {
-        enum crazypod_app_id app_id =
-            (enum crazypod_app_id)id;
+        enum crazypod_app_id app_id = (enum crazypod_app_id)id;
         bool fixed = crazypod_apps_is_fixed(app_id);
-
-        if((fixed && selected == 0) ||
-           (!fixed && selected == 1)) {
+        if((fixed && selected == 0) || (!fixed && selected == 1)) {
             crazypod_choice_coordinator_dismiss(false);
             if(host.begin_main_menu_reorder != NULL)
                 host.begin_main_menu_reorder(app_id);
             return;
         }
         if(!fixed && selected == 0 &&
-           crazypod_apps_set_enabled(
-               app_id, !crazypod_apps_is_enabled(app_id))) {
+           crazypod_apps_set_enabled(app_id,
+               !crazypod_apps_is_enabled(app_id))) {
             enum crazypod_app_id preferred =
                 host.selected_app != NULL
-                    ? host.selected_app()
-                    : CRAZYPOD_APP_INVALID;
-
+                    ? host.selected_app() : CRAZYPOD_APP_INVALID;
             if(host.main_menu_changed != NULL)
                 host.main_menu_changed(preferred, app_id);
             crazypod_choice_coordinator_show_receipt(
@@ -665,9 +427,7 @@ void crazypod_choice_coordinator_activate(long now)
         return;
     }
     if(kind == CRAZYPOD_CHOICE_NOW_PLAYING_THEME) {
-        bool applied =
-            crazypod_now_playing_theme_select(selected);
-
+        bool applied = crazypod_now_playing_theme_select(selected);
         if(applied && host.appearance_changed != NULL)
             host.appearance_changed();
         crazypod_choice_coordinator_show_receipt(
@@ -675,107 +435,17 @@ void crazypod_choice_coordinator_activate(long now)
             applied, now, applied);
         return;
     }
-    if(kind == CRAZYPOD_CHOICE_BOOK_READER_ACTIONS) {
-        if(selected == 0) {
-            begin_hold(CHOICE_HOLD_BOOKMARK, now);
-            return;
-        }
-        crazypod_choice_coordinator_dismiss(false);
-        host.push_selected(
-            MUSIC_ROUTE_QUEUE, -1,
-            crazypod_queue_index());
-        return;
-    }
-    if(kind == CRAZYPOD_CHOICE_ICON_THEME) {
-        crazypod_appearance_set_icon_theme(selected);
-        host.appearance_changed();
-        crazypod_choice_coordinator_show_receipt(
-            CP_TR("Saved"), true, now, true);
-    }
-    else if(kind == CRAZYPOD_CHOICE_APPEARANCE) {
-        enum crazypod_appearance_field field =
-            (enum crazypod_appearance_field)id;
-
-        crazypod_appearance_set_value(
-            field,
-            crazypod_customize_feature_choice_value(
-                field, selected));
-        host.appearance_changed();
-        crazypod_choice_coordinator_show_receipt(
-            CP_TR("Saved"), true, now, true);
-    }
-    else if(kind == CRAZYPOD_CHOICE_BACKGROUND) {
-        enum crazypod_appearance_field field =
-            (enum crazypod_appearance_field)id;
-        enum crazypod_wallpaper_target target =
-            crazypod_customize_feature_background_target(field);
-
-        if(selected == CRAZYPOD_APPEARANCE_COLOR_COUNT + 1) {
-            const char *path =
-                crazypod_customize_feature_background_wallpaper(field);
-
-            crazypod_photos_set_route_suspended(false);
-            crazypod_photos_ensure_catalog();
-            crazypod_choice_coordinator_dismiss(false);
-            host.push_selected(
-                DIY_ROUTE_WALLPAPER_FILES, field,
-                photo_index_for_path(path));
-        }
-        else {
-            crazypod_wallpaper_clear(target);
-            crazypod_appearance_set_value(field, selected);
-            host.appearance_changed();
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Saved"), true, now, true);
-        }
-    }
-    else if(kind == CRAZYPOD_CHOICE_SETTING) {
-        bool applied =
-            crazypod_settings_feature_apply_choice(id, selected);
-
+    if(kind == CRAZYPOD_CHOICE_SETTING) {
+        bool applied = crazypod_settings_feature_apply_choice(id, selected);
         crazypod_choice_coordinator_show_receipt(
             applied ? CP_TR("Saved") : CP_TR("Failed"),
             applied, now, applied);
     }
-    else if(kind == CRAZYPOD_CHOICE_BOOK_FONT_SIZE) {
-        crazypod_choice_coordinator_dismiss(false);
-        crazypod_books_feature_apply_font_size(selected);
-        crazypod_choice_coordinator_show_receipt(
-            CP_TR("Saved"), true, now, false);
-    }
-    else if(kind == CRAZYPOD_CHOICE_BOOK_THEME) {
-        crazypod_books_set_theme(selected);
-        crazypod_choice_coordinator_show_receipt(
-            CP_TR("Saved"), true, now, true);
-    }
 }
 
-const struct route_state *
-crazypod_choice_coordinator_tick(long now)
+const struct route_state *crazypod_choice_coordinator_tick(long now)
 {
-    const struct route_state *confirmation = NULL;
     bool refresh;
-
-    if(hold_action != CHOICE_HOLD_NONE &&
-       !TIME_BEFORE(now, hold_until)) {
-        enum choice_hold_action completed = hold_action;
-
-        hold_action = CHOICE_HOLD_NONE;
-        hold_until = 0;
-        if(completed == CHOICE_HOLD_BOOKMARK) {
-            bool saved =
-                crazypod_books_feature_toggle_reader_bookmark();
-
-            crazypod_choice_coordinator_show_receipt(
-                saved ? CP_TR("Saved") : CP_TR("Failed"),
-                saved, now, false);
-        }
-        else if(completed == CHOICE_HOLD_CONFIRMATION)
-            confirmation = route_action_current();
-    }
-
-    if(confirmation != NULL)
-        return confirmation;
     if(receipt_until == 0 || TIME_BEFORE(now, receipt_until))
         return NULL;
     refresh = receipt_refresh_route;
@@ -808,40 +478,12 @@ int crazypod_choice_coordinator_wait_ticks(long now)
 bool crazypod_choice_coordinator_route_should_overlay(
     enum crazypod_route route)
 {
-    switch(route) {
-    case SETTINGS_ROUTE_MAIN_MENU_ACTIONS:
-    case NOTES_ROUTE_EXIT_ACTIONS:
-    case NOTES_ROUTE_DISCARD_CONFIRM:
-    case NOTES_ROUTE_ACTIONS:
-    case NOTES_ROUTE_DELETED_ACTIONS:
-    case NOTES_ROUTE_DELETE_CONFIRM:
-    case NOTES_ROUTE_PERMANENT_CONFIRM:
-    case NOTES_ROUTE_EMPTY_TRASH_CONFIRM:
-    case BOOKS_ROUTE_ACTIONS:
-    case BOOKS_ROUTE_DELETE_CONFIRM:
-    case CLOCK_ROUTE_SLEEP_TIMER:
-    case WORKOUT_ROUTE_FINISH_CONFIRM:
-    case WORKOUT_ROUTE_DELETE_CONFIRM:
-    case CALENDAR_ROUTE_ACTIONS:
-    case CALENDAR_ROUTE_DELETE_CONFIRM:
-    case PHOTOS_ROUTE_DELETE_PHOTO_CONFIRM:
-    case PHOTOS_ROUTE_DELETE_VIDEO_CONFIRM:
-    case DIY_ROUTE_PRESET_ACTIONS:
-    case DIY_ROUTE_PRESET_EDIT:
-        return true;
-    default:
-        return false;
-    }
+    return route == SETTINGS_ROUTE_MAIN_MENU_ACTIONS;
 }
 
 bool crazypod_choice_coordinator_confirmation_visible(void)
 {
-    const struct route_state *state = route_action_current();
-
-    return crazypod_choice_overlay_kind() ==
-            CRAZYPOD_CHOICE_ROUTE_ACTIONS &&
-        !crazypod_choice_overlay_receipt_visible() &&
-        state != NULL && route_is_confirmation(state->route);
+    return false;
 }
 
 const struct route_state *

@@ -1389,12 +1389,7 @@
         "apps/crazypod/crazypod_workouts.c:38"
       ]
     },
-    "Dark": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:138"
-      ],
-      "keepEnglish": true
-    },
+
     "Data": {
       "locations": [
         "apps/crazypod/ui/shell/crazypod_usb_prompt.c:146"
@@ -1895,11 +1890,7 @@
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:216"
       ]
     },
-    "Add Bookmark": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:251"
-      ]
-    },
+
     "Hold Center to Delete": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_feature.c:172",
@@ -1923,11 +1914,7 @@
         "apps/crazypod/ui/features/notes/crazypod_notes_feature.c:205"
       ]
     },
-    "Remove Bookmark": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:250"
-      ]
-    },
+
     "Hold Center to Save": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:232"
@@ -2175,11 +2162,7 @@
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:78"
       ]
     },
-    "Large  ·  16 pt": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:131"
-      ]
-    },
+
     "Latest reading activity": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_preview.c:131"
@@ -2216,12 +2199,7 @@
         "apps/crazypod/ui/features/books/crazypod_books_workflow.c:222"
       ]
     },
-    "Light": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:138"
-      ],
-      "keepEnglish": true
-    },
+
     "Liquid Ribbon": {
       "locations": [
         "apps/crazypod/crazypod_soundwave.c:26"
@@ -2433,11 +2411,7 @@
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:195"
       ]
     },
-    "Medium  ·  14 pt": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:130"
-      ]
-    },
+
     "Menu": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:59"
@@ -2464,12 +2438,7 @@
       ],
       "keepEnglish": true
     },
-    "Mint": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:138"
-      ],
-      "keepEnglish": true
-    },
+
     "Missing Book": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_screen.c:141"
@@ -2876,11 +2845,7 @@
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:67"
       ]
     },
-    "PAGE THEME": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:100"
-      ]
-    },
+
     "PAUSED": {
       "locations": [
         "apps/crazypod/crazypod_lcd.c:412",
@@ -2980,12 +2945,7 @@
         "apps/crazypod/ui/features/books/crazypod_books_feature.c:185"
       ]
     },
-    "Parchment": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:138"
-      ],
-      "keepEnglish": true
-    },
+
     "Particle Pulse": {
       "locations": [
         "apps/crazypod/crazypod_soundwave.c:29"
@@ -3039,11 +2999,7 @@
         "apps/crazypod/ui/features/settings/crazypod_settings_catalog.c:13"
       ]
     },
-    "Playback Queue": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:252"
-      ]
-    },
+
     "Playlists": {
       "locations": [
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:166",
@@ -3729,11 +3685,7 @@
         "apps/crazypod/ui/features/settings/crazypod_settings_model.c:53"
       ]
     },
-    "Small  ·  12 pt": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:130"
-      ]
-    },
+
     "Soccer": {
       "locations": [
         "apps/crazypod/crazypod_workouts.c:38"
@@ -3882,11 +3834,7 @@
         "apps/crazypod/ui/features/organizer/crazypod_utility_preview.c:211"
       ]
     },
-    "TEXT SIZE": {
-      "locations": [
-        "apps/crazypod/ui/app/crazypod_choice_coordinator.c:98"
-      ]
-    },
+
     "THU": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_calendar_screen.c:29"

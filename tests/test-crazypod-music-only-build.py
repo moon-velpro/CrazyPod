@@ -85,6 +85,14 @@ def verify() -> None:
                    "CRAZYPOD_APP_LOCK"):
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
+    coordinator = source("apps/crazypod/ui/app/crazypod_choice_coordinator.c")
+    for retired in ("crazypod_books_", "crazypod_customize_",
+                    "crazypod_photos_", "crazypod_photo_",
+                    "crazypod_wallpaper_"):
+        assert retired not in coordinator, retired
+    assert "crazypod_settings_feature_apply_choice(id, selected)" in coordinator
+    assert "crazypod_now_playing_theme_select(selected)" in coordinator
+    assert "return route == SETTINGS_ROUTE_MAIN_MENU_ACTIONS;" in coordinator
     app_input = source("apps/crazypod/ui/app/crazypod_app_input.c")
     rows = source("apps/crazypod/ui/app/crazypod_menu_rows.c")
     assert "crazypod_notes_feature_toggle_editor_field(" not in app_input
