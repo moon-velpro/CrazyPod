@@ -7,9 +7,13 @@
 #include "crazypod_private_icon_assets.h"
 
 #ifdef CRAZYPOD_PRIVATE_ICONS
-/* Generated only by the local, explicitly opted-in private build.
- * This file is excluded from Git and is never part of public CI. */
+/* Fake/controlled data for the C99 host fixture test only; real private
+ * builds include an ignored locally generated source, never a Git blob. */
+#ifdef CRAZYPOD_PRIVATE_ICON_TEST_FIXTURE
+#include <crazypod_private_icon_fixture.inc>
+#else
 #include "crazypod_private_icon_assets.inc"
+#endif
 #endif
 
 const lv_image_dsc_t *crazypod_private_icon_app(
