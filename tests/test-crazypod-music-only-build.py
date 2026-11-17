@@ -93,7 +93,16 @@ def verify() -> None:
     assert "home_selection_last_latency_us" in present_header
     assert "home_selection_over_50ms" in present_header
     assert "home_selection_start_us = crazypod_monotonic_usec();" in present
-    assert "if(!submitted)" in present and "if(home_selection_pending)" in present
+    assert "if(!submitted)" in present
+    assert "if(home_selection_pending && home_selection_frame_ready)" in present
+    assert "crazypod_present_home_selection_frame_flushed();" in startup
+    assert "crazypod_present_home_selection_waiting_for_flush()" in startup
+    assert "crazypod_present_queue_full();" not in desktop, (
+        "Home wheel must not submit the old framebuffer before LVGL redraw"
+    )
+    assert "test_home_selection_waits_for_real_lvgl_flush" in source(
+        "tests/crazypod_frameclock_host_test.c"
+    )
 
 
     # The route ABI is stable, but all retired dispatch paths are inert.
