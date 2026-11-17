@@ -214,7 +214,6 @@ enum crazypod_menu_icon crazypod_settings_feature_item_icon(
         CRAZYPOD_MENU_ICON_PLAYBACK,
         CRAZYPOD_MENU_ICON_POWER,
         CRAZYPOD_MENU_ICON_CONTROLS,
-        CRAZYPOD_MENU_ICON_MENU,
         CRAZYPOD_MENU_ICON_LANGUAGE,
     };
 
