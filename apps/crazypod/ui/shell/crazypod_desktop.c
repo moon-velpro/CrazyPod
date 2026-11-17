@@ -14,6 +14,7 @@
 #include "../../crazypod_product_geometry.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_liquid_music.h"
+#include "../presentation/crazypod_menu_icon_assets.h"
 #include "../presentation/crazypod_ui_widgets.h"
 #include "crazypod_desktop.h"
 #include "crazypod_desktop_native.h"
@@ -79,14 +80,21 @@ static const char *home_entry_title(int index)
     }
 }
 
-static const char *home_entry_symbol(int index)
+/* Four original, visually consistent system-style symbols.
+ * In particular, Podcasts is a radio beacon, never a speaker icon. */
+static enum crazypod_menu_icon home_entry_icon(int index)
 {
     switch(index) {
-    case CRAZYPOD_HOME_NOW_PLAYING: return LV_SYMBOL_PLAY;
-    case CRAZYPOD_HOME_MUSIC: return LV_SYMBOL_AUDIO;
-    case CRAZYPOD_HOME_PODCASTS: return LV_SYMBOL_VOLUME_MID;
-    case CRAZYPOD_HOME_SETTINGS: return LV_SYMBOL_SETTINGS;
-    default: return LV_SYMBOL_RIGHT;
+    case CRAZYPOD_HOME_NOW_PLAYING:
+        return CRAZYPOD_MENU_ICON_NOW_PLAYING;
+    case CRAZYPOD_HOME_MUSIC:
+        return CRAZYPOD_MENU_ICON_MUSIC;
+    case CRAZYPOD_HOME_PODCASTS:
+        return CRAZYPOD_MENU_ICON_PODCAST;
+    case CRAZYPOD_HOME_SETTINGS:
+        return CRAZYPOD_MENU_ICON_SETTINGS;
+    default:
+        return CRAZYPOD_MENU_ICON_NONE;
     }
 }
 
@@ -295,9 +303,14 @@ lv_obj_t *crazypod_desktop_create(
             home_entry_color(i), LV_OPA_COVER);
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
-        home_symbols[i] = crazypod_ui_widget_label(
-            home_badges[i], home_entry_symbol(i),
-            &lv_font_montserrat_12, COLOR_WHITE, LV_OPA_COVER);
+        home_symbols[i] = lv_image_create(home_badges[i]);
+        lv_image_set_src(
+            home_symbols[i],
+            crazypod_menu_icon_asset(home_entry_icon(i)));
+        lv_obj_set_style_image_recolor(
+            home_symbols[i], lv_color_hex(COLOR_WHITE), 0);
+        lv_obj_set_style_image_recolor_opa(
+            home_symbols[i], LV_OPA_COVER, 0);
         lv_obj_center(home_symbols[i]);
         lv_obj_remove_flag(
             home_symbols[i], LV_OBJ_FLAG_CLICKABLE);
