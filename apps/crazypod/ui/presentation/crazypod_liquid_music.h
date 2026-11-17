@@ -50,6 +50,21 @@
  * Keep the presentation's contrast model and fallback model synchronized. */
 #define CRAZYPOD_LM_SHADE_OPA              150
 
+/* Tint the blurred 320x240 cover backdrop from the actual album palette.
+ * Bounded dark channel values preserve readable labels, while the source
+ * artwork remains the main contributor to the changing background. */
+static inline unsigned crazypod_lm_tint_component(unsigned component)
+{
+    return 8u + (component * 76u + 127u) / 255u;
+}
+
+static inline unsigned crazypod_lm_album_shade(unsigned primary)
+{
+    return (crazypod_lm_tint_component((primary >> 16) & 255u) << 16) |
+           (crazypod_lm_tint_component((primary >> 8) & 255u) << 8) |
+           crazypod_lm_tint_component(primary & 255u);
+}
+
 /* Muted, real-device-friendly fallback colors only when cover data
  * is absent. Cached artwork always takes priority over these tones. */
 #define CRAZYPOD_LM_FALLBACK_PALETTE { \
