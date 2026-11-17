@@ -40,6 +40,7 @@ struct crazypod_now_screen_view {
     lv_obj_t *lyrics_next;
     lv_obj_t *wave_surface;
     lv_obj_t *progress_marker;
+    lv_obj_t *transport_status;
     lv_obj_t *elapsed;
     lv_obj_t *remaining;
     bool wave_playing;

@@ -66,6 +66,22 @@ cc -std=c99 -Wall -Wextra -Werror \
 
 "$test_root/crazypod_liquid_music_host_test"
 
+# Video player is no longer linked. Keep the compatibility stubs inert.
+cc -std=c99 -Wall -Wextra -Werror \
+    -I"$repo_root/tests/crazypod-video-stubs" \
+    -I"$repo_root/apps/crazypod" \
+    "$repo_root/apps/crazypod/crazypod_videos_disabled.c" \
+    "$repo_root/tests/crazypod_video_disabled_host_test.c" \
+    -o "$test_root/crazypod_video_disabled_host_test"
+
+"$test_root/crazypod_video_disabled_host_test"
+
+cc -std=c99 -Wall -Wextra -Werror \
+    "$repo_root/tests/crazypod_product_scope_host_test.c" \
+    -o "$test_root/crazypod_product_scope_host_test"
+
+"$test_root/crazypod_product_scope_host_test"
+
 cc -std=c99 -Wall -Wextra -Werror \
     "$repo_root/tests/crazypod_music_root_menu_host_test.c" \
     -o "$test_root/crazypod_music_root_menu_host_test"
@@ -158,6 +174,76 @@ cc -std=c99 -Wall -Wextra -Werror \
     "$repo_root/tests/crazypod_image_host_test.c" \
     -o "$test_root/crazypod_image_host_test"
 
+# Compile the shipping A8 icon rasterizer on Linux as well as on ARM.
+cc -std=c99 -Wall -Wextra -Werror \
+    -I"$repo_root/tests/crazypod-image-stubs" \
+    -I"$repo_root/apps/crazypod/ui" \
+    -I"$repo_root/apps/crazypod/ui/presentation" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_menu_icon_assets.c" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_private_icon_assets.c" \
+    "$repo_root/tests/crazypod_apple_glyph_host_test.c" \
+    -o "$test_root/crazypod_apple_glyph_host_test"
+
+# Public builds must not include embedded Apple/user-supplied bitmap data.
+# Explicit local-only overrides have a separate generated source path.
+cc -std=c99 -Wall -Wextra -Werror \
+    -I"$repo_root/tests/crazypod-image-stubs" \
+    -I"$repo_root/apps/crazypod/ui" \
+    -I"$repo_root/apps/crazypod/ui/presentation" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_iphone_app_icons.c" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_private_icon_assets.c" \
+    "$repo_root/tests/crazypod_iphone_app_icons_host_test.c" \
+    -o "$test_root/crazypod_iphone_app_icons_host_test"
+
+"$test_root/crazypod_iphone_app_icons_host_test"
+
+# Compile a synthetic private icon layer, without downloading or checking
+# in Apple artwork. Verify public fallback and private A8/RGB565A8 links.
+cat > "$test_root/crazypod_private_icon_fixture.inc" <<'END_PRIVATE_ICON_FIXTURE'
+static const uint8_t fixture_app[35 * 35 * 3] = { 0x42 };
+static const lv_image_dsc_t fixture_app_image = {
+    .header.magic = LV_IMAGE_HEADER_MAGIC,
+    .header.cf = LV_COLOR_FORMAT_RGB565A8,
+    .header.w = 35,
+    .header.h = 35,
+    .header.stride = 70,
+    .data_size = sizeof(fixture_app),
+    .data = fixture_app,
+};
+static const uint8_t fixture_menu[14 * 14] = { 0x99 };
+static const lv_image_dsc_t fixture_menu_image = {
+    .header.magic = LV_IMAGE_HEADER_MAGIC,
+    .header.cf = LV_COLOR_FORMAT_A8,
+    .header.w = 14,
+    .header.h = 14,
+    .header.stride = 14,
+    .data_size = sizeof(fixture_menu),
+    .data = fixture_menu,
+};
+static const lv_image_dsc_t *const
+    crazypod_local_app_icons[CRAZYPOD_IPHONE_ICON_COUNT] = {
+    [CRAZYPOD_IPHONE_ICON_MUSIC] = &fixture_app_image,
+};
+static const lv_image_dsc_t *const
+    crazypod_local_menu_icons[CRAZYPOD_MENU_ICON_COUNT] = {
+    [CRAZYPOD_MENU_ICON_BRIGHTNESS] = &fixture_menu_image,
+};
+END_PRIVATE_ICON_FIXTURE
+cc -std=c99 -Wall -Wextra -Werror \
+    -DCRAZYPOD_PRIVATE_ICONS -DCRAZYPOD_PRIVATE_ICON_TEST_FIXTURE \
+    -I"$test_root" \
+    -I"$repo_root/tests/crazypod-image-stubs" \
+    -I"$repo_root/apps/crazypod/ui" \
+    -I"$repo_root/apps/crazypod/ui/presentation" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_private_icon_assets.c" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_menu_icon_assets.c" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_iphone_app_icons.c" \
+    "$repo_root/tests/crazypod_private_icon_fixture_host_test.c" \
+    -o "$test_root/crazypod_private_icon_fixture_host_test"
+"$test_root/crazypod_private_icon_fixture_host_test"
+
+"$test_root/crazypod_apple_glyph_host_test"
+
 "$test_root/crazypod_image_host_test"
 
 cc -std=c99 -Wall -Wextra -Werror \
@@ -206,4 +292,5 @@ cc -std=c99 -Wall -Wextra -Werror \
 "$test_root/crazypod_runtime_font_host_test"
 
 python3 "$repo_root/tests/test-crazypod-menu-icons.py"
+python3 -m py_compile "$repo_root/tools/prepare-crazypod-private-icons.py"
 python3 "$repo_root/tests/test-crazypod-photo-cache-policy.py"

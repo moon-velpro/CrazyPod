@@ -162,6 +162,26 @@ static void test_route_registry(void)
     int route;
 
     assert(crazypod_route_registry_validate());
+    /* Old route numbers retain their descriptors but cannot be opened. */
+    assert(crazypod_route_registry_product_allowed(MUSIC_ROUTE_MENU));
+    assert(crazypod_route_registry_product_allowed(MUSIC_ROUTE_QUEUE));
+    assert(crazypod_route_registry_product_allowed(
+        MUSIC_ROUTE_NOW_PLAYING));
+    assert(crazypod_route_registry_product_allowed(PODCASTS_ROUTE_MENU));
+    assert(crazypod_route_registry_product_allowed(SETTINGS_ROUTE_MENU));
+    assert(crazypod_route_registry_product_allowed(SETTINGS_ROUTE_POWER));
+    assert(!crazypod_route_registry_product_allowed(PHOTOS_ROUTE_VIDEOS));
+    assert(!crazypod_route_registry_product_allowed(BOOKS_ROUTE_READER));
+    assert(!crazypod_route_registry_product_allowed(NOTES_ROUTE_MENU));
+    assert(!crazypod_route_registry_product_allowed(DIY_ROUTE_MENU));
+    assert(!crazypod_route_registry_product_allowed(MINIAPP_ROUTE_VIEW));
+    assert(!crazypod_route_registry_product_allowed(EXTRAS_ROUTE_MENU));
+    assert(!crazypod_route_registry_product_allowed(
+        GAMEBOY_ROUTE_LIBRARY));
+    assert(!crazypod_route_registry_product_allowed(
+        (enum crazypod_route)-1));
+    assert(!crazypod_route_registry_product_allowed(
+        (enum crazypod_route)CRAZYPOD_ROUTE_COUNT));
     for(route = 0; route < CRAZYPOD_ROUTE_COUNT; ++route)
         assert(crazypod_route_registry_get(route) != NULL);
     assert(crazypod_route_registry_is_shell(EXTRAS_ROUTE_MENU));

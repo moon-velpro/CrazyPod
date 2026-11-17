@@ -14,6 +14,8 @@
 #include "../../crazypod_product_geometry.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_liquid_music.h"
+#include "../presentation/crazypod_iphone_app_icons.h"
+#include "../presentation/crazypod_menu_icon_assets.h"
 #include "../presentation/crazypod_ui_widgets.h"
 #include "crazypod_desktop.h"
 #include "crazypod_desktop_native.h"
@@ -29,6 +31,17 @@
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
 #define HOME_ROW_HEIGHT CRAZYPOD_PRODUCT_HOME_ROW_HEIGHT
 #define HOME_ROW_GAP CRAZYPOD_PRODUCT_HOME_ROW_GAP
+#define HOME_REEL_VIEW_TOP CRAZYPOD_PRODUCT_HOME_VIEWPORT_Y
+#define HOME_REEL_VIEW_HEIGHT CRAZYPOD_PRODUCT_HOME_VIEWPORT_HEIGHT
+#define HOME_REEL_STEP CRAZYPOD_PRODUCT_HOME_CARD_STEP
+#define HOME_REEL_TRACK_TOP CRAZYPOD_PRODUCT_HOME_TRACK_PADDING
+#define HOME_SELECTED_WIDTH (HOME_ROW_WIDTH - 16)
+#define HOME_IDLE_WIDTH (HOME_ROW_WIDTH - 54)
+/* Private app PNGs remain local-only; the same objects are reused on
+ * every vertical detent instead of loading/scaling image data again. */
+#define HOME_APP_TILE_SIZE CRAZYPOD_IPHONE_APP_ICON_SIZE
+#define HOME_APP_TILE_X 6
+#define HOME_APP_TILE_Y 2
 #define HOME_WHEEL_POSITIONS 96
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
 #define HOME_WHEEL_RELEASE_TICKS \
@@ -39,8 +52,12 @@ static lv_obj_t *screen;
 static lv_obj_t *wallpaper;
 static lv_obj_t *wallpaper_dim;
 static lv_obj_t *home_headline;
+static lv_obj_t *home_viewport;
+static lv_obj_t *home_reel;
+static lv_obj_t *home_subtitles[CRAZYPOD_HOME_DESTINATION_COUNT];
+static bool home_private_badges[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_badges[CRAZYPOD_HOME_DESTINATION_COUNT];
-static lv_obj_t *home_symbols[CRAZYPOD_HOME_DESTINATION_COUNT];
+static lv_obj_t *home_fallback_glyphs[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_chevrons[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_rows[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_labels[CRAZYPOD_HOME_DESTINATION_COUNT];
@@ -79,37 +96,93 @@ static const char *home_entry_title(int index)
     }
 }
 
-static const char *home_entry_symbol(int index)
+static const char *home_entry_subtitle(int index)
 {
     switch(index) {
-    case CRAZYPOD_HOME_NOW_PLAYING: return LV_SYMBOL_PLAY;
-    case CRAZYPOD_HOME_MUSIC: return LV_SYMBOL_AUDIO;
-    case CRAZYPOD_HOME_PODCASTS: return LV_SYMBOL_VOLUME_MID;
-    case CRAZYPOD_HOME_SETTINGS: return LV_SYMBOL_SETTINGS;
-    default: return LV_SYMBOL_RIGHT;
+    case CRAZYPOD_HOME_NOW_PLAYING: return CP_TR("Playback");
+    case CRAZYPOD_HOME_MUSIC: return CP_TR("Albums");
+    case CRAZYPOD_HOME_PODCASTS: return CP_TR("Continue");
+    case CRAZYPOD_HOME_SETTINGS: return CP_TR("Sound");
+    default: return "";
     }
 }
 
-static uint32_t home_entry_color(int index)
+static void update_home_vertical_scroll(void)
 {
-    static const uint32_t colors[] = {
-        0x527FC0, 0xF24E82, 0x855ED5, 0x63758B
-    };
-
-    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
-        ? colors[index] : colors[0];
+    if(home_reel != NULL)
+        lv_obj_set_y(
+            home_reel, crazypod_home_reel_offset_y(selected_app));
 }
 
-/* A four-row LVGL Home has no native moving band. Request a full,
- * hardware-synchronized present only when selection changes while the
- * physical wheel is touched. Keep unrelated partial LVGL work deferred until
- * release, preserving the Home interaction gate and avoiding unsynced DMA. */
-static void queue_touched_home_selection(void)
+static void update_selection_row(int index)
 {
-#ifdef HAVE_WHEEL_POSITION
-    if(desktop_active && wheel_touch_status())
-        crazypod_present_queue_full();
-#endif
+    bool selected = index == selected_app;
+    int width = selected ? HOME_SELECTED_WIDTH : HOME_IDLE_WIDTH;
+    int height = selected
+        ? CRAZYPOD_PRODUCT_HOME_FOCUSED_HEIGHT :
+          CRAZYPOD_PRODUCT_HOME_IDLE_HEIGHT;
+
+    if(home_rows[index] == NULL || home_labels[index] == NULL)
+        return;
+
+    /* Only the outgoing and incoming cards change depth/typography.
+     * All vertical motion is one track shift, with no PNG decode. */
+    lv_obj_set_x(home_rows[index], selected ? 8 : 27);
+    lv_obj_set_size(home_rows[index], width, height);
+    lv_obj_set_style_bg_opa(
+        home_rows[index], selected ? 240 : 48, 0);
+    lv_obj_set_style_border_opa(
+        home_rows[index], selected ? 200 : LV_OPA_TRANSP, 0);
+    lv_obj_set_style_shadow_opa(
+        home_rows[index], selected ? 34 : 0, 0);
+
+    if(home_badges[index] != NULL) {
+        if(home_private_badges[index]) {
+            /* Image scale is changed only on selection, never decoded. */
+            lv_image_set_scale(
+                home_badges[index],
+                (selected ? 35 : 27) *
+                    LV_SCALE_NONE / HOME_APP_TILE_SIZE);
+            lv_obj_set_pos(
+                home_badges[index],
+                selected ? 15 : 12, selected ? 13 : 11);
+        }
+        else {
+            lv_obj_set_size(
+                home_badges[index],
+                selected ? 35 : 27, selected ? 35 : 27);
+            lv_obj_set_pos(home_badges[index], 7, selected ? 5 : 6);
+        }
+        lv_obj_set_style_opa(
+            home_badges[index], selected ? 255 : 220, 0);
+        if(home_fallback_glyphs[index] != NULL)
+            lv_image_set_scale(
+                home_fallback_glyphs[index],
+                (selected ? 22 : 17) * LV_SCALE_NONE / 14);
+    }
+    lv_obj_set_pos(
+        home_labels[index], selected ? 53 : 43,
+        selected ? 3 : 9);
+    lv_obj_set_width(home_labels[index], width - 77);
+    lv_obj_set_style_text_color(
+        home_labels[index], lv_color_hex(
+            selected ? CRAZYPOD_LM_HOME_TEXT :
+                       CRAZYPOD_LM_HOME_MUTED), 0);
+    if(home_subtitles[index] != NULL) {
+        if(selected)
+            lv_obj_remove_flag(
+                home_subtitles[index], LV_OBJ_FLAG_HIDDEN);
+        else
+            lv_obj_add_flag(
+                home_subtitles[index], LV_OBJ_FLAG_HIDDEN);
+    }
+    if(home_chevrons[index] != NULL) {
+        lv_obj_set_pos(
+            home_chevrons[index], width - 24,
+            selected ? 15 : 12);
+        lv_obj_set_style_opa(
+            home_chevrons[index], selected ? 190 : 94, 0);
+    }
 }
 
 static void update_selection_chrome(void)
@@ -117,43 +190,24 @@ static void update_selection_chrome(void)
     int index;
 
     for(index = 0; index < CRAZYPOD_HOME_DESTINATION_COUNT; ++index) {
-        bool selected = index == selected_app;
-
-        if(home_rows[index] == NULL || home_labels[index] == NULL)
-            continue;
-        CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
-        /* A cool, quiet white material with a dark-ink hierarchy.
-         * No continuous blur/refraction work on the ARM5 playback path. */
+        /* Immutable row chrome is configured once or on appearance change,
+         * never for each physical wheel detent. */
         lv_obj_set_style_bg_color(
             home_rows[index], lv_color_hex(HOME_GLASS), 0);
-        lv_obj_set_style_bg_opa(
-            home_rows[index], selected
-                ? CRAZYPOD_LM_HOME_SELECTED_OPA :
-                  CRAZYPOD_LM_HOME_IDLE_OPA, 0);
         lv_obj_set_style_border_width(home_rows[index], 1, 0);
         lv_obj_set_style_border_color(
-            home_rows[index], lv_color_hex(COLOR_WHITE), 0);
-        lv_obj_set_style_border_opa(
-            home_rows[index], selected
-                ? CRAZYPOD_LM_HOME_RIM_OPA : 96, 0);
-        lv_obj_set_style_text_color(
-            home_labels[index],
-            lv_color_hex(selected
-                ? CRAZYPOD_LM_HOME_TEXT :
-                  CRAZYPOD_LM_HOME_MUTED), 0);
+            home_rows[index],
+            lv_color_hex(CRAZYPOD_LM_HOME_GLASS), 0);
+        CP_LV_LABEL_SET_TEXT(home_labels[index], home_entry_title(index));
         lv_obj_set_style_opa(home_labels[index], LV_OPA_COVER, 0);
-        if(home_badges[index] != NULL)
-            lv_obj_set_style_opa(
-                home_badges[index], selected ? 255 : 229, 0);
-        if(home_chevrons[index] != NULL)
-            lv_obj_set_style_opa(
-                home_chevrons[index], selected ? 190 : 110, 0);
+        update_selection_row(index);
     }
 }
 
 static void layout(void)
 {
     update_selection_chrome();
+    update_home_vertical_scroll();
     if(screen != NULL)
         lv_obj_invalidate(screen);
 }
@@ -176,9 +230,16 @@ static bool set_selected_target(int selected)
 
     if(selected == selected_app)
         return false;
-    selected_app = selected;
-    update_selection_chrome();
-    queue_touched_home_selection();
+    {
+        int previous = selected_app;
+        selected_app = selected;
+        crazypod_present_note_home_selection();
+        /* Only two rows change when a detent lands. Avoid relaying out
+         * and invalidating all four translated Home labels on each tick. */
+        update_selection_row(previous);
+        update_selection_row(selected);
+        update_home_vertical_scroll();
+    }
     return true;
 }
 #endif
@@ -247,6 +308,8 @@ lv_obj_t *crazypod_desktop_create(
     int i;
 
     memset(&desktop_host, 0, sizeof(desktop_host));
+    memset(home_private_badges, 0, sizeof(home_private_badges));
+    memset(home_fallback_glyphs, 0, sizeof(home_fallback_glyphs));
     if(host != NULL)
         desktop_host = *host;
     screen = lv_obj_create(NULL);
@@ -274,37 +337,113 @@ lv_obj_t *crazypod_desktop_create(
     crazypod_status_bar_set_palette(
         0, CRAZYPOD_LM_HOME_TEXT, CRAZYPOD_LM_HOME_GLASS);
 
-    /* A new iPod: type-first identity, not a miniature iPhone launcher. */
+    /* Compact heading above the 3-slot vertical app reel. */
     home_headline = crazypod_ui_widget_label(
-        screen, "iPod", &lv_font_montserrat_24,
+        screen, "iPod", &lv_font_montserrat_16,
         CRAZYPOD_LM_HOME_TEXT, LV_OPA_COVER);
-    lv_obj_set_pos(home_headline, HOME_ROW_X + 7, 32);
+    lv_obj_set_pos(home_headline, HOME_ROW_X + 11, 27);
     lv_obj_remove_flag(home_headline, LV_OBJ_FLAG_CLICKABLE);
 
-    /* Four legible destinations, with no app-carousel icon decoding. */
+    /* The reel is a single clipped scene, not a horizontally paged
+     * iPhone launcher. Moving its track is one O(1) LVGL operation. */
+    home_viewport = lv_obj_create(screen);
+    crazypod_ui_widget_make_plain(home_viewport);
+    lv_obj_set_pos(home_viewport, HOME_ROW_X, HOME_REEL_VIEW_TOP);
+    lv_obj_set_size(
+        home_viewport, HOME_ROW_WIDTH, HOME_REEL_VIEW_HEIGHT);
+    lv_obj_set_style_radius(home_viewport, 10, 0);
+    lv_obj_set_style_clip_corner(home_viewport, true, 0);
+    lv_obj_remove_flag(home_viewport, LV_OBJ_FLAG_CLICKABLE);
+    home_reel = lv_obj_create(home_viewport);
+    crazypod_ui_widget_make_plain(home_reel);
+    lv_obj_set_size(
+        home_reel, HOME_ROW_WIDTH,
+        HOME_REEL_TRACK_TOP +
+        CRAZYPOD_HOME_DESTINATION_COUNT * HOME_REEL_STEP + 70);
+
     for(i = 0; i < CRAZYPOD_HOME_DESTINATION_COUNT; ++i) {
         home_rows[i] = crazypod_ui_widget_box(
-            screen, HOME_ROW_X,
-            HOME_ROW_TOP + i * (HOME_ROW_HEIGHT + HOME_ROW_GAP),
-            HOME_ROW_WIDTH, HOME_ROW_HEIGHT, 14,
+            home_reel, 27,
+            HOME_REEL_TRACK_TOP + i * HOME_REEL_STEP,
+            HOME_IDLE_WIDTH,
+            CRAZYPOD_PRODUCT_HOME_IDLE_HEIGHT, 14,
             HOME_GLASS, LV_OPA_TRANSP);
-        home_badges[i] = crazypod_ui_widget_box(
-            home_rows[i], 7, 3, 19, 19, 6,
-            home_entry_color(i), LV_OPA_COVER);
+        lv_obj_set_style_shadow_width(home_rows[i], 9, 0);
+        lv_obj_set_style_shadow_color(
+            home_rows[i], lv_color_hex(0x647A93), 0);
+        lv_obj_remove_flag(
+            home_rows[i], LV_OBJ_FLAG_CLICKABLE);
+        {
+            const enum crazypod_iphone_app_icon_id app_id =
+                i == CRAZYPOD_HOME_MUSIC ? CRAZYPOD_IPHONE_ICON_MUSIC :
+                i == CRAZYPOD_HOME_PODCASTS
+                    ? CRAZYPOD_IPHONE_ICON_PODCASTS :
+                    CRAZYPOD_IPHONE_ICON_SETTINGS;
+            const lv_image_dsc_t *private_image =
+                i == CRAZYPOD_HOME_NOW_PLAYING
+                    ? NULL : crazypod_iphone_app_icon(app_id);
+
+            if(private_image != NULL) {
+                /* Internal builds: retain the exact user-supplied app
+                 * art and alpha, with zero I/O in the Click Wheel loop. */
+                home_private_badges[i] = true;
+                home_badges[i] = lv_image_create(home_rows[i]);
+                lv_image_set_src(home_badges[i], private_image);
+                lv_obj_set_pos(
+                    home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
+            }
+            else {
+                /* Public/CI builds: original source-drawn app tile.
+                 * Voice Memos is never misidentified as Now Playing. */
+                static const uint32_t tile_colors[] = {
+                    0x253047, 0xFFFFFF, 0xA344CD, 0xC6CCD3
+                };
+                static const uint32_t glyph_colors[] = {
+                    0xFFFFFF, 0xEA3357, 0xFFFFFF, 0x2B3540
+                };
+                static const enum crazypod_menu_icon glyphs[] = {
+                    CRAZYPOD_MENU_ICON_NOW_PLAYING,
+                    CRAZYPOD_MENU_ICON_MUSIC,
+                    CRAZYPOD_MENU_ICON_PODCAST,
+                    CRAZYPOD_MENU_ICON_SETTINGS
+                };
+                lv_obj_t *symbol;
+
+                home_badges[i] = crazypod_ui_widget_box(
+                    home_rows[i], HOME_APP_TILE_X, HOME_APP_TILE_Y,
+                    HOME_APP_TILE_SIZE, HOME_APP_TILE_SIZE, 6,
+                    tile_colors[i], LV_OPA_COVER);
+                symbol = lv_image_create(home_badges[i]);
+                lv_image_set_src(
+                    symbol, crazypod_menu_icon_asset(glyphs[i]));
+                lv_obj_set_style_image_recolor(
+                    symbol, lv_color_hex(glyph_colors[i]), 0);
+                lv_obj_set_style_image_recolor_opa(
+                    symbol, LV_OPA_COVER, 0);
+                lv_obj_center(symbol);
+                home_fallback_glyphs[i] = symbol;
+                lv_obj_remove_flag(symbol, LV_OBJ_FLAG_CLICKABLE);
+            }
+        }
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
-        home_symbols[i] = crazypod_ui_widget_label(
-            home_badges[i], home_entry_symbol(i),
-            &lv_font_montserrat_12, COLOR_WHITE, LV_OPA_COVER);
-        lv_obj_center(home_symbols[i]);
-        lv_obj_remove_flag(
-            home_symbols[i], LV_OBJ_FLAG_CLICKABLE);
         home_labels[i] = crazypod_ui_widget_label(
             home_rows[i], home_entry_title(i),
             body_font, CRAZYPOD_LM_HOME_TEXT, LV_OPA_COVER);
-        lv_obj_set_pos(home_labels[i], 35, 3);
-        lv_obj_set_width(home_labels[i], HOME_ROW_WIDTH - 79);
+        lv_obj_set_pos(home_labels[i], 43, 9);
+        lv_obj_set_width(home_labels[i], HOME_IDLE_WIDTH - 76);
         lv_label_set_long_mode(home_labels[i], LV_LABEL_LONG_MODE_DOTS);
+        home_subtitles[i] = crazypod_ui_widget_label(
+            home_rows[i], home_entry_subtitle(i),
+            &lv_font_montserrat_8,
+            CRAZYPOD_LM_NATIVE_SECONDARY, 205);
+        lv_obj_set_pos(home_subtitles[i], 53, 27);
+        lv_obj_set_width(
+            home_subtitles[i], HOME_SELECTED_WIDTH - 80);
+        lv_label_set_long_mode(
+            home_subtitles[i], LV_LABEL_LONG_MODE_DOTS);
+        lv_obj_add_flag(
+            home_subtitles[i], LV_OBJ_FLAG_HIDDEN);
         home_chevrons[i] = crazypod_ui_widget_label(
             home_rows[i], LV_SYMBOL_RIGHT, &lv_font_montserrat_12,
             CRAZYPOD_LM_HOME_TEXT, 150);
@@ -313,7 +452,9 @@ lv_obj_t *crazypod_desktop_create(
             home_chevrons[i], LV_OBJ_FLAG_CLICKABLE);
     }
     crazypod_now_capsule_create(screen, metadata_font);
-    selected_app = 0;
+    /* Music takes the central focus on the first Home visit, like the
+     * owner's reference; above/below cards remain in vertical order. */
+    selected_app = CRAZYPOD_HOME_MUSIC;
     wheel_last_seen = now;
     wheel_position = -1;
     wheel_detent_accumulator = 0;
@@ -349,21 +490,23 @@ void crazypod_desktop_set_selected(int selected, bool animated)
     changed = selected != selected_app;
     wheel_tracking = false;
     wheel_detent_accumulator = 0;
-    selected_app = selected;
     if(changed) {
-        update_selection_chrome();
-        queue_touched_home_selection();
+        int previous = selected_app;
+        selected_app = selected;
+        if(desktop_active)
+            crazypod_present_note_home_selection();
+        update_selection_row(previous);
+        update_selection_row(selected);
+        update_home_vertical_scroll();
     }
 }
 
 void crazypod_desktop_move_selection(int direction)
 {
-    int count = CRAZYPOD_HOME_DESTINATION_COUNT;
-    int selected = selected_app + direction;
+    int selected = crazypod_home_selection_after_wheel(
+        selected_app, direction);
 
-    if(count <= 1 || direction == 0 ||
-       selected < 0 || selected >= count ||
-       selected == selected_app)
+    if(direction == 0 || selected == selected_app)
         return;
     crazypod_desktop_set_selected(selected, true);
 }
@@ -377,6 +520,9 @@ void crazypod_desktop_set_active(bool active, long now)
 #endif
     if(active)
         return;
+    /* A backgrounded Home cannot satisfy an outstanding selection flush;
+     * clear its metric instead of attributing another screen's frame. */
+    crazypod_present_cancel_home_selection();
     wheel_tracking = false;
     wheel_position = -1;
     wheel_detent_accumulator = 0;

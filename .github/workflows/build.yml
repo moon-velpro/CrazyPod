@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - design/music-first-2026
+      - refactor/music-only-2026
+  pull_request:
+    branches:
+      - main
+      - design/music-first-2026
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -35,12 +41,17 @@ jobs:
             tests/crazypod_music_root_menu_host_test.c \
             -o /tmp/music_root_test
           /tmp/music_root_test
+          cc -std=c99 -Wall -Wextra -Werror \
+            tests/crazypod_product_scope_host_test.c \
+            -o /tmp/product_scope_test
+          /tmp/product_scope_test
       - name: Check architecture and run UI host tests
         run: |
           set -eu
           sh tests/check-crazypod-ui-architecture.sh
           sh tests/run-crazypod-ui-host-tests.sh
           python3 tools/check-crazypod-l10n.py --strict-bare
+          python3 tests/test-crazypod-music-only-build.py
 
   hardware:
     name: iPod 6G firmware
@@ -62,13 +73,6 @@ jobs:
             pkg-config \
             python3 \
             zip
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: tools/miniapp-builder/package-lock.json
 
       - name: Build host font converter
         shell: bash
@@ -104,7 +108,6 @@ jobs:
           path: |
             build-hw-ipod6g/rockbox.ipod
             build-hw-ipod6g/CrazyPod-6G.zip
-            dist/miniapps/*.cpk
 
   simulator:
     name: macOS simulator
@@ -117,13 +120,6 @@ jobs:
         run: |
           brew untap aws/tap || true
           HOMEBREW_NO_AUTO_UPDATE=1 brew install freetype sdl2 ffmpeg pkg-config
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: tools/miniapp-builder/package-lock.json
 
       - name: Build host font converter
         shell: bash

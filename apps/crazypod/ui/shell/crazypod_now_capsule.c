@@ -21,6 +21,7 @@
 #include "../presentation/crazypod_liquid_music.h"
 #include "../presentation/crazypod_marquee.h"
 #include "../presentation/crazypod_ui_widgets.h"
+#include "../presentation/crazypod_private_icon_assets.h"
 #include "crazypod_now_capsule.h"
 
 #define COLOR_WHITE 0xFFFFFF
@@ -58,6 +59,7 @@ struct capsule_view {
     lv_obj_t *progress;
     lv_obj_t *spectrum;
     lv_obj_t *wave_ball;
+    lv_obj_t *play_symbol;
     lv_obj_t *wave_glow;
     lv_obj_t *artwork;
     lv_obj_t *artwork_image;
@@ -299,7 +301,8 @@ void crazypod_now_capsule_refresh_appearance(void)
         lv_obj_set_style_bg_opa(
             capsule.wave_glow, playing ? 30 : 9, 0);
     }
-    if(capsule.spectrum != NULL)
+    if(capsule.spectrum != NULL &&
+       !lv_obj_has_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN))
         lv_obj_invalidate(capsule.spectrum);
 }
 
@@ -369,10 +372,30 @@ void crazypod_now_capsule_create(
     lv_obj_center(capsule.artwork_image);
     lv_obj_remove_flag(capsule.artwork_image, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(capsule.artwork_image, LV_OBJ_FLAG_HIDDEN);
-    capsule.artwork_symbol = crazypod_ui_widget_label(
-        capsule.artwork, LV_SYMBOL_AUDIO,
-        &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_center(capsule.artwork_symbol);
+    {
+        const lv_image_dsc_t *private_symbol =
+            crazypod_private_icon_menu(CRAZYPOD_MENU_ICON_MUSIC);
+
+        if(private_symbol != NULL) {
+            capsule.artwork_symbol = lv_image_create(capsule.artwork);
+            lv_image_set_src(capsule.artwork_symbol, private_symbol);
+            lv_image_set_scale(
+                capsule.artwork_symbol,
+                18 * LV_SCALE_NONE / private_symbol->header.w);
+            lv_obj_set_style_image_recolor(
+                capsule.artwork_symbol, lv_color_hex(COLOR_WHITE), 0);
+            lv_obj_set_style_image_recolor_opa(
+                capsule.artwork_symbol, LV_OPA_COVER, 0);
+            lv_obj_remove_flag(
+                capsule.artwork_symbol, LV_OBJ_FLAG_CLICKABLE);
+        }
+        else {
+            capsule.artwork_symbol = crazypod_ui_widget_label(
+                capsule.artwork, LV_SYMBOL_AUDIO,
+                &lv_font_montserrat_16, COLOR_WHITE, LV_OPA_COVER);
+        }
+        lv_obj_center(capsule.artwork_symbol);
+    }
 
     capsule.track = crazypod_ui_widget_label(
         capsule.root, CP_TR("No Track"), metadata_font,
@@ -408,21 +431,15 @@ void crazypod_now_capsule_create(
     lv_obj_set_style_bg_grad_dir(
         capsule.progress, LV_GRAD_DIR_HOR, 0);
 
+    /* The Home mini player ends in a simple play/pause symbol.
+     * Remove the Android-looking glowing audio orb and its idle animation. */
     capsule.wave_ball = crazypod_ui_widget_box(
         capsule.root,
         248 + CAPSULE_CONTENT_X_OFFSET,
         5 + CAPSULE_CONTENT_Y_OFFSET,
         42, 42,
-        LV_RADIUS_CIRCLE, 0x20252E, LV_OPA_COVER);
-    lv_obj_set_style_bg_grad_color(
-        capsule.wave_ball, lv_color_hex(0x353D49), 0);
-    lv_obj_set_style_bg_grad_dir(
-        capsule.wave_ball, LV_GRAD_DIR_VER, 0);
-    lv_obj_set_style_clip_corner(capsule.wave_ball, true, 0);
-    lv_obj_set_style_border_width(capsule.wave_ball, 1, 0);
-    lv_obj_set_style_border_color(
-        capsule.wave_ball, lv_color_hex(COLOR_WHITE), 0);
-    lv_obj_set_style_border_opa(capsule.wave_ball, 66, 0);
+        LV_RADIUS_CIRCLE, COLOR_WHITE, LV_OPA_TRANSP);
+    lv_obj_set_style_border_width(capsule.wave_ball, 0, 0);
     capsule.wave_glow = crazypod_ui_widget_box(
         capsule.wave_ball, 0, 0, 32, 32,
         LV_RADIUS_CIRCLE, capsule.wave_palette.primary, 82);
@@ -454,6 +471,16 @@ void crazypod_now_capsule_create(
         lv_obj_remove_flag(
             capsule.glass_border[index], LV_OBJ_FLAG_CLICKABLE);
     }
+    /* Preserve the legacy spectrum object only as a hidden compatibility
+     * surface; it no longer invalidates the Home every 100ms. */
+    lv_obj_add_flag(capsule.wave_glow, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN);
+    capsule.play_symbol = crazypod_ui_widget_label(
+        capsule.wave_ball, LV_SYMBOL_PLAY,
+        &lv_font_montserrat_16, CAPSULE_TEXT, LV_OPA_COVER);
+    lv_obj_center(capsule.play_symbol);
+    lv_obj_remove_flag(
+        capsule.play_symbol, LV_OBJ_FLAG_CLICKABLE);
     crazypod_now_capsule_refresh_appearance();
 }
 
@@ -652,7 +679,17 @@ void crazypod_now_capsule_tick(
         capsule.track, home_active && wheel_touch_active);
     crazypod_marquee_set_paused(
         capsule.artist, home_active && wheel_touch_active);
-    if(!home_active || capsule.spectrum == NULL)
+    if(capsule.play_symbol != NULL && home_active) {
+        const char *symbol =
+            (audio_status() & AUDIO_STATUS_PLAY) != 0 &&
+            (audio_status() & AUDIO_STATUS_PAUSE) == 0
+                ? LV_SYMBOL_PAUSE : LV_SYMBOL_PLAY;
+
+        if(strcmp(lv_label_get_text(capsule.play_symbol), symbol) != 0)
+            CP_LV_LABEL_SET_TEXT(capsule.play_symbol, symbol);
+    }
+    if(!home_active || capsule.spectrum == NULL ||
+       lv_obj_has_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN))
         return;
     if(wheel_touch_active) {
         capsule.spectrum_tick = now;

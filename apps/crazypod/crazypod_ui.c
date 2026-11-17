@@ -42,7 +42,6 @@
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
-#include "crazypod_icons.h"
 #include "crazypod_lyrics.h"
 #include "crazypod_l10n.h"
 #include "crazypod_runtime_font.h"
@@ -54,7 +53,6 @@
 #include "crazypod_notes.h"
 #include "crazypod_organizer.h"
 #include "crazypod_playlist.h"
-#include "crazypod_photos.h"
 #include "crazypod_presets.h"
 #include "crazypod_state.h"
 #include "crazypod_ui.h"
@@ -83,7 +81,6 @@
 #include "ui/presentation/crazypod_alpha_jump_hud.h"
 #include "ui/features/books/crazypod_books_feature.h"
 #include "ui/features/notes/crazypod_notes_feature.h"
-#include "ui/features/photos/crazypod_photos_feature.h"
 #include "ui/shell/crazypod_app_catalog.h"
 #include "ui/shell/crazypod_desktop.h"
 #include "ui/shell/crazypod_desktop_native.h"
@@ -106,7 +103,6 @@
 #include "ui/presentation/crazypod_screen_corners.h"
 #include "ui/presentation/crazypod_glass_panel.h"
 #include "ui/presentation/crazypod_glass_sampler.h"
-#include "ui/features/customize/crazypod_customize_feature.h"
 #include "ui/shell/crazypod_lock_screen.h"
 #include "ui/shell/crazypod_now_capsule.h"
 #include "ui/shell/crazypod_power_prompt.h"
@@ -116,7 +112,6 @@
 #include "ui/shell/crazypod_system_event.h"
 #include "ui/shell/crazypod_system_prompts.h"
 #include "ui/shell/crazypod_usb_prompt.h"
-#include "crazypod_videos.h"
 #include "crazypod_wallpaper.h"
 #include "crazypod_workouts.h"
 
@@ -331,14 +326,6 @@ static struct route_state *current_route(void)
     return crazypod_ui_routes_current();
 }
 
-static int calendar_today_date(void)
-{
-    struct tm *now = get_time();
-
-    return (now->tm_year + 1900) * 10000 +
-           (now->tm_mon + 1) * 100 + now->tm_mday;
-}
-
 static int route_item_count(const struct route_state *state)
 {
     return crazypod_route_query_item_count(
@@ -508,134 +495,13 @@ static void play_wheel_feedback(long button)
 
 static bool handle_confirmation(const struct route_state *state)
 {
-    bool overlay =
-        crazypod_choice_coordinator_owns_route_state(state);
-    struct crazypod_notes_confirmation_result notes =
-        crazypod_notes_feature_confirm(
-            state, crazypod_ui_routes_depth() +
-                (overlay ? 2 : 0));
-    struct crazypod_books_confirmation_result books;
-    struct crazypod_organizer_confirmation_result organizer;
-
-    if(crazypod_route_actions_confirm_photos(
-           state, current_tick))
-        return true;
-    if(notes.handled) {
-        if(!notes.succeeded) {
-            if(overlay)
-                crazypod_choice_coordinator_show_receipt(
-                    CP_TR("Failed"), false,
-                    current_tick, false);
-            else
-                render_current_route(false);
-            if(!overlay)
-                crazypod_choice_coordinator_show_receipt(
-                    CP_TR("Failed"), false,
-                    current_tick, false);
-            return true;
-        }
-        if(notes.navigation ==
-           CRAZYPOD_NOTES_CONFIRMATION_RESET_MENU) {
-            crazypod_ui_routes_reset(NOTES_ROUTE_MENU, -1, 0);
-        }
-        else if(notes.navigation ==
-                CRAZYPOD_NOTES_CONFIRMATION_RESET_MENU_SHOW_DELETED) {
-            crazypod_ui_routes_reset(NOTES_ROUTE_MENU, -1, 0);
-            crazypod_ui_routes_push(NOTES_ROUTE_DELETED, -1, 0);
-        }
-        else if(notes.navigation ==
-                CRAZYPOD_NOTES_CONFIRMATION_TRUNCATE)
-            crazypod_ui_routes_truncate(notes.depth);
-        if(overlay) {
-            bool deleted =
-                state->route != NOTES_ROUTE_DISCARD_CONFIRM;
-
-            crazypod_choice_coordinator_show_receipt(
-                deleted ? CP_TR("Deleted") : CP_TR("Done"),
-                true, current_tick, true);
-        }
-        else {
-            render_current_route(true);
-            crazypod_choice_coordinator_show_receipt(
-                state->route != NOTES_ROUTE_DISCARD_CONFIRM
-                    ? CP_TR("Deleted") : CP_TR("Done"),
-                true, current_tick, false);
-        }
-        return true;
-    }
-
-    books = crazypod_books_feature_confirm(state);
-    if(books.handled) {
-        if(books.deleted) {
-            crazypod_books_feature_invalidate_metadata();
-            if(overlay)
-                crazypod_ui_routes_reset(
-                    BOOKS_ROUTE_MENU, -1, 0);
-            else
-                crazypod_app_launcher_open_books();
-        }
-        else if(!overlay)
-            render_current_route(false);
-        if(overlay)
-            crazypod_choice_coordinator_show_receipt(
-                books.deleted
-                    ? CP_TR("Deleted") : CP_TR("Delete Failed"),
-                books.deleted, current_tick, books.deleted);
-        else
-            crazypod_choice_coordinator_show_receipt(
-                books.deleted
-                    ? CP_TR("Deleted") : CP_TR("Delete Failed"),
-                books.deleted, current_tick, false);
-        return true;
-    }
-
-    organizer = crazypod_organizer_feature_confirm(
-        state, current_tick, HZ, calendar_today_date());
-    if(!organizer.handled)
-        return false;
-    if(!organizer.succeeded) {
-        if(overlay)
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Failed"), false, current_tick, false);
-        else
-            render_current_route(false);
-        if(!overlay)
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Failed"), false,
-                current_tick, false);
-        return true;
-    }
-    if(organizer.navigation ==
-       CRAZYPOD_ORGANIZER_CONFIRMATION_SHOW_CALENDAR_DAY) {
-        crazypod_route_actions_show_calendar_day(
-            organizer.date);
-    }
-    else {
-        crazypod_ui_routes_reset(WORKOUT_ROUTE_MENU, -1, 1);
-        if(organizer.navigation ==
-           CRAZYPOD_ORGANIZER_CONFIRMATION_SHOW_WORKOUT_HISTORY)
-            crazypod_ui_routes_push(
-                WORKOUT_ROUTE_HISTORY, -1, 0);
-    }
-    if(overlay) {
-        bool deleted =
-            state->route != WORKOUT_ROUTE_FINISH_CONFIRM;
-
-        crazypod_choice_coordinator_show_receipt(
-            deleted ? CP_TR("Deleted") : CP_TR("Saved"),
-            true, current_tick, true);
-    }
-    else {
-        render_current_route(true);
-        crazypod_choice_coordinator_show_receipt(
-            state->route != WORKOUT_ROUTE_FINISH_CONFIRM
-                ? CP_TR("Deleted") : CP_TR("Saved"),
-            true, current_tick, false);
-    }
-    return true;
+    /* Product route guard rejects retired Books/Notes/Photos/Organizer
+     * confirmation pages. Settings choices use the live overlay path. */
+    (void)state;
+    return false;
 }
 
- static void configure_feature_input(void)
+static void configure_feature_input(void)
 {
     const struct crazypod_feature_input_host host = {
         .now = ui_now,
@@ -735,6 +601,14 @@ static void platform_queue_present(
 {
     if(crazypod_scene_transition_owns_framebuffer())
         crazypod_present_queue_full();
+    else if(!crazypod_shell_product_active() &&
+            !crazypod_lock_screen_is_locked() &&
+            !modal_prompt_visible() &&
+            crazypod_present_home_selection_waiting_for_flush()) {
+        /* LVGL's final flush has already copied the selected Home row
+         * pixels. Only now may the synchronized full-frame DMA begin. */
+        crazypod_present_home_selection_frame_flushed();
+    }
     else
         crazypod_present_queue_rect(x, y, width, height);
 }
@@ -792,13 +666,9 @@ void crazypod_ui_run(void)
     crazypod_now_capsule_reset_motion(current_tick);
     crazypod_image_init();
     crazypod_artwork_init();
-    crazypod_icons_init();
-    crazypod_photos_init();
-    crazypod_videos_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
-    crazypod_miniapps_feature_initialize_runtime();
-    crazypod_miniapps_feature_initialize();
+    /* No CPK verification, MiniApp registry or theme runtime at boot. */
 
     {
         const struct crazypod_platform_display_host display_host = {
@@ -851,8 +721,6 @@ void crazypod_ui_run(void)
     crazypod_playback_initialize();
     crazypod_now_playing_navigation_initialize();
     crazypod_now_capsule_initialize_artwork();
-    crazypod_photos_feature_initialize_media();
-    crazypod_customize_feature_initialize_media();
 #ifdef SIMULATOR
     crazypod_scene_transition_demo_init();
     simulator_snapshot_pending =
@@ -1088,8 +956,7 @@ void crazypod_ui_run(void)
 #endif
         if(lv_anim_count_running())
             keep_cpu_boosted(HZ / 10 > 0 ? HZ / 10 : 1);
-        if(crazypod_artwork_busy() || crazypod_photos_busy() ||
-           crazypod_videos_busy())
+        if(crazypod_artwork_busy())
             keep_cpu_boosted(HZ / 10);
         if(crazypod_music_is_scanning() && !locked)
             keep_cpu_boosted(HZ / 10);
@@ -1100,8 +967,6 @@ void crazypod_ui_run(void)
                 crazypod_coverflow_motion_active())) &&
            (!crazypod_music_is_scanning() || locked) &&
            !crazypod_artwork_busy() &&
-           !crazypod_photos_busy() &&
-           !crazypod_videos_busy() &&
            !TIME_BEFORE(current_tick, boost_until))
             set_cpu_boost(false);
     }

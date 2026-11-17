@@ -275,6 +275,21 @@ crazypod_route_registry_feature(enum crazypod_route route)
         ? descriptor->feature : NULL;
 }
 
+bool crazypod_route_registry_product_allowed(
+    enum crazypod_route route)
+{
+    const struct crazypod_feature *feature =
+        crazypod_route_registry_feature(route);
+
+    /* Keep the old route descriptors and numeric IDs intact so on-disk
+     * state and test fixtures remain parseable. Only these destinations
+     * may enter the music-only firmware's interactive route stack. */
+    return feature != NULL &&
+        (feature->id == CRAZYPOD_FEATURE_MUSIC ||
+         feature->id == CRAZYPOD_FEATURE_NOW_PLAYING ||
+         feature->id == CRAZYPOD_FEATURE_SETTINGS);
+}
+
 bool crazypod_route_registry_is_shell(enum crazypod_route route)
 {
     const struct crazypod_route_descriptor *descriptor =

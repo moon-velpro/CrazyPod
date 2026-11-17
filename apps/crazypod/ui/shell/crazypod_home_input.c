@@ -2,6 +2,8 @@
 
 #ifdef IPOD_6G
 
+#include <stddef.h>
+
 #include "button.h"
 
 #include "crazypod_home_input.h"
@@ -51,6 +53,10 @@ void crazypod_home_input_handle(
     const struct crazypod_input_event *event,
     const struct crazypod_home_input_actions *actions)
 {
+    /* Treat Select as a single navigation action, never an auto-repeat.
+     * The input owner handles release/long-hold gestures separately. */
+    if(event == NULL || actions == NULL || event->release)
+        return;
     if(event->base == BUTTON_SCROLL_FWD) {
         actions->move_selection(
             crazypod_input_wheel_steps(
@@ -67,7 +73,7 @@ void crazypod_home_input_handle(
         actions->next_track();
     else if(event->base == BUTTON_LEFT && !event->repeated)
         actions->previous_track();
-    else if(event->base == BUTTON_SELECT)
+    else if(event->base == BUTTON_SELECT && !event->repeated)
         actions->open_selected_app();
     else if(event->base == BUTTON_PLAY && !event->repeated)
         actions->toggle_playback();

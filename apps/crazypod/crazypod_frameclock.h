@@ -40,6 +40,12 @@ struct crazypod_present_diagnostics {
     uint32_t music_render_timeouts;
     uint32_t last_music_render_us;
     uint32_t max_music_render_us;
+    /* First detent to successful framebuffer presentation (not audio timing). */
+    uint32_t home_selection_events;
+    uint32_t home_selection_presents;
+    uint32_t home_selection_last_latency_us;
+    uint32_t home_selection_max_latency_us;
+    uint32_t home_selection_over_50ms;
 };
 
 struct crazypod_frameclock {
@@ -55,6 +61,11 @@ uint32_t crazypod_monotonic_usec(void);
 
 void crazypod_present_init(long now);
 void crazypod_present_set_home_interaction(bool active);
+void crazypod_present_note_home_selection(void);
+/* Keep panel commits behind the actual LVGL flush for a new selection. */
+bool crazypod_present_home_selection_waiting_for_flush(void);
+void crazypod_present_home_selection_frame_flushed(void);
+void crazypod_present_cancel_home_selection(void);
 void crazypod_present_queue_rect(int x, int y, int width, int height);
 void crazypod_present_queue_home_rect(
     int x, int y, int width, int height);

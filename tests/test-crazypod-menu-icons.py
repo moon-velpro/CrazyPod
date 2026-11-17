@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structural and generated-data checks for CrazyPod menu row icons."""
+"""Guard the original iPod-style 14px icon renderer and semantic routes."""
 
 from pathlib import Path
 import re
@@ -8,7 +8,12 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 UI = ROOT / "apps/crazypod/ui"
 HEADER = UI / "crazypod_menu_icon.h"
-DATA = UI / "presentation/crazypod_menu_icon_data.inc"
+ASSET_SOURCE = UI / "presentation/crazypod_menu_icon_assets.c"
+HOME_SOURCE = UI / "shell/crazypod_desktop.c"
+
+
+def source_gitignore() -> str:
+    return (ROOT / ".gitignore").read_text(encoding="utf-8")
 
 
 def enum_names() -> list[str]:
@@ -20,35 +25,88 @@ def enum_names() -> list[str]:
     return re.findall(r"CRAZYPOD_MENU_ICON_([A-Z0-9_]+)", body.group(1))
 
 
-def test_generated_assets() -> None:
+def test_original_system_glyphs() -> None:
     names = enum_names()
     assert names[0] == "NONE"
     assert names[-1] == "COUNT"
-    expected = names[1:-1]
-    text = DATA.read_text(encoding="utf-8")
-    arrays = re.findall(
-        r"const uint8_t menu_icon_([a-z0-9_]+)_data\[\] = \{"
-        r"(.*?)\n\};",
-        text,
-        re.S,
-    )
-    assert 90 <= len(arrays) <= len(expected)
-    generated_symbols = {name for name, _ in arrays}
-    for name, values_text in arrays:
-        values = re.findall(r"0x([0-9a-f]{2})", values_text)
-        assert len(values) == 14 * 14, name
-        alpha = [int(value, 16) for value in values]
-        assert max(alpha) >= 64, name
-        assert sum(value > 0 for value in alpha) >= 12, name
+    expected = set(names[1:-1])
+    asset = ASSET_SOURCE.read_text(encoding="utf-8")
+    home = HOME_SOURCE.read_text(encoding="utf-8")
 
-    table = re.findall(
-        r"\[CRAZYPOD_MENU_ICON_([A-Z0-9_]+)\]\s*=\s*"
-        r"&menu_icon_([a-z0-9_]+)",
-        text,
+    # No Google Material atlas is compiled or shipped to the product.
+    assert "crazypod_menu_icon_data.inc" not in asset
+    assert "material-symbols" not in asset.lower()
+    assert "iconify" not in asset.lower()
+    assert "static LV_ATTRIBUTE_MEM_ALIGN uint8_t" in asset
+    assert "icon_pixels[G_GLYPH_COUNT][ICON_SIZE * ICON_SIZE]" in asset
+    assert "#define ICON_SIZE 14" in asset
+    assert "#define SUBSAMPLES 3" in asset
+    assert "sample_segment(" in asset
+    assert "static void circle_g(" in asset
+    assert "static void triangle_g(" in asset
+    assert "static void draw_glyph(" in asset
+    assert "if(!icon_built[glyph])" in asset
+
+    # IDs persist for route ABI compatibility, even for retired features.
+    explicit = set(re.findall(r"case CRAZYPOD_MENU_ICON_([A-Z0-9_]+):", asset))
+    assert expected <= explicit, f"Missing icon semantic mappings: {expected-explicit}"
+    assert "return G_MENU;" in asset
+
+    # Home supports local images when supplied, but public builds have
+    # working original fallback tiles and never embed uploaded PNG bytes.
+    assert "crazypod_iphone_app_icons.h" in home
+    assert "crazypod_iphone_app_icon(" in home
+    assert "CRAZYPOD_IPHONE_ICON_MUSIC" in home
+    assert "CRAZYPOD_IPHONE_ICON_PODCASTS" in home
+    assert "CRAZYPOD_IPHONE_ICON_SETTINGS" in home
+    assert "CRAZYPOD_IPHONE_ICON_VOICE_MEMOS" not in home
+    assert "CRAZYPOD_MENU_ICON_NOW_PLAYING" in home
+    assert "const lv_image_dsc_t *private_image" in home
+    assert "if(private_image != NULL)" in home
+    assert "tile_colors[]" in home
+    assert "HOME_APP_TILE_SIZE CRAZYPOD_IPHONE_APP_ICON_SIZE" in home
+    assert "LV_SYMBOL_VOLUME_MID" not in home
+
+    images = (UI / "presentation/crazypod_iphone_app_icons.c").read_text(
+        encoding="utf-8"
     )
-    assert [name for name, _ in table] == expected
-    assert all(symbol in generated_symbols for _, symbol in table)
-    assert len(set(symbol for _, symbol in table)) == len(arrays)
+    private = (UI / "presentation/crazypod_private_icon_assets.c").read_text(
+        encoding="utf-8"
+    )
+    assert "crazypod_private_icon_app(icon)" in images
+    assert "app_base64" not in images
+    assert "crazypod_private_icon_menu(icon)" in asset
+    assert "#ifdef CRAZYPOD_PRIVATE_ICONS" in private
+    assert '#include "crazypod_private_icon_assets.inc"' in private
+    assert "crazypod_local_menu_icons[icon]" in private
+    assert "crazypod_local_app_icons[icon]" in private
+    manifest = (ROOT / "apps/SOURCES").read_text()
+    assert "crazypod/ui/presentation/crazypod_iphone_app_icons.c" in manifest
+    assert "crazypod/ui/presentation/crazypod_private_icon_assets.c" in manifest
+    assert "crazypod_private_icon_assets.inc" in source_gitignore()
+    assert "CRAZYPOD_PRIVATE_ICONS_DIR" in (ROOT / "build-hw.sh").read_text()
+    assert "CRAZYPOD_PRIVATE_ICONS_DIR" in (ROOT / "build-sim.sh").read_text()
+
+    # Playback controls and status/charging/missing-artwork symbols must
+    # also participate in private overrides, not just menu list rows.
+    widgets = (UI / "presentation/crazypod_ui_widgets.c").read_text(
+        encoding="utf-8"
+    )
+    status = (UI / "shell/crazypod_status_bar.c").read_text(
+        encoding="utf-8"
+    )
+    capsule = (UI / "shell/crazypod_now_capsule.c").read_text(
+        encoding="utf-8"
+    )
+    assert "crazypod_private_icon_menu(private_widget_icon(icon))" in widgets
+    assert "lv_obj_set_style_image_recolor(child" in widgets
+    assert "CRAZYPOD_MENU_ICON_FAVORITE" in widgets
+    assert "CRAZYPOD_MENU_ICON_SHUFFLE" in widgets
+    assert "CRAZYPOD_MENU_ICON_REPEAT" in widgets
+    assert "crazypod_private_icon_menu(semantic)" in status
+    assert "CRAZYPOD_MENU_ICON_NOW_PLAYING" in status
+    assert "CRAZYPOD_MENU_ICON_CHARGING" in status
+    assert "crazypod_private_icon_menu(CRAZYPOD_MENU_ICON_MUSIC)" in capsule
 
 
 def test_semantic_route_coverage() -> None:
@@ -135,7 +193,7 @@ def test_renderer_has_no_route_fallback() -> None:
 
 
 if __name__ == "__main__":
-    test_generated_assets()
+    test_original_system_glyphs()
     test_semantic_route_coverage()
     test_renderer_has_no_route_fallback()
     print("CrazyPod menu icon checks passed")

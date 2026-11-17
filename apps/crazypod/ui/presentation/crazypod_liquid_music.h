@@ -17,17 +17,26 @@
 #define CRAZYPOD_LM_FOCUS_FILL_OPA         76
 #define CRAZYPOD_LM_FOCUS_BORDER_OPA       93
 
-/* iPod 2026 Home: airy blue-white background, dark readable text,
- * frosted white navigation cards; Now Playing stays artwork-led/dark. */
-#define CRAZYPOD_LM_HOME_TOP               0xF2F8FFu
-#define CRAZYPOD_LM_HOME_BOTTOM            0xBCDDF6u
-#define CRAZYPOD_LM_HOME_TEXT              0x202C3Cu
-#define CRAZYPOD_LM_HOME_MUTED             0x4D6074u
+/* Shared 320x240 Apple-like presentation. Glass belongs to controls and
+ * the mini player; long lists are clean paper with quiet separators. */
+#define CRAZYPOD_LM_NATIVE_BG              0xF8F9FBu
+#define CRAZYPOD_LM_NATIVE_INK             0x18212Du
+#define CRAZYPOD_LM_NATIVE_SECONDARY       0x6C7481u
+#define CRAZYPOD_LM_NATIVE_SELECTED        0xDCE8FCu
+#define CRAZYPOD_LM_NATIVE_HAIRLINE        0xD9DEE7u
+
+/* iPod 2026 Home: calm near-white gradient, dark labels, a single
+ * highlighted row instead of four independent outlined glass pills. */
+#define CRAZYPOD_LM_HOME_TOP               0xF9FAFDu
+#define CRAZYPOD_LM_HOME_BOTTOM            0xE9EEF7u
+#define CRAZYPOD_LM_HOME_TEXT              0x18212Du
+#define CRAZYPOD_LM_HOME_MUTED             0x3E4754u
 #define CRAZYPOD_LM_HOME_GLASS             0xFFFFFFu
-#define CRAZYPOD_LM_HOME_SELECTED_OPA      228
-#define CRAZYPOD_LM_HOME_IDLE_OPA          154
-#define CRAZYPOD_LM_HOME_RIM_OPA           208
-#define CRAZYPOD_LM_HOME_WALLPAPER_SCRIM   200
+#define CRAZYPOD_LM_HOME_SELECTION_FILL    0xDDE8FCu
+#define CRAZYPOD_LM_HOME_SELECTED_OPA      205
+#define CRAZYPOD_LM_HOME_IDLE_OPA          0
+#define CRAZYPOD_LM_HOME_RIM_OPA           100
+#define CRAZYPOD_LM_HOME_WALLPAPER_SCRIM   215
 
 /* One artwork dimension is shared by the screen and its RGB565 cache.
  * Keep the presentation's double-bank allocation in the memory budget. */
@@ -41,6 +50,21 @@
  * Keep the presentation's contrast model and fallback model synchronized. */
 #define CRAZYPOD_LM_SHADE_OPA              150
 
+/* Tint the blurred 320x240 cover backdrop from the actual album palette.
+ * Bounded dark channel values preserve readable labels, while the source
+ * artwork remains the main contributor to the changing background. */
+static inline unsigned crazypod_lm_tint_component(unsigned component)
+{
+    return 8u + (component * 76u + 127u) / 255u;
+}
+
+static inline unsigned crazypod_lm_album_shade(unsigned primary)
+{
+    return (crazypod_lm_tint_component((primary >> 16) & 255u) << 16) |
+           (crazypod_lm_tint_component((primary >> 8) & 255u) << 8) |
+           crazypod_lm_tint_component(primary & 255u);
+}
+
 /* Muted, real-device-friendly fallback colors only when cover data
  * is absent. Cached artwork always takes priority over these tones. */
 #define CRAZYPOD_LM_FALLBACK_PALETTE { \
@@ -48,10 +72,11 @@
     0x756E66u, 0x728396u, 0x8B7277u, 0x667C83u  \
 }
 
-/* Audio waveform and timer sit below the artwork; do not cover the cover. */
+/* Compact waveform/scrubber sits above physical-button playback glyphs.
+ * No new audio visualization thread or touch controls are introduced. */
 #define CRAZYPOD_LM_WAVE_X                 16
 #define CRAZYPOD_LM_WAVE_Y                 181
 #define CRAZYPOD_LM_WAVE_WIDTH             288
-#define CRAZYPOD_LM_WAVE_HEIGHT            34
+#define CRAZYPOD_LM_WAVE_HEIGHT             8
 
 #endif

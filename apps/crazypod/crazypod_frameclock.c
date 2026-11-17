@@ -40,6 +40,9 @@ static int deferred_present_y1;
 static int deferred_present_x2;
 static int deferred_present_y2;
 static uint32_t present_sequence;
+static bool home_selection_pending;
+static bool home_selection_frame_ready;
+static uint32_t home_selection_start_us;
 static long present_tick;
 static struct crazypod_present_diagnostics present_diagnostics;
 #ifdef SIMULATOR
@@ -91,12 +94,39 @@ void crazypod_present_init(long now)
     present_pending = false;
     present_sync = PRESENT_SYNC_NONE;
     deferred_present_pending = false;
+    home_selection_pending = false;
+    home_selection_frame_ready = false;
+    home_selection_start_us = 0;
     memset(&present_diagnostics, 0, sizeof(present_diagnostics));
 }
 
 void crazypod_present_set_home_interaction(bool active)
 {
     home_interaction_active = active;
+}
+
+void crazypod_present_note_home_selection(void)
+{
+    /* Keep the first pending detent: coalesced wheel steps still count as
+     * one visible frame, and the oldest step defines perceived lag. */
+    if(!home_selection_pending) {
+        home_selection_pending = true;
+        home_selection_start_us = crazypod_monotonic_usec();
+    }
+    /* Do not count an earlier pending frame as the new selection. */
+    home_selection_frame_ready = false;
+    ++present_diagnostics.home_selection_events;
+}
+
+bool crazypod_present_home_selection_waiting_for_flush(void)
+{
+    return home_selection_pending && !home_selection_frame_ready;
+}
+
+void crazypod_present_cancel_home_selection(void)
+{
+    home_selection_pending = false;
+    home_selection_frame_ready = false;
 }
 
 static void set_present_rect(
@@ -258,6 +288,17 @@ void crazypod_present_queue_full(void)
     crazypod_present_queue_rect(0, 0, LCD_WIDTH, LCD_HEIGHT);
 }
 
+void crazypod_present_home_selection_frame_flushed(void)
+{
+    if(!crazypod_present_home_selection_waiting_for_flush())
+        return;
+    /* Called from the final LVGL flush callback, *after* the new
+     * selection's RGB565 pixels have landed in the Rockbox framebuffer.
+     * Full TE/FMARK submission is still owned by the existing presenter. */
+    home_selection_frame_ready = true;
+    crazypod_present_queue_full();
+}
+
 void crazypod_present_take_fullscreen_ownership(void)
 {
     if(!present_initialized)
@@ -265,6 +306,7 @@ void crazypod_present_take_fullscreen_ownership(void)
     present_pending = false;
     present_sync = PRESENT_SYNC_NONE;
     deferred_present_pending = false;
+    crazypod_present_cancel_home_selection();
 }
 
 static bool crazypod_present_is_full(void)
@@ -319,6 +361,19 @@ void crazypod_present_now(void)
     ++present_sequence;
     present_tick = current_tick;
     ++present_diagnostics.presents;
+    if(home_selection_pending && home_selection_frame_ready) {
+        uint32_t latency =
+            crazypod_monotonic_usec() - home_selection_start_us;
+
+        home_selection_pending = false;
+        home_selection_frame_ready = false;
+        ++present_diagnostics.home_selection_presents;
+        present_diagnostics.home_selection_last_latency_us = latency;
+        if(latency > present_diagnostics.home_selection_max_latency_us)
+            present_diagnostics.home_selection_max_latency_us = latency;
+        if(latency > 50000u)
+            ++present_diagnostics.home_selection_over_50ms;
+    }
     if(full)
         ++present_diagnostics.full_presents;
     present_diagnostics.last_present_us = duration_us;
@@ -342,6 +397,12 @@ void crazypod_present_tick(void)
     uint32_t late_ticks;
 
     if(!present_pending)
+        return;
+
+    /* Never submit an old full framebuffer while the new Home selection
+       is still waiting for LVGL to flush its updated row styles. */
+    if(home_interaction_active && home_selection_pending &&
+       !home_selection_frame_ready)
         return;
 
     /* While a finger remains on the Home wheel, ordinary LVGL dirt can

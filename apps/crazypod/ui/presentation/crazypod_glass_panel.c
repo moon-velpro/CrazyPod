@@ -52,6 +52,19 @@ lv_obj_t *crazypod_glass_panel_create(
     lv_obj_set_style_border_opa(
         border, crazypod_glass_material_border_opa(material), 0);
     lv_obj_remove_flag(border, LV_OBJ_FLAG_CLICKABLE);
+    if(material == CRAZYPOD_GLASS_HOME_CONTROLS && width > 32 &&
+       height > 24) {
+        /* Static specular highlights: no browser SVG refraction,
+         * RGB channel displacement, or animations in the wheel loop. */
+        lv_obj_t *top_glint = crazypod_ui_widget_box(
+            panel, 16, 2, width - 32, 1, 0,
+            0xFFFFFF, 170);
+        lv_obj_t *bottom_rim = crazypod_ui_widget_box(
+            panel, 16, height - 3, width - 32, 1, 0,
+            0x91B8DD, 42);
+        lv_obj_remove_flag(top_glint, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_remove_flag(bottom_rim, LV_OBJ_FLAG_CLICKABLE);
+    }
     return panel;
 }
 
