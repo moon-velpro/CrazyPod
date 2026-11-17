@@ -46,6 +46,7 @@ jobs:
           sh tests/check-crazypod-ui-architecture.sh
           sh tests/run-crazypod-ui-host-tests.sh
           python3 tools/check-crazypod-l10n.py --strict-bare
+          python3 tests/test-crazypod-music-only-build.py
 
   hardware:
     name: iPod 6G firmware
