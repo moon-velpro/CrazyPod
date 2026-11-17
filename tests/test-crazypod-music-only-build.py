@@ -164,6 +164,27 @@ def verify() -> None:
     ):
         assert reader_source in reader_guard, reader_source
     assert "#ifdef SIMULATOR\n/* Retired reader compatibility:" in manifest
+    # The iPod ELF must not bring in the discontinued application engines.
+    # Keep the original sources for simulator-only legacy diagnostics.
+    retired_apps_guard = manifest.split(
+        "/* Retired Notes/Photos/Organizer/Customize/MiniApps compatibility:", 1
+    )[1].split("#endif", 1)[0]
+    for retired_source in (
+        "crazypod/crazypod_photos.c",
+        "crazypod/crazypod_notes.c",
+        "crazypod/crazypod_organizer.c",
+        "crazypod/crazypod_workouts.c",
+        "crazypod/crazypod_miniapps.c",
+        "crazypod/crazypod_presets.c",
+        "crazypod/miniapps/runtime/crazypod_miniapp_native_runtime.c",
+        "crazypod/ui/features/photos/crazypod_photos_runtime.c",
+        "crazypod/ui/features/miniapps/crazypod_miniapps_feature.c",
+        "crazypod/ui/features/customize/crazypod_wallpaper_crop_runtime.c",
+    ):
+        assert retired_source in retired_apps_guard, retired_source
+    assert "crazypod/crazypod_music.c" in manifest
+    assert "crazypod/crazypod_screenshot.c" in manifest
+    assert "crazypod/wallpaper/crazypod_wallpaper_store.c" in manifest
     for retired_source in (
         "crazypod/crazypod_videos.c",
         "crazypod/crazypod_video_mpeg_misc.c",
