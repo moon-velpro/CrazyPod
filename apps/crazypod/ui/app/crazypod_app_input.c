@@ -27,6 +27,7 @@
 #include "../shell/crazypod_desktop.h"
 #include "../shell/crazypod_home_actions.h"
 #include "../shell/crazypod_home_input.h"
+#include "../shell/crazypod_home_model.h"
 #include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_screenshot_feedback.h"
 #include "crazypod_app_input.h"
@@ -286,16 +287,16 @@ static void confirm_remote_down_hold(long now)
 static void home_open_selected_app(void)
 {
     switch(crazypod_desktop_selected()) {
-    case 0:
+    case CRAZYPOD_HOME_NOW_PLAYING:
         crazypod_app_launcher_open_now_playing();
         break;
-    case 1:
+    case CRAZYPOD_HOME_MUSIC:
         crazypod_app_launcher_open(CRAZYPOD_APP_MUSIC);
         break;
-    case 2:
+    case CRAZYPOD_HOME_PODCASTS:
         crazypod_app_launcher_open(CRAZYPOD_APP_PODCASTS);
         break;
-    case 3:
+    case CRAZYPOD_HOME_SETTINGS:
         crazypod_app_launcher_open(CRAZYPOD_APP_SETTINGS);
         break;
     default:
