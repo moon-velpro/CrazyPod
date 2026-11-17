@@ -21,7 +21,7 @@ static const char *const music_menu_titles[] = {
     CP_TR("Now Playing"), CP_TR("Cover Flow"),
     CP_TR("All Music"), CP_TR("Playlists"),
     CP_TR("Artists"), CP_TR("Albums"),
-    CP_TR("Songs"), CP_TR("Search"),
+    CP_TR("Songs"), CP_TR("Search"), CP_TR("Shuffle"),
 };
 
 static bool copy_current_track(struct crazypod_track *track)
@@ -106,7 +106,8 @@ static void render_liquid_music_root_preview(
         lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
     }
     else {
-        const char *glyph = selected == 7 ? LV_SYMBOL_EYE_OPEN :
+        const char *glyph = selected == 8 ? LV_SYMBOL_SHUFFLE :
+            selected == 7 ? LV_SYMBOL_EYE_OPEN :
             selected == 4 ? LV_SYMBOL_DIRECTORY :
             selected == 1 || selected == 5 ? LV_SYMBOL_IMAGE :
             selected == 2 || selected == 6 ? LV_SYMBOL_LIST :
@@ -129,7 +130,7 @@ static void render_liquid_music_root_preview(
 void crazypod_music_root_preview_render(
     lv_obj_t *parent, int selected, bool defer_media)
 {
-    if(parent == NULL || selected < 0 || selected >= 8)
+    if(parent == NULL || selected < 0 || selected >= 9)
         return;
     render_liquid_music_root_preview(parent, selected, defer_media);
 }
