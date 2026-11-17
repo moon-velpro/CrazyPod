@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "../apps/crazypod/ui/presentation/crazypod_liquid_music.h"
+#include "../apps/crazypod/crazypod_product_geometry.h"
 
 /* Simulates the exact RGB channel shade model used by the double-buffered
  * Now Playing background presentation. The most luminous RGB888 backdrop
@@ -31,6 +32,20 @@ int main(void)
     assert(CRAZYPOD_LM_SHADE_OPA <= 255);
     assert(shade_channel(255, 5, CRAZYPOD_LM_SHADE_OPA) <= 111);
     assert(shade_channel(255, 8, CRAZYPOD_LM_SHADE_OPA) <= 111);
+
+    /* Native UI and wallpaper blur must crop the same iPod glass pill. */
+    assert(CRAZYPOD_PRODUCT_SCREEN_WIDTH == 320);
+    assert(CRAZYPOD_PRODUCT_SCREEN_HEIGHT == 240);
+    assert(CRAZYPOD_PRODUCT_HOME_ROW_COUNT == 4);
+    assert(CRAZYPOD_PRODUCT_HOME_ROW_TOP +
+           CRAZYPOD_PRODUCT_HOME_ROW_HEIGHT *
+               CRAZYPOD_PRODUCT_HOME_ROW_COUNT +
+           CRAZYPOD_PRODUCT_HOME_ROW_GAP *
+               (CRAZYPOD_PRODUCT_HOME_ROW_COUNT - 1) <
+           CRAZYPOD_PRODUCT_MINIPLAYER_Y);
+    assert(CRAZYPOD_PRODUCT_MINIPLAYER_MARGIN == 12);
+    assert(CRAZYPOD_PRODUCT_MINIPLAYER_Y +
+           CRAZYPOD_PRODUCT_MINIPLAYER_BOTTOM < 240);
 
     /* The "glass" control material should be subtle rather than opaque. */
     assert(CRAZYPOD_LM_GLASS_FILL_OPA > 0);
