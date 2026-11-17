@@ -5,6 +5,8 @@
 
 #define LV_IMAGE_HEADER_MAGIC 0x19
 #define LV_COLOR_FORMAT_RGB565 0x12
+#define LV_COLOR_FORMAT_A8 0x13
+#define LV_ATTRIBUTE_MEM_ALIGN
 
 typedef struct {
     uint32_t magic;
