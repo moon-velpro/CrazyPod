@@ -71,3 +71,14 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - `crazypod_runtime_services.c` 不再按帧轮询 Mini Apps/CPK 安装、虚拟闹钟、照片/视频、笔记、图书和组织管理服务；保留音乐增量扫描、音频状态、封面缓存、LVGL 动画、锁屏时的状态保存及安全轮询。主 UI 也不再初始化 MiniApp Runtime。
 - 构建增加 `nm` 产物检查，`rockbox.elf` 若出现 MPEG2 或视频引擎/目录符号会直接失败；C99 宿主测试覆盖禁用视频接口。源清单与启动调用的静态契约亦加入回归测试。
 - **验证边界：** 当前已通过禁用视频接口的隔离 C99 编译/执行，以及 GitHub 源码静态检查；最新 ARM 全量固件、macOS 模拟器以及真机测试暂未确认通过，不应将本节视为可烧录证明。未在已验证固件上量出节省的字节数。
+
+## 2026-11-17 · 第二轮：UI 路由与启动路径去耦
+
+- `crazypod_feature_input.c` 仅为 Music、Now Playing 和 Settings 注册输入分发器；不再把按键/转盘输入送往 Notes、Books、Media、Organizer、Customize 或 MiniApps。
+- `crazypod_route_query.c` 与 `crazypod_route_renderer.c` 不再查询、渲染旧应用的菜单、图标和全屏界面；Now Playing 始终采用内建原生播放器。后续还需要拆除旧的 `crazypod_route_actions.c` 和组合根中的全部依赖，才能从 `apps/SOURCES` 排除这些应用的剩余源文件。
+- 添加 `crazypod_route_registry_product_allowed()`：合法产品路由只有 Music、Now Playing、Podcasts 和 Settings 所属的路由。旧的路由枚举值、记录描述符保留不变，但启动器根路由、路由入栈与激活入口均拦截旧应用。现有 C99 路由宿主测试扩充了音乐/设置允许与图书/媒体/MiniApp 拒绝的断言。
+- `crazypod_ui.c` 不再启动相册/视频目录，也不再为已退役媒体任务保持 CPU Boost。用户已选择的壁纸和音乐封面依然会初始化。
+- `crazypod_main.c` 的 ARM 和模拟器分支不再读取 DIY 预设库；保留独立的已保存外观设置和音乐库初始化，不删除旧文件、不改变持久化编号。
+- GitHub Actions 新增对以 `main` 或 `design/music-first-2026` 为基线的 PR 执行合同测试、ARM 固件和 macOS 模拟器构建的事件配置。该事件配置不代表最新 CI 已成功；当前仍缺少最新提交的完整构建产物与真机稳定性证据。
+
+**重要：** 这轮削减了产品入口和 UI 主循环依赖，并不意味着其余旧模块已经全部从 `rockbox.elf` 移除。应以 ARM 链接映射、ELF 符号与真机播放/USB/待机/恢复测试为最终裁剪依据。
