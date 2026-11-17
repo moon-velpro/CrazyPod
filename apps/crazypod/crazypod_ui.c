@@ -42,7 +42,6 @@
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
-#include "crazypod_icons.h"
 #include "crazypod_lyrics.h"
 #include "crazypod_l10n.h"
 #include "crazypod_runtime_font.h"
@@ -796,7 +795,6 @@ void crazypod_ui_run(void)
     crazypod_now_capsule_reset_motion(current_tick);
     crazypod_image_init();
     crazypod_artwork_init();
-    crazypod_icons_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
     /* No CPK verification, MiniApp registry or theme runtime at boot. */
