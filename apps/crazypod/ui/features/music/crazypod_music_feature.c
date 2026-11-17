@@ -177,6 +177,10 @@ bool crazypod_music_feature_item_title(
 
     switch(state->route) {
     case MUSIC_ROUTE_MENU: {
+        if(index == CRAZYPOD_MUSIC_ROOT_SHUFFLE) {
+            *title = CP_TR("Shuffle");
+            return true;
+        }
         static const char *const titles[] = {
             CP_TR("Now Playing"), CP_TR("Cover Flow"), CP_TR("All Music"), CP_TR("Playlists"),
             CP_TR("Artists"), CP_TR("Albums"), CP_TR("Songs"), CP_TR("Search")
@@ -285,6 +289,8 @@ enum crazypod_menu_icon crazypod_music_feature_item_icon(
         return CRAZYPOD_MENU_ICON_NONE;
     switch(state->route) {
     case MUSIC_ROUTE_MENU:
+        if(index == CRAZYPOD_MUSIC_ROOT_SHUFFLE)
+            return CRAZYPOD_MENU_ICON_SHUFFLE;
         index = crazypod_music_root_legacy_index(index);
         return index >= 0 &&
             index < (int)(sizeof(root_icons) / sizeof(root_icons[0]))
@@ -389,6 +395,9 @@ bool crazypod_music_feature_activate(
     else if(action.kind ==
             CRAZYPOD_MUSIC_ACTIVATION_SHOW_NOW_ACTIONS)
         host->show_now_actions();
+    else if(action.kind ==
+            CRAZYPOD_MUSIC_ACTIVATION_SHUFFLE_ALL)
+        host->shuffle_all();
     return true;
 }
 
@@ -519,7 +528,9 @@ void crazypod_music_feature_render_root_preview(
     lv_obj_t *parent, int selected, bool defer_media)
 {
     crazypod_music_root_preview_render(
-        parent, crazypod_music_root_legacy_index(selected), defer_media);
+        parent, selected == CRAZYPOD_MUSIC_ROOT_SHUFFLE
+            ? 8 : crazypod_music_root_legacy_index(selected),
+        defer_media);
 }
 
 void crazypod_music_feature_render_item_preview(
