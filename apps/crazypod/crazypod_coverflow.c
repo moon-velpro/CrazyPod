@@ -19,9 +19,18 @@
 #include "crazypod_music.h"
 
 #define FLOW_CACHE_SLOTS CRAZYPOD_COVERFLOW_ARTWORK_SLOTS
-#define FLOW_PREFETCH_AHEAD 25
-#define FLOW_PREFETCH_BEHIND 25
+#define FLOW_PREFETCH_AHEAD 16
+#define FLOW_PREFETCH_BEHIND 16
 #define FLOW_PREFETCH_VISIBLE 6
+/* Every wanted album must have a distinct slot while near covers decode.
+ * This is checked at preprocessing time, not left to an LRU eviction. */
+#if CRAZYPOD_COVERFLOW_ARTWORK_SLOTS != \
+    (FLOW_PREFETCH_AHEAD + FLOW_PREFETCH_BEHIND + 1)
+#error "Cover Flow slot count must match the look-ahead window"
+#endif
+#if FLOW_PREFETCH_VISIBLE >= FLOW_PREFETCH_AHEAD
+#error "Visible covers need room inside the look-ahead window"
+#endif
 #define FLOW_COVER_SIZE CRAZYPOD_COVERFLOW_ARTWORK_SIZE
 #define FLOW_TOP 40
 #define FLOW_BOTTOM 180

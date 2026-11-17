@@ -6,7 +6,9 @@
 #include "lvgl.h"
 #include "crazypod_music.h"
 
-#define CRAZYPOD_COVERFLOW_ARTWORK_SLOTS 51
+/* 16 covers of cache-only look-ahead on each side + the selected album.
+ * Keep this aligned with FLOW_PREFETCH_AHEAD/BEHIND in coverflow.c. */
+#define CRAZYPOD_COVERFLOW_ARTWORK_SLOTS 33
 #define CRAZYPOD_PREVIEW_ARTWORK_SLOT \
     CRAZYPOD_COVERFLOW_ARTWORK_SLOTS
 #define CRAZYPOD_NOW_PREFETCH_ARTWORK_SLOT \

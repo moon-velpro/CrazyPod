@@ -231,6 +231,20 @@ def verify() -> None:
         assert retired_source in retired_apps_guard, retired_source
     assert "crazypod/crazypod_music.c" in manifest
     assert "crazypod/crazypod_screenshot.c" in manifest
+    # A bounded bidirectional cache keeps visible artwork responsive but
+    # avoids permanently reserving 51 x 2 x 128x128 pixel banks in BSS.
+    art_header = source("apps/crazypod/crazypod_artwork.h")
+    coverflow = source("apps/crazypod/crazypod_coverflow.c")
+    assert "#define CRAZYPOD_COVERFLOW_ARTWORK_SLOTS 33" in art_header
+    assert "#define FLOW_PREFETCH_AHEAD 16" in coverflow
+    assert "#define FLOW_PREFETCH_BEHIND 16" in coverflow
+    assert "#define FLOW_PREFETCH_VISIBLE 6" in coverflow
+    assert "slot count must match the look-ahead window" in coverflow
+    assert "candidate_number <= FLOW_PREFETCH_VISIBLE * 2" in coverflow
+    assert "crazypod_artwork_load_cached_priority(" in coverflow
+    artwork = source("apps/crazypod/crazypod_artwork.c")
+    assert "static fb_data coverflow_pixels[CRAZYPOD_COVERFLOW_ARTWORK_SLOTS]" in artwork
+    assert "[CRAZYPOD_ARTWORK_BANKS][CRAZYPOD_COVERFLOW_ARTWORK_SIZE *" in artwork
     assert "crazypod/wallpaper/crazypod_wallpaper_store.c" in manifest
     for retired_source in (
         "crazypod/crazypod_videos.c",
