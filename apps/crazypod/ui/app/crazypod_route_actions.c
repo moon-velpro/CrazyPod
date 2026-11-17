@@ -94,7 +94,7 @@ static void transaction_failed(void)
 static bool push_route_state(
     enum crazypod_route route, int group, int selected)
 {
-    if(crazypod_route_registry_get(route) == NULL ||
+    if(!crazypod_route_registry_product_allowed(route) ||
        !crazypod_ui_routes_push(route, group, selected))
         return false;
     crazypod_menu_preview_prefetch(current_route());
@@ -104,6 +104,8 @@ static bool push_route_state(
 void crazypod_route_actions_push_selected(
     enum crazypod_route route, int group, int selected)
 {
+    if(!crazypod_route_registry_product_allowed(route))
+        return; /* A stale route must not start an abandoned app. */
     if(route == SETTINGS_ROUTE_MAIN_MENU_ACTIONS) {
         crazypod_choice_coordinator_show(
             CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS,
@@ -679,6 +681,10 @@ void crazypod_route_actions_activate(long now)
 
     if(state == NULL)
         return;
+    if(!crazypod_route_registry_product_allowed(state->route)) {
+        host.close_product();
+        return;
+    }
     if(state->route == SETTINGS_ROUTE_MAIN_MENU &&
        crazypod_settings_feature_main_menu_reordering()) {
         enum crazypod_app_id id =
@@ -729,7 +735,8 @@ void crazypod_route_actions_activate_overlay_state(
     struct route_state state;
     const struct crazypod_feature *feature;
 
-    if(source == NULL)
+    if(source == NULL ||
+       !crazypod_route_registry_product_allowed(source->route))
         return;
     state = *source;
     overlay_dispatch = true;
