@@ -7,7 +7,6 @@
 #include "../../crazypod_music.h"
 #include "../../crazypod_product_scope.h"
 #include "../../crazypod_state.h"
-#include "../features/books/crazypod_books_feature.h"
 #include "../features/music/crazypod_music_feature.h"
 #include "../navigation/crazypod_route_registry.h"
 #include "../navigation/crazypod_ui_routes.h"
@@ -87,14 +86,14 @@ void crazypod_app_launcher_configure(
 
 void crazypod_app_launcher_open_root(enum crazypod_route route)
 {
-    if(crazypod_route_registry_get(route) != NULL)
+    /* Persisted legacy route numbers are valid values, not destinations. */
+    if(crazypod_route_registry_product_allowed(route))
         open_route(route);
 }
 
 void crazypod_app_launcher_open_books(void)
 {
-    crazypod_books_feature_ensure_metadata();
-    open_route(BOOKS_ROUTE_MENU);
+    /* Legacy caller ABI only: the book library is not opened or scanned. */
 }
 
 void crazypod_app_launcher_open(enum crazypod_app_id id)
