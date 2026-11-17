@@ -123,10 +123,10 @@ int crazypod_runtime_services_prepare_wait(
         screen_off_idle = true;
     }
 
-    /* Product alarms came only from the removed MiniApp runtime.
-     * The persisted music state remains the source of any earlier wakeup. */
+    /* With no app alarms, block until a real system/music-state event.
+     * Avoid creating an unnecessary 1 Hz wakeup while LCD is off. */
     return crazypod_screen_off_shorter_wait(
-        CRAZYPOD_STATIC_WAIT_TICKS, crazypod_state_wait_ticks());
+        CRAZYPOD_WAIT_BLOCK, crazypod_state_wait_ticks());
 }
 
 bool crazypod_runtime_services_screen_off_tick(void)
