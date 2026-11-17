@@ -349,6 +349,89 @@ static void test_home_touch_defers_ordinary_lvgl_until_release(void)
     assert(lcd_height == 3);
 }
 
+static void test_home_selection_waits_for_real_lvgl_flush(void)
+{
+    struct crazypod_present_diagnostics diagnostics;
+
+    reset_lcd();
+    crazypod_present_init(0);
+    crazypod_present_set_home_interaction(true);
+    /* This old full-frame request must never count as a new wheel result. */
+    crazypod_present_queue_full();
+    test_usec_timer = 1000;
+    crazypod_present_note_home_selection();
+    test_usec_timer += 2000;
+    crazypod_present_note_home_selection();
+    assert(crazypod_present_home_selection_waiting_for_flush());
+
+    crazypod_present_tick();
+    assert(lcd_calls == 0);
+    crazypod_present_get_diagnostics(&diagnostics);
+    assert(diagnostics.home_selection_events == 2);
+    assert(diagnostics.home_selection_presents == 0);
+
+    /* The final LVGL flush has written the new selection to framebuffer. */
+    test_usec_timer += 10000;
+    crazypod_present_home_selection_frame_flushed();
+    assert(!crazypod_present_home_selection_waiting_for_flush());
+    lcd_duration_us = 1500;
+    crazypod_present_tick();
+    assert(lcd_calls == 1);
+    assert(lcd_width == LCD_WIDTH);
+    assert(lcd_height == LCD_HEIGHT);
+    crazypod_present_get_diagnostics(&diagnostics);
+    assert(diagnostics.home_selection_presents == 1);
+    assert(diagnostics.home_selection_last_latency_us == 13500);
+    assert(diagnostics.home_selection_max_latency_us == 13500);
+    assert(diagnostics.home_selection_over_50ms == 0);
+}
+
+static void test_home_selection_failed_te_does_not_count(void)
+{
+    struct crazypod_present_diagnostics diagnostics;
+
+    reset_lcd();
+    crazypod_present_init(0);
+    test_usec_timer = 1000;
+    crazypod_present_note_home_selection();
+    test_usec_timer += 2000;
+    crazypod_present_home_selection_frame_flushed();
+    lcd_sync_submit_succeeds = false;
+    crazypod_present_tick();
+    assert(lcd_calls == 1);
+
+    crazypod_present_get_diagnostics(&diagnostics);
+    assert(diagnostics.home_selection_presents == 0);
+    assert(diagnostics.sync_submit_failures == 1);
+    assert(!crazypod_present_home_selection_waiting_for_flush());
+
+    test_usec_timer += 50000;
+    lcd_sync_submit_succeeds = true;
+    crazypod_present_tick();
+    assert(lcd_calls == 2);
+    crazypod_present_get_diagnostics(&diagnostics);
+    assert(diagnostics.home_selection_presents == 1);
+    assert(diagnostics.home_selection_last_latency_us == 52000);
+    assert(diagnostics.home_selection_over_50ms == 1);
+}
+
+static void test_home_selection_is_cancelled_on_navigation(void)
+{
+    struct crazypod_present_diagnostics diagnostics;
+
+    reset_lcd();
+    crazypod_present_init(0);
+    crazypod_present_note_home_selection();
+    assert(crazypod_present_home_selection_waiting_for_flush());
+    crazypod_present_take_fullscreen_ownership();
+    assert(!crazypod_present_home_selection_waiting_for_flush());
+    crazypod_present_queue_full();
+    crazypod_present_now();
+    crazypod_present_get_diagnostics(&diagnostics);
+    assert(diagnostics.home_selection_events == 1);
+    assert(diagnostics.home_selection_presents == 0);
+}
+
 int main(void)
 {
     test_frameclock_cadence();
@@ -363,5 +446,8 @@ int main(void)
     test_failed_home_sync_retries_without_consuming_frame();
     test_failed_full_sync_retries_without_consuming_frame();
     test_home_touch_defers_ordinary_lvgl_until_release();
+    test_home_selection_waits_for_real_lvgl_flush();
+    test_home_selection_failed_te_does_not_count();
+    test_home_selection_is_cancelled_on_navigation();
     return 0;
 }
