@@ -14,6 +14,7 @@
 #include "../navigation/crazypod_route_query.h"
 #include "crazypod_marquee.h"
 #include "crazypod_menu_screen.h"
+#include "crazypod_liquid_music.h"
 
 #define COLOR_WHITE 0xFFFFFF
 #define CRAZYPOD_VISIBLE_ROWS 6
@@ -56,9 +57,16 @@ void crazypod_menu_screen_render(
     lv_obj_t *header;
 
     crazypod_menu_list_reset(state->route);
+    if(state->route == MUSIC_ROUTE_MENU) {
+        lv_obj_set_style_bg_color(
+            context->parent, lv_color_hex(CRAZYPOD_LM_CANVAS), 0);
+        lv_obj_set_style_bg_opa(
+            context->parent, LV_OPA_COVER, 0);
+    }
     header = make_label(context->parent, crazypod_route_query_title(state),
                         context->metadata_font,
-                        COLOR_WHITE, 85);
+                        COLOR_WHITE,
+                        state->route == MUSIC_ROUTE_MENU ? 210 : 85);
     lv_obj_set_pos(header, CRAZYPOD_MENU_HEADER_X,
                    CRAZYPOD_MENU_HEADER_Y);
     lv_obj_set_width(header, CRAZYPOD_MENU_HEADER_WIDTH);
@@ -163,10 +171,16 @@ void crazypod_menu_screen_render(
                            CRAZYPOD_MENU_ROW_X, y,
                            CRAZYPOD_MENU_ROW_WIDTH,
                            CRAZYPOD_MENU_ROW_HEIGHT, 8,
-                           selected ? context->primary_color : context->panel_color,
-                           selected ? 220 : LV_OPA_TRANSP);
+                           state->route == MUSIC_ROUTE_MENU
+                               ? CRAZYPOD_LM_GLASS :
+                               selected ? context->primary_color :
+                                   context->panel_color,
+                           selected ? (state->route == MUSIC_ROUTE_MENU
+                               ? CRAZYPOD_LM_FOCUS_FILL_OPA : 220) :
+                               LV_OPA_TRANSP);
         if(selected) {
-            if(context->gradient_highlight) {
+            if(context->gradient_highlight &&
+               state->route != MUSIC_ROUTE_MENU) {
                 lv_obj_set_style_bg_grad_color(
                     row_box, lv_color_hex(context->secondary_color), 0);
                 lv_obj_set_style_bg_grad_dir(row_box, LV_GRAD_DIR_HOR, 0);
@@ -174,7 +188,9 @@ void crazypod_menu_screen_render(
             lv_obj_set_style_border_width(row_box, 1, 0);
             lv_obj_set_style_border_color(row_box,
                                            lv_color_hex(COLOR_WHITE), 0);
-            lv_obj_set_style_border_opa(row_box, 90, 0);
+            lv_obj_set_style_border_opa(
+                row_box, state->route == MUSIC_ROUTE_MENU
+                    ? CRAZYPOD_LM_FOCUS_BORDER_OPA : 90, 0);
         }
 
         {
