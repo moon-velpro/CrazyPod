@@ -126,9 +126,14 @@ static struct crazypod_music_activation_result activate_search(
 struct crazypod_music_activation_result
 crazypod_music_activation_execute(const struct route_state *state)
 {
-    if(state->route == MUSIC_ROUTE_MENU)
+    if(state->route == MUSIC_ROUTE_MENU) {
+        if(state->selected == CRAZYPOD_MUSIC_ROOT_SHUFFLE)
+            return result(
+                CRAZYPOD_MUSIC_ACTIVATION_SHUFFLE_ALL,
+                MUSIC_ROUTE_MENU, -1);
         return activate_menu(
             crazypod_music_root_legacy_index(state->selected));
+    }
     if(state->route == MUSIC_ROUTE_SEARCH)
         return activate_search(state->selected);
     if(state->route == MUSIC_ROUTE_PLAYLISTS)
