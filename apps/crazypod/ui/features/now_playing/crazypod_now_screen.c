@@ -271,6 +271,7 @@ void crazypod_now_screen_render(
     const lv_image_dsc_t *cover_caption = NULL;
     const lv_image_dsc_t *presentation_backdrop = NULL;
     uint32_t content_color = COLOR_WHITE;
+    uint32_t shade_color = CRAZYPOD_NOW_SHADE_COLOR;
     lv_obj_t *backdrop;
     lv_obj_t *shade;
     lv_obj_t *material;
@@ -303,7 +304,7 @@ void crazypod_now_screen_render(
             context->visual_generation,
             &lyrics_artwork, &cover_caption,
             &presentation_backdrop,
-            &content_color);
+            &content_color, &shade_color);
     if(presentation_backdrop != NULL) {
         backdrop = lv_image_create(context->parent);
         lv_image_set_src(backdrop, presentation_backdrop);
@@ -325,7 +326,7 @@ void crazypod_now_screen_render(
     }
     shade = make_box(
         context->parent, 0, 0, 320, 240, 0,
-        CRAZYPOD_NOW_SHADE_COLOR, CRAZYPOD_NOW_SHADE_OPA);
+        shade_color, CRAZYPOD_NOW_SHADE_OPA);
     lv_obj_remove_flag(shade, LV_OBJ_FLAG_CLICKABLE);
 
     /* Give the artwork the visual priority. Only a very quiet
