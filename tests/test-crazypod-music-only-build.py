@@ -105,6 +105,22 @@ def verify() -> None:
         assert abandoned_call not in runtime, (
             f"Retired runtime still polled: {abandoned_call}"
         )
+    # Never enumerate an old photo/video library during music-only boot.
+    for retired_boot_hook in (
+        "crazypod_photos_init();",
+        "crazypod_videos_init();",
+        "crazypod_photos_feature_initialize_media();",
+        "crazypod_customize_feature_initialize_media();",
+    ):
+        assert retired_boot_hook not in startup, (
+            f"Retired Media/Customize startup hook: {retired_boot_hook}"
+        )
+    assert "crazypod_wallpaper_init();" in startup, (
+        "Existing user wallpapers must remain loadable"
+    )
+    assert "crazypod_artwork_init();" in startup, (
+        "Music artwork cache startup was accidentally removed"
+    )
     for abandoned_call in (
         "crazypod_miniapps_feature_initialize_runtime();",
         "crazypod_miniapps_feature_initialize();",
