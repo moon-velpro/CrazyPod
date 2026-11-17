@@ -96,9 +96,6 @@ Builds CrazyPod exclusively for the Rockbox iPod 6G target.
 Environment:
   CRAZYPOD_INCREMENTAL=1  reuse the selected variant build directory
   CRAZYPOD_SKIP_DEP=1     skip make dep when make.dep exists
-  CRAZYPOD_PACKAGE_EDITION=music|lab
-                           music: lean audio-only install ZIP (default)
-                           lab: legacy apps and theme bundles
   CRAZYPOD_REPRO_DIAGNOSTICS=1
                            build the one-shot harness in build-hw-ipod6g-repro/
   CRAZYPOD_IAP_DIAGNOSTICS=1
@@ -120,14 +117,6 @@ CROSS_COMPILE="${CROSS_COMPILE:-arm-none-eabi-}"
 export CROSS_COMPILE
 CRAZYPOD_BUILD_DEFINES=""
 CRAZYPOD_BUILD_VARIANT="production"
-# Package policy is independent of firmware build diagnostics. The music
-# edition ships no legacy app CPKs, game folders, or non-audio content dirs.
-# It never deletes files from an existing iPod during an upgrade.
-CRAZYPOD_PACKAGE_EDITION="${CRAZYPOD_PACKAGE_EDITION:-music}"
-case "$CRAZYPOD_PACKAGE_EDITION" in
-    music|lab) ;;
-    *) echo "Error: CRAZYPOD_PACKAGE_EDITION must be music or lab." >&2; exit 2 ;;
-esac
 repro_diagnostics="${CRAZYPOD_REPRO_DIAGNOSTICS:-}"
 iap_diagnostics="${CRAZYPOD_IAP_DIAGNOSTICS:-}"
 repro_enabled=0
@@ -279,18 +268,12 @@ mkdir -p "$PACKAGE_DIR/.rockbox/codecs"
 mkdir -p "$PACKAGE_DIR/.rockbox/codepages"
 mkdir -p "$PACKAGE_DIR/.rockbox/fonts"
 mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/icons"
-if [ "$CRAZYPOD_PACKAGE_EDITION" = "lab" ]; then
-    mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages"
-    for content_directory in Music Podcasts Books Pictures Videos Contacts \
-        Calendars MiniApps MiniApps/Games/GB MiniApps/Games/GBC; do
-        mkdir -p "$PACKAGE_DIR/$content_directory"
-    done
-    cp ../packaging/gameboy/README.txt "$PACKAGE_DIR/MiniApps/Games/README.txt"
-else
-    for content_directory in Music Podcasts Pictures; do
-        mkdir -p "$PACKAGE_DIR/$content_directory"
-    done
-fi
+mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages"
+for content_directory in Music Podcasts Books Pictures Videos Contacts \
+    Calendars MiniApps MiniApps/Games/GB MiniApps/Games/GBC; do
+    mkdir -p "$PACKAGE_DIR/$content_directory"
+done
+cp ../packaging/gameboy/README.txt "$PACKAGE_DIR/MiniApps/Games/README.txt"
 CODEPAGE_TOOL="$(cd .. && pwd)/tools/codepages"
 CODEPAGE_BUILD_DIR="$PACKAGE_DIR/generated-codepages"
 if [ ! -x "$CODEPAGE_TOOL" ]; then
@@ -319,18 +302,16 @@ cp -R ../assets/crazypod-icons/. \
     "$PACKAGE_DIR/.rockbox/crazypod/icons/"
 cp ../assets/crazypod/default-home.bmp \
     "$PACKAGE_DIR/.rockbox/crazypod/default-home.bmp"
-if [ "$CRAZYPOD_PACKAGE_EDITION" = "lab" ]; then
-    cp "../dist/miniapps/$GAME2048_PACKAGE" \
-       "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-    cp "../dist/miniapps/$CAPABILITY_LAB_PACKAGE" \
-       "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-    cp "../dist/miniapps/$NATIVE_REFERENCE_PACKAGE" \
-       "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-    cp "../dist/miniapps/$NOW_PLAYING_THEME_PACKAGE" \
-       "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-    cp "../dist/miniapps/$SIGNAL_THEME_PACKAGE" \
-       "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-fi
+cp "../dist/miniapps/$GAME2048_PACKAGE" \
+   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
+cp "../dist/miniapps/$CAPABILITY_LAB_PACKAGE" \
+   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
+cp "../dist/miniapps/$NATIVE_REFERENCE_PACKAGE" \
+   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
+cp "../dist/miniapps/$NOW_PLAYING_THEME_PACKAGE" \
+   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
+cp "../dist/miniapps/$SIGNAL_THEME_PACKAGE" \
+   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
 for codec in lib/rbcodec/codecs/*.codec; do
     [ -f "$codec" ] || continue
     case "$codec" in
@@ -341,16 +322,11 @@ done
 rm -f CrazyPod-6G.zip
 (
     cd "$PACKAGE_DIR"
-    if [ "$CRAZYPOD_PACKAGE_EDITION" = "lab" ]; then
-        zip -q -r "$PACKAGE_DIR/../CrazyPod-6G.zip" \
-            .rockbox Music Podcasts Books Pictures Videos Contacts Calendars \
-            MiniApps
-    else
-        zip -q -r "$PACKAGE_DIR/../CrazyPod-6G.zip" \
-            .rockbox Music Podcasts Pictures
-    fi
+    zip -q -r "$PACKAGE_DIR/../CrazyPod-6G.zip" \
+        .rockbox Music Podcasts Books Pictures Videos Contacts Calendars \
+        MiniApps
 )
 mv "$PACKAGE_DIR/../CrazyPod-6G.zip" CrazyPod-6G.zip
 
 echo "CrazyPod: built $(pwd)/rockbox.ipod"
-echo "CrazyPod: packaged $(pwd)/CrazyPod-6G.zip ($CRAZYPOD_PACKAGE_EDITION edition)"
+echo "CrazyPod: packaged $(pwd)/CrazyPod-6G.zip"
