@@ -75,6 +75,9 @@ void crazypod_menu_list_refresh_row(
     lv_opa_t icon_opa, const char *marker_text, lv_opa_t marker_opa)
 {
     lv_obj_t *box;
+    bool native_root =
+        view.route == MUSIC_ROUTE_MENU ||
+        view.route == SETTINGS_ROUTE_MENU;
     bool media_list =
         (view.route >= MUSIC_ROUTE_MENU &&
          view.route <= MUSIC_ROUTE_QUEUE) ||
@@ -98,40 +101,71 @@ void crazypod_menu_list_refresh_row(
             view.labels[row],
             title != NULL ? title : "",
             selected);
-        lv_obj_set_style_text_opa(view.labels[row], label_opa, 0);
+        lv_obj_set_style_text_opa(
+            view.labels[row], native_root ?
+                (selected ? 255 : 228) : label_opa, 0);
+        if(native_root)
+            lv_obj_set_style_text_color(
+                view.labels[row],
+                lv_color_hex(CRAZYPOD_LM_NATIVE_INK), 0);
     }
-    lv_obj_set_style_bg_color(
-        box, lv_color_hex(media_list ? CRAZYPOD_LM_GLASS :
-            selected ? primary_color : panel_color), 0);
-    lv_obj_set_style_bg_opa(
-        box, selected ? (media_list ? CRAZYPOD_LM_FOCUS_FILL_OPA :
-            220) : LV_OPA_TRANSP, 0);
-    lv_obj_set_style_border_width(box, selected ? 1 : 0, 0);
-    lv_obj_set_style_border_color(
-        box, lv_color_hex(CRAZYPOD_LM_TEXT), 0);
-    lv_obj_set_style_border_opa(
-        box, selected ? (media_list ?
-            CRAZYPOD_LM_FOCUS_BORDER_OPA : 90) : 0, 0);
-    lv_obj_set_style_bg_grad_dir(
-        box, selected && gradient && !media_list ?
-            LV_GRAD_DIR_HOR : LV_GRAD_DIR_NONE, 0);
-    if(selected && gradient && !media_list)
-        lv_obj_set_style_bg_grad_color(
-            box, lv_color_hex(secondary_color), 0);
+    if(native_root) {
+        lv_obj_set_style_bg_color(
+            box, lv_color_hex(CRAZYPOD_LM_NATIVE_SELECTED), 0);
+        lv_obj_set_style_bg_opa(
+            box, selected ? 235 : LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_width(box, 0, 0);
+        lv_obj_set_style_bg_grad_dir(
+            box, LV_GRAD_DIR_NONE, 0);
+    }
+    else {
+        lv_obj_set_style_bg_color(
+            box, lv_color_hex(media_list ? CRAZYPOD_LM_GLASS :
+                selected ? primary_color : panel_color), 0);
+        lv_obj_set_style_bg_opa(
+            box, selected ? (media_list ? CRAZYPOD_LM_FOCUS_FILL_OPA :
+                220) : LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_width(box, selected ? 1 : 0, 0);
+        lv_obj_set_style_border_color(
+            box, lv_color_hex(CRAZYPOD_LM_TEXT), 0);
+        lv_obj_set_style_border_opa(
+            box, selected ? (media_list ?
+                CRAZYPOD_LM_FOCUS_BORDER_OPA : 90) : 0, 0);
+        lv_obj_set_style_bg_grad_dir(
+            box, selected && gradient && !media_list ?
+                LV_GRAD_DIR_HOR : LV_GRAD_DIR_NONE, 0);
+        if(selected && gradient && !media_list)
+            lv_obj_set_style_bg_grad_color(
+                box, lv_color_hex(secondary_color), 0);
+    }
 
     if(view.circles[row] != NULL) {
         lv_obj_set_style_bg_opa(
-            view.circles[row], selected ? 45 : 18, 0);
+            view.circles[row], native_root ? LV_OPA_TRANSP :
+                selected ? 45 : 18, 0);
         if(view.icons[row] != NULL) {
             lv_image_set_src(
                 view.icons[row], crazypod_menu_icon_asset(icon));
-            lv_obj_set_style_opa(view.icons[row], icon_opa, 0);
+            lv_obj_set_style_opa(
+                view.icons[row], native_root ?
+                    (selected ? 255 : 215) : icon_opa, 0);
+            if(native_root)
+                lv_obj_set_style_image_recolor(
+                    view.icons[row],
+                    lv_color_hex(CRAZYPOD_LM_NATIVE_INK), 0);
         }
     }
     if(view.markers[row] != NULL) {
         CP_LV_LABEL_SET_TEXT(
-            view.markers[row], marker_text != NULL ? marker_text : "");
-        lv_obj_set_style_text_opa(view.markers[row], marker_opa, 0);
+            view.markers[row], native_root ? LV_SYMBOL_RIGHT :
+                marker_text != NULL ? marker_text : "");
+        lv_obj_set_style_text_opa(
+            view.markers[row], native_root ?
+                (selected ? 205 : 148) : marker_opa, 0);
+        if(native_root)
+            lv_obj_set_style_text_color(
+                view.markers[row],
+                lv_color_hex(CRAZYPOD_LM_NATIVE_SECONDARY), 0);
     }
 }
 
