@@ -10,6 +10,11 @@ on:
 permissions:
   contents: read
 
+# A design iteration should build only its newest commit; don't cancel main.
+concurrency:
+  group: crazypod-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   design_contract:
     name: Home and Liquid Music contracts
@@ -26,6 +31,16 @@ jobs:
           cc -std=c99 -Wall -Wextra -Werror \
             tests/crazypod_home_model_host_test.c -o /tmp/home_model_test
           /tmp/home_model_test
+          cc -std=c99 -Wall -Wextra -Werror \
+            tests/crazypod_music_root_menu_host_test.c \
+            -o /tmp/music_root_test
+          /tmp/music_root_test
+      - name: Check architecture and run UI host tests
+        run: |
+          set -eu
+          sh tests/check-crazypod-ui-architecture.sh
+          sh tests/run-crazypod-ui-host-tests.sh
+          python3 tools/check-crazypod-l10n.py --strict-bare
 
   hardware:
     name: iPod 6G firmware
