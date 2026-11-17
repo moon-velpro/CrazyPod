@@ -88,6 +88,11 @@ def verify() -> None:
     # The real simulator sources need an independent Linux compile/link gate
     # when the macOS runner is queued; do not stage old full font packages.
     assert "linux_simulator_link:" in workflow
+    snapshot_source = source(
+        "apps/crazypod/ui/app/crazypod_simulator_snapshot.c"
+    )
+    assert '#include "string-extra.h"' in snapshot_source
+    assert "strlcpy(buffer, actions, sizeof(buffer));" in snapshot_source
     assert "name: Linux simulator link check" in workflow
     linux_job = workflow.split("  linux_simulator_link:", 1)[1].split(
         "  simulator:", 1

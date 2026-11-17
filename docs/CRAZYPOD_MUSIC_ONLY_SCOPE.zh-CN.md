@@ -186,3 +186,9 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - macOS runner 连续排队导致当前修改缺少完整模拟器源码编译验证；因此在 `.github/workflows/build.yml` 增设 Ubuntu `Linux simulator link check`，使用相同的 `--target=ipod6g --type=s --sdl-threads` 配置做 `make dep` 和 `make -j2`，要求生成 `rockboxui`。
 - 此门禁只编译、链接，不生成旧版 47×4 字体包，不启动模拟器 GUI，也不改变正常 macOS app 构建；仍保留原 macOS job 验证平台特定兼容性。
 - 新日志作为单独 artifact，帮助捕获仅在 `SIMULATOR` 编译路径中存在的书籍／MiniApps 旧诊断兼容问题，不与已验证的 ARM 音乐固件混淆。
+
+## 2026-11-18 · Linux 模拟器首个编译问题
+
+- Linux simulator link job 的实际第一处阻断是 `crazypod_simulator_snapshot.c` 使用 `strlcpy` 未包含 `string-extra.h`：Linux libc 不能像 macOS 一样隐式提供该函数。
+- 现改为显式包含 Rockbox 的 `string-extra.h`，不替换为语义不同的 `strncpy`，从而保持原来的 NUL 结尾行为和路径上限检查。
+- 日志里部分 `firmware/libc/include/endian.h` 的诊断来自 Linux 主机依赖探测，但实际让 make 失败的是 `strlcpy` 的隐式声明；继续以链接是否成功判断是否还存在真实源码问题。

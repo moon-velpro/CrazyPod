@@ -12,6 +12,7 @@
 #include "file.h"
 #include "kernel.h"
 #include "lvgl.h"
+#include "string-extra.h" /* Rockbox strlcpy; not provided by Linux libc. */
 
 #include "../../crazypod_books.h"
 #include "../../crazypod_frameclock.h"
