@@ -11,4 +11,19 @@ enum crazypod_home_destination {
     CRAZYPOD_HOME_DESTINATION_COUNT,
 };
 
+
+/* Accelerated wheel events may skip multiple rows. Always stop at the
+ * nearest edge instead of dropping an overshooting event entirely. */
+static inline int crazypod_home_selection_after_wheel(
+    int selected, int steps)
+{
+    int target = selected + steps;
+
+    if(target < CRAZYPOD_HOME_NOW_PLAYING)
+        return CRAZYPOD_HOME_NOW_PLAYING;
+    if(target >= CRAZYPOD_HOME_DESTINATION_COUNT)
+        return CRAZYPOD_HOME_DESTINATION_COUNT - 1;
+    return target;
+}
+
 #endif
