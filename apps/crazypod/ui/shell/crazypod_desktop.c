@@ -57,6 +57,7 @@ static lv_obj_t *home_reel;
 static lv_obj_t *home_subtitles[CRAZYPOD_HOME_DESTINATION_COUNT];
 static bool home_private_badges[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_badges[CRAZYPOD_HOME_DESTINATION_COUNT];
+static lv_obj_t *home_fallback_glyphs[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_chevrons[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_rows[CRAZYPOD_HOME_DESTINATION_COUNT];
 static lv_obj_t *home_labels[CRAZYPOD_HOME_DESTINATION_COUNT];
@@ -154,6 +155,10 @@ static void update_selection_row(int index)
         }
         lv_obj_set_style_opa(
             home_badges[index], selected ? 255 : 220, 0);
+        if(home_fallback_glyphs[index] != NULL)
+            lv_image_set_scale(
+                home_fallback_glyphs[index],
+                (selected ? 22 : 17) * LV_SCALE_NONE / 14);
     }
     lv_obj_set_pos(
         home_labels[index], selected ? 53 : 43,
@@ -304,6 +309,7 @@ lv_obj_t *crazypod_desktop_create(
 
     memset(&desktop_host, 0, sizeof(desktop_host));
     memset(home_private_badges, 0, sizeof(home_private_badges));
+    memset(home_fallback_glyphs, 0, sizeof(home_fallback_glyphs));
     if(host != NULL)
         desktop_host = *host;
     screen = lv_obj_create(NULL);
@@ -415,6 +421,7 @@ lv_obj_t *crazypod_desktop_create(
                 lv_obj_set_style_image_recolor_opa(
                     symbol, LV_OPA_COVER, 0);
                 lv_obj_center(symbol);
+                home_fallback_glyphs[i] = symbol;
                 lv_obj_remove_flag(symbol, LV_OBJ_FLAG_CLICKABLE);
             }
         }
