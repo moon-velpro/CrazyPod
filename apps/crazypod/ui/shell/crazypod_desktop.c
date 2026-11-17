@@ -15,6 +15,7 @@
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_liquid_music.h"
 #include "../presentation/crazypod_iphone_app_icons.h"
+#include "../presentation/crazypod_menu_icon_assets.h"
 #include "../presentation/crazypod_ui_widgets.h"
 #include "crazypod_desktop.h"
 #include "crazypod_desktop_native.h"
@@ -278,13 +279,39 @@ lv_obj_t *crazypod_desktop_create(
          * recolored monochrome glyphs on simulated Android tiles.
          * Static source descriptors are cached; wheel detents touch only
          * the row selection chrome. */
-        home_badges[i] = lv_image_create(home_rows[i]);
-        lv_image_set_src(
-            home_badges[i],
-            crazypod_iphone_app_icon(
-                (enum crazypod_home_destination)i));
-        lv_obj_set_pos(
-            home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
+        if(i == CRAZYPOD_HOME_NOW_PLAYING) {
+            /* Voice Memos is a recording app, not Now Playing.
+             * Keep the actual user-supplied Voice Memos image available
+             * as a source asset without mislabeling its function. */
+            lv_obj_t *play_image;
+            home_badges[i] = crazypod_ui_widget_box(
+                home_rows[i], HOME_APP_TILE_X, HOME_APP_TILE_Y,
+                HOME_APP_TILE_SIZE, HOME_APP_TILE_SIZE, 6,
+                0x253047, LV_OPA_COVER);
+            play_image = lv_image_create(home_badges[i]);
+            lv_image_set_src(
+                play_image,
+                crazypod_menu_icon_asset(
+                    CRAZYPOD_MENU_ICON_NOW_PLAYING));
+            lv_obj_set_style_image_recolor(
+                play_image, lv_color_hex(COLOR_WHITE), 0);
+            lv_obj_set_style_image_recolor_opa(
+                play_image, LV_OPA_COVER, 0);
+            lv_obj_center(play_image);
+            lv_obj_remove_flag(
+                play_image, LV_OBJ_FLAG_CLICKABLE);
+        }
+        else {
+            /* Use the user-uploaded iPhone Music, Podcasts and
+             * Settings image pixels, including their original alpha. */
+            home_badges[i] = lv_image_create(home_rows[i]);
+            lv_image_set_src(
+                home_badges[i],
+                crazypod_iphone_app_icon(
+                    (enum crazypod_home_destination)i));
+            lv_obj_set_pos(
+                home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
+        }
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
         home_labels[i] = crazypod_ui_widget_label(
