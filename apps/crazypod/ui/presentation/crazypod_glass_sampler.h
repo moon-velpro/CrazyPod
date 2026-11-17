@@ -16,6 +16,8 @@ enum crazypod_glass_material {
     CRAZYPOD_GLASS_ARTWORK_CAPTION,
     CRAZYPOD_GLASS_INFO_TOAST,
     CRAZYPOD_GLASS_HEADPHONE_POPUP,
+    /* Product Home light controls use pre-blurred RGB565 + a static rim. */
+    CRAZYPOD_GLASS_HOME_CONTROLS,
 };
 
 typedef void (*crazypod_glass_boost_callback)(int ticks);
