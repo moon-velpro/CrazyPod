@@ -1434,11 +1434,6 @@
         "apps/crazypod/ui/features/organizer/crazypod_organizer_feature.c:313"
       ]
     },
-    "Delete Failed": {
-      "locations": [
-        "apps/crazypod/ui/features/photos/crazypod_photos_feature.c:354"
-      ]
-    },
     "Delete this local file": {
       "locations": [
         "apps/crazypod/ui/features/books/crazypod_books_preview.c:481"

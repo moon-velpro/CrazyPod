@@ -278,7 +278,6 @@ static const struct crazypod_l10n_entry crazypod_l10n_entries[] = {
     { "December", { "十二月", "十二月", "12月", "12월", "Dezember", "Décembre", "Diciembre", "Dezembro" } },
     { "Default", { "默认", "預設", "デフォルト", "기본값", "Standard", "Par défaut", "Predeterminado", "Padrão" } },
     { "Delete", { "删除", "刪除", "削除", "삭제", "Löschen", "Supprimer", "Eliminar", "Apagar" } },
-    { "Delete Failed", { "删除失败", "刪除失敗", "削除に失敗しました", "삭제 실패", "Löschen fehlgeschlagen", "Échec de la suppression", "Error al eliminar", "Falha ao apagar" } },
     { "Delete this local file", { "删除此本地文件", "刪除此本機檔案", "このローカルファイルを削除", "이 로컬 파일 삭제", "Diese lokale Datei löschen", "Supprimer ce fichier local", "Eliminar este archivo local", "Apagar este arquivo local" } },
     { "Deleted", { "已删除", "已刪除", "削除済み", "삭제됨", "Gelöscht", "Supprimés", "Eliminado", "Apagado" } },
     { "Deleted Is Empty", { "“已删除”为空", "“已刪除”為空", "削除済みは空です", "삭제된 항목이 비어 있음", "Gelöscht ist leer", "Corbeille vide", "No hay elementos eliminados", "Não há itens apagados" } },
