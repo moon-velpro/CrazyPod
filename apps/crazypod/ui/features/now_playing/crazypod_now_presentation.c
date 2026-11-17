@@ -14,14 +14,15 @@
 
 #include "../../../crazypod_image.h"
 #include "../../presentation/crazypod_glass_sampler.h"
+#include "../../presentation/crazypod_liquid_music.h"
 #include "crazypod_now_presentation.h"
 
 #define PRESENTATION_BANKS 2
-#define COVER_SIZE 108
+#define COVER_SIZE CRAZYPOD_LM_ARTWORK_SIZE
 #define COVER_CAPTION_HEIGHT (COVER_SIZE / 3)
 #define BACKDROP_WIDTH 40
 #define BACKDROP_HEIGHT 30
-#define SHADE_OPA 118
+#define SHADE_OPA CRAZYPOD_LM_SHADE_OPA
 #define COLOR_WHITE 0xFFFFFF
 
 static char track_paths[PRESENTATION_BANKS][MAX_PATH];
