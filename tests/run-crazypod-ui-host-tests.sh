@@ -66,6 +66,16 @@ cc -std=c99 -Wall -Wextra -Werror \
 
 "$test_root/crazypod_liquid_music_host_test"
 
+# Video player is no longer linked. Keep the compatibility stubs inert.
+cc -std=c99 -Wall -Wextra -Werror \
+    -I"$repo_root/tests/crazypod-video-stubs" \
+    -I"$repo_root/apps/crazypod" \
+    "$repo_root/apps/crazypod/crazypod_videos_disabled.c" \
+    "$repo_root/tests/crazypod_video_disabled_host_test.c" \
+    -o "$test_root/crazypod_video_disabled_host_test"
+
+"$test_root/crazypod_video_disabled_host_test"
+
 cc -std=c99 -Wall -Wextra -Werror \
     "$repo_root/tests/crazypod_product_scope_host_test.c" \
     -o "$test_root/crazypod_product_scope_host_test"
