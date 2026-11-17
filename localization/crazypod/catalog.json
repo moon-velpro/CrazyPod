@@ -402,11 +402,6 @@
       ],
       "keepEnglish": true
     },
-    "A  /  Z": {
-      "locations": [
-        "apps/crazypod/ui/features/music/crazypod_music_root_preview.c:371"
-      ]
-    },
     "ACTIONS": {
       "locations": [
         "apps/crazypod/ui/features/now_playing/crazypod_now_playing_overlay.c:337"
@@ -2414,11 +2409,6 @@
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:120"
       ]
     },
-    "Main Menu": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_catalog.c:13"
-      ]
-    },
     "Manual elapsed-time tracking": {
       "locations": [
         "apps/crazypod/ui/features/organizer/crazypod_utility_preview.c:120"
@@ -2944,11 +2934,6 @@
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:129"
       ]
     },
-    "PLAYLIST / A": {
-      "locations": [
-        "apps/crazypod/ui/features/music/crazypod_music_root_preview.c:446"
-      ]
-    },
     "PLAYLISTS": {
       "locations": [
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:124"
@@ -3330,11 +3315,6 @@
     "Rename": {
       "locations": [
         "apps/crazypod/ui/features/customize/crazypod_customize_catalog.c:26"
-      ]
-    },
-    "Reorder or hide entries": {
-      "locations": [
-        "apps/crazypod/ui/features/settings/crazypod_settings_model.c:114"
       ]
     },
     "Repeat": {
