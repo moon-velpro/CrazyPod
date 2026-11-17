@@ -40,6 +40,8 @@ static int deferred_present_y1;
 static int deferred_present_x2;
 static int deferred_present_y2;
 static uint32_t present_sequence;
+static bool home_selection_pending;
+static uint32_t home_selection_start_us;
 static long present_tick;
 static struct crazypod_present_diagnostics present_diagnostics;
 #ifdef SIMULATOR
@@ -91,12 +93,25 @@ void crazypod_present_init(long now)
     present_pending = false;
     present_sync = PRESENT_SYNC_NONE;
     deferred_present_pending = false;
+    home_selection_pending = false;
+    home_selection_start_us = 0;
     memset(&present_diagnostics, 0, sizeof(present_diagnostics));
 }
 
 void crazypod_present_set_home_interaction(bool active)
 {
     home_interaction_active = active;
+}
+
+void crazypod_present_note_home_selection(void)
+{
+    /* Keep the first pending detent: coalesced wheel steps still count as
+     * one visible frame, and the oldest step defines perceived lag. */
+    if(!home_selection_pending) {
+        home_selection_pending = true;
+        home_selection_start_us = crazypod_monotonic_usec();
+    }
+    ++present_diagnostics.home_selection_events;
 }
 
 static void set_present_rect(
@@ -319,6 +334,18 @@ void crazypod_present_now(void)
     ++present_sequence;
     present_tick = current_tick;
     ++present_diagnostics.presents;
+    if(home_selection_pending) {
+        uint32_t latency =
+            crazypod_monotonic_usec() - home_selection_start_us;
+
+        home_selection_pending = false;
+        ++present_diagnostics.home_selection_presents;
+        present_diagnostics.home_selection_last_latency_us = latency;
+        if(latency > present_diagnostics.home_selection_max_latency_us)
+            present_diagnostics.home_selection_max_latency_us = latency;
+        if(latency > 50000u)
+            ++present_diagnostics.home_selection_over_50ms;
+    }
     if(full)
         ++present_diagnostics.full_presents;
     present_diagnostics.last_present_us = duration_us;
