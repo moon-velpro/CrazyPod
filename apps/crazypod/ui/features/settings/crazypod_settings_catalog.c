@@ -13,13 +13,13 @@
 
 const char *const crazypod_settings_menu_titles[] = {
     CP_TR("Sound"), CP_TR("Display"), CP_TR("Date & Time"), CP_TR("Playback"),
-    CP_TR("Power"), CP_TR("Controls"), CP_TR("Main Menu"), CP_TR("Language")
+    CP_TR("Power"), CP_TR("Controls"), CP_TR("Language")
 };
 
 const char *const crazypod_settings_menu_symbols[] = {
     LV_SYMBOL_AUDIO, LV_SYMBOL_EYE_OPEN, LV_SYMBOL_SETTINGS,
     LV_SYMBOL_PLAY, LV_SYMBOL_POWER, LV_SYMBOL_SETTINGS,
-    LV_SYMBOL_LIST, LV_SYMBOL_HOME
+    LV_SYMBOL_HOME
 };
 
 static const int sound_items[] = {
