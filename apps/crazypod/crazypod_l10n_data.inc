@@ -571,6 +571,7 @@ static const struct crazypod_l10n_entry crazypod_l10n_entries[] = {
     { "Play A/B", { "播放 A/B", "播放 A/B", "A/B再生", "A/B 재생", "A/B abspielen", "Lire A/B", "Reproducir A/B", "Reproduzir A/B" } },
     { "Play Mode", { "播放模式", "播放模式", "再生モード", "재생 모드", "Wiedergabemodus", "Mode de lecture", "Modo de reproducción", "Modo de reprodução" } },
     { "Playback", { "播放", "播放", "再生", "재생", "Wiedergabe", "Lecture", "Reproducción", "Reprodução" } },
+    { "Playback Queue", { "播放队列", "播放佇列", "再生キュー", "재생 대기열", "Warteschlange", "File de lecture", "Cola de reproducción", "Fila de reprodução" } },
     { "Playlists", { "播放列表", "播放列表", "プレイリスト", "플레이리스트", "Playlists", "Playlists", "Listas de reproducción", "Playlists" } },
     { "Podcasts", { "播客", "Podcast", "ポッドキャスト", "팟캐스트", "Podcasts", "Podcasts", "Pódcasts", "Podcasts" } },
     { "Power", { "电源", "電源", "電源", "전원", "Strom", "Alimentation", "Energía", "Energia" } },

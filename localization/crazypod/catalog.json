@@ -3000,6 +3000,11 @@
       ]
     },
 
+    "Playback Queue": {
+      "locations": [
+        "apps/crazypod/ui/shell/crazypod_home_actions.c:62"
+      ]
+    },
     "Playlists": {
       "locations": [
         "apps/crazypod/ui/features/music/crazypod_music_feature.c:166",
