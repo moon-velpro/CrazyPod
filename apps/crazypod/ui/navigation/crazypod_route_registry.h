@@ -34,6 +34,8 @@ crazypod_route_registry_get(enum crazypod_route route);
 const struct crazypod_feature *
 crazypod_route_registry_feature(enum crazypod_route route);
 bool crazypod_route_registry_is_shell(enum crazypod_route route);
+/* True only for the three product apps and the native playback page. */
+bool crazypod_route_registry_product_allowed(enum crazypod_route route);
 bool crazypod_route_registry_has_flag(
     enum crazypod_route route, enum crazypod_route_flag flag);
 bool crazypod_route_registry_validate(void);
