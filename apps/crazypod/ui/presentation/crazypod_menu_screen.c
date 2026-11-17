@@ -55,26 +55,36 @@ void crazypod_menu_screen_render(
     int start;
     int row;
     lv_obj_t *header;
+    bool native_root =
+        state->route == MUSIC_ROUTE_MENU ||
+        state->route == SETTINGS_ROUTE_MENU;
     bool media_list =
         (state->route >= MUSIC_ROUTE_MENU &&
          state->route <= MUSIC_ROUTE_QUEUE) ||
         state->route == PODCASTS_ROUTE_MENU;
 
     crazypod_menu_list_reset(state->route);
-    if(media_list) {
+    if(native_root || media_list) {
         lv_obj_set_style_bg_color(
-            context->parent, lv_color_hex(CRAZYPOD_LM_CANVAS), 0);
+            context->parent,
+            lv_color_hex(native_root
+                ? CRAZYPOD_LM_NATIVE_BG : CRAZYPOD_LM_CANVAS), 0);
         lv_obj_set_style_bg_opa(
             context->parent, LV_OPA_COVER, 0);
     }
     header = make_label(context->parent, crazypod_route_query_title(state),
-                        context->metadata_font,
-                        COLOR_WHITE,
-                        media_list ? 210 : 85);
-    lv_obj_set_pos(header, CRAZYPOD_MENU_HEADER_X,
-                   CRAZYPOD_MENU_HEADER_Y);
-    lv_obj_set_width(header, CRAZYPOD_MENU_HEADER_WIDTH);
-    lv_obj_set_height(header, CRAZYPOD_MENU_HEADER_HEIGHT);
+                        native_root
+                            ? &lv_font_montserrat_24 :
+                              context->metadata_font,
+                        native_root ? CRAZYPOD_LM_NATIVE_INK : COLOR_WHITE,
+                        native_root ? LV_OPA_COVER :
+                            media_list ? 210 : 85);
+    lv_obj_set_pos(header, native_root ? 19 : CRAZYPOD_MENU_HEADER_X,
+                   native_root ? 34 : CRAZYPOD_MENU_HEADER_Y);
+    lv_obj_set_width(header,
+        native_root ? LCD_WIDTH - 38 : CRAZYPOD_MENU_HEADER_WIDTH);
+    lv_obj_set_height(header,
+        native_root ? 30 : CRAZYPOD_MENU_HEADER_HEIGHT);
     lv_label_set_long_mode(header, LV_LABEL_LONG_MODE_DOTS);
 
     if(count <= 0) {
@@ -160,29 +170,33 @@ void crazypod_menu_screen_render(
 
     for(row = 0; row < CRAZYPOD_VISIBLE_ROWS; ++row) {
         int index = start + row;
-        int y = CRAZYPOD_MENU_ROW_Y + row * CRAZYPOD_MENU_ROW_STEP;
+        int y = native_root
+            ? 69 + row * 26 :
+              CRAZYPOD_MENU_ROW_Y + row * CRAZYPOD_MENU_ROW_STEP;
         bool selected = index == state->selected;
         lv_obj_t *row_box;
         lv_obj_t *label;
         lv_obj_t *marker;
         const char *title;
-        int text_x = 12;
-        int text_width = 120;
+        int text_x = native_root ? 43 : 12;
+        int text_width = native_root ? LCD_WIDTH - 98 : 120;
 
         if(index >= count)
             break;
         row_box = make_box(context->parent,
-                           CRAZYPOD_MENU_ROW_X, y,
-                           CRAZYPOD_MENU_ROW_WIDTH,
-                           CRAZYPOD_MENU_ROW_HEIGHT, 8,
-                           media_list
-                               ? CRAZYPOD_LM_GLASS :
-                               selected ? context->primary_color :
-                                   context->panel_color,
-                           selected ? (media_list
-                               ? CRAZYPOD_LM_FOCUS_FILL_OPA : 220) :
-                               LV_OPA_TRANSP);
-        if(selected) {
+                           native_root ? 12 : CRAZYPOD_MENU_ROW_X, y,
+                           native_root ? LCD_WIDTH - 24 :
+                               CRAZYPOD_MENU_ROW_WIDTH,
+                           native_root ? 25 : CRAZYPOD_MENU_ROW_HEIGHT,
+                           native_root ? 9 : 8,
+                           native_root ? CRAZYPOD_LM_NATIVE_SELECTED :
+                           media_list ? CRAZYPOD_LM_GLASS :
+                           selected ? context->primary_color :
+                                      context->panel_color,
+                           selected ? (native_root ? 235 :
+                               media_list ? CRAZYPOD_LM_FOCUS_FILL_OPA :
+                                            220) : LV_OPA_TRANSP);
+        if(selected && !native_root) {
             if(context->gradient_highlight &&
                state->route != MUSIC_ROUTE_MENU) {
                 lv_obj_set_style_bg_grad_color(
@@ -196,6 +210,11 @@ void crazypod_menu_screen_render(
                 row_box, media_list
                     ? CRAZYPOD_LM_FOCUS_BORDER_OPA : 90, 0);
         }
+        if(native_root && row + 1 < CRAZYPOD_VISIBLE_ROWS) {
+            /* One subtle native separator instead of a shadow card. */
+            make_box(row_box, 37, 24, LCD_WIDTH - 84, 1, 0,
+                     CRAZYPOD_LM_NATIVE_HAIRLINE, 105);
+        }
 
         {
             enum crazypod_menu_icon icon_id =
@@ -206,42 +225,51 @@ void crazypod_menu_screen_render(
             if(icon_asset != NULL) {
                 lv_obj_t *circle = make_box(
                     row_box, 0, 0, 21, 21,
-                    LV_RADIUS_CIRCLE, COLOR_WHITE,
-                    selected ? 45 : 18);
+                    native_root ? 5 : LV_RADIUS_CIRCLE,
+                    native_root ? CRAZYPOD_LM_NATIVE_BG : COLOR_WHITE,
+                    native_root ? LV_OPA_TRANSP :
+                        selected ? 45 : 18);
                 lv_obj_t *icon = lv_image_create(circle);
 
                 lv_obj_align(circle, LV_ALIGN_LEFT_MID, 6, 0);
                 lv_image_set_src(icon, icon_asset);
                 lv_obj_set_style_image_recolor(
-                    icon, lv_color_hex(COLOR_WHITE), 0);
+                    icon, lv_color_hex(native_root
+                        ? CRAZYPOD_LM_NATIVE_INK : COLOR_WHITE), 0);
                 lv_obj_set_style_image_recolor_opa(
                     icon, LV_OPA_COVER, 0);
                 lv_obj_set_style_opa(
                     icon, selected ? 255 : 170, 0);
                 lv_obj_center(icon);
                 crazypod_menu_list_bind_icon(row, circle, icon);
-                text_x = 34;
-                text_width = 88;
+                text_x = native_root ? 43 : 34;
+                text_width = native_root ? LCD_WIDTH - 102 : 88;
             }
         }
         title = context->item_title(state, index);
         if(title == NULL)
             title = "";
         label = make_label(row_box, title, context->metadata_font,
-                           COLOR_WHITE, selected ? 255 : 195);
+                           native_root
+                               ? CRAZYPOD_LM_NATIVE_INK : COLOR_WHITE,
+                           selected ? 255 : native_root ? 228 : 195);
         lv_obj_set_width(label, text_width);
         crazypod_ui_widget_align_row_label(
             label, text_x, CRAZYPOD_UI_ROW_LABEL_TEXT);
         crazypod_marquee_configure(label, selected);
 
         marker = make_label(row_box,
+                            native_root ? LV_SYMBOL_RIGHT :
                             context->item_is_current(state, index)
                                 ? LV_SYMBOL_OK :
                             selected ? LV_SYMBOL_PLAY : LV_SYMBOL_BULLET,
                             &lv_font_montserrat_8,
-                            COLOR_WHITE, selected ? 205 : 90);
+                            native_root ? CRAZYPOD_LM_NATIVE_SECONDARY :
+                                          COLOR_WHITE,
+                            selected ? 205 : native_root ? 148 : 90);
         crazypod_ui_widget_align_row_label(
-            marker, 128, CRAZYPOD_UI_ROW_LABEL_MARKER);
+            marker, native_root ? LCD_WIDTH - 51 : 128,
+            CRAZYPOD_UI_ROW_LABEL_MARKER);
         crazypod_menu_list_bind_row(row, row_box, label, marker);
     }
 
@@ -254,12 +282,19 @@ void crazypod_menu_screen_render(
             count, state->selected, CRAZYPOD_VISIBLE_ROWS,
             CRAZYPOD_MENU_SCROLL_Y, track_height, 12,
             &thumb_y, &thumb_height);
-        bar = make_box(context->parent, CRAZYPOD_MENU_SCROLL_X,
+        bar = make_box(context->parent,
+                       native_root ? LCD_WIDTH - 6 :
+                           CRAZYPOD_MENU_SCROLL_X,
                        CRAZYPOD_MENU_SCROLL_Y, 2, track_height, 1,
-                       COLOR_WHITE, 25);
+                       native_root ? CRAZYPOD_LM_NATIVE_HAIRLINE :
+                           COLOR_WHITE, native_root ? 55 : 25);
         (void)bar;
-        bar = make_box(context->parent, CRAZYPOD_MENU_SCROLL_X,
-                       thumb_y, 2, thumb_height, 1, COLOR_WHITE, 155);
+        bar = make_box(context->parent,
+                       native_root ? LCD_WIDTH - 6 :
+                           CRAZYPOD_MENU_SCROLL_X,
+                       thumb_y, 2, thumb_height, 1,
+                       native_root ? CRAZYPOD_LM_NATIVE_SECONDARY :
+                           COLOR_WHITE, native_root ? 110 : 155);
         crazypod_menu_list_bind_scroll_thumb(bar);
     }
 
