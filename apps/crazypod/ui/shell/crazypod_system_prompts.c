@@ -13,18 +13,12 @@
 
 #include "../../accessory/crazypod_iap_simple.h"
 #include "../../crazypod_artwork.h"
-#include "../../crazypod_books.h"
 #include "../../crazypod_coverflow.h"
 #include "../../crazypod_music.h"
-#include "../../crazypod_organizer.h"
-#include "../../crazypod_photos.h"
 #include "../../crazypod_screen_recording.h"
 #include "../../crazypod_state.h"
-#include "../../crazypod_videos.h"
 #include "../app/crazypod_choice_coordinator.h"
 #include "../app/crazypod_menu_preview.h"
-#include "../features/customize/crazypod_customize_feature.h"
-#include "../features/miniapps/crazypod_miniapps_feature.h"
 #include "../features/music/crazypod_music_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../presentation/crazypod_overlay_glass.h"
@@ -41,7 +35,6 @@
 #include "crazypod_usb_prompt.h"
 
 #define POWER_HOLD_TICKS (3 * HZ)
-#define MEDIA_INVALID_PATH "/.crazypod/cache/media.invalid"
 
 static struct {
     struct crazypod_system_prompts_host host;
@@ -116,10 +109,6 @@ static void dismissed(void)
 static void execute(enum shutdown_type type)
 {
     (void)crazypod_screen_recording_stop(prompts.host.now());
-    if(crazypod_miniapps_feature_is_open()) {
-        crazypod_miniapps_feature_reset_input();
-        crazypod_miniapps_feature_close();
-    }
     crazypod_state_save(true);
     shutdown_hw(type);
 }
@@ -138,8 +127,7 @@ static void configure_power(void)
             !crazypod_lock_screen_is_locked() &&
             !crazypod_home_actions_visible() &&
             !crazypod_now_playing_overlay_visible(),
-        .before_hold_show =
-            crazypod_customize_feature_clear_input_holds,
+        .before_hold_show = NULL,
         .before_show = before_show,
         .create_panel = crazypod_overlay_glass_panel,
         .animate_panel = crazypod_popup_animate,
@@ -349,15 +337,11 @@ void crazypod_system_prompts_usb_connected(intptr_t data)
     (void)crazypod_screen_recording_stop(prompts.host.now());
     /*
      * The host may replace any storage-backed catalog while it owns mass
-     * storage. Drop every product route now so stale numeric selections
-     * cannot target a different book, contact or calendar event afterward.
+     * storage. Drop the Music/Settings product route before the host owns
+     * mass storage; no application keeps stale file handles or selection.
      * close_product() is a no-op when Home is already visible.
      */
     prompts.host.close_product();
-    if(crazypod_miniapps_feature_is_open()) {
-        crazypod_miniapps_feature_reset_input();
-        crazypod_miniapps_feature_close();
-    }
     /* Playback is stopped for mass storage, so the retained lock-screen
      * snapshot is invalid immediately. Clear it before USB owns the UI;
      * otherwise disconnect presents one stale Now Playing frame before the
@@ -367,18 +351,9 @@ void crazypod_system_prompts_usb_connected(intptr_t data)
     crazypod_music_library_schedule_rescan(
         prompts.host.now() + HZ / 2);
     crazypod_artwork_suspend();
-    crazypod_photos_suspend();
-    crazypod_videos_suspend();
     crazypod_music_cancel_scan();
     crazypod_music_require_catalog_validation();
-    crazypod_photos_invalidate_catalog();
-    crazypod_videos_invalidate_catalog();
     crazypod_state_save(true);
-    /* Catalogs and host-sensitive media caches are now invalidated.
-     * Removing the transaction marker here prevents newly rebuilt photo/
-     * video catalogs from being rejected on the next boot when Music was
-     * never opened. A crash before this point leaves it for boot cleanup. */
-    remove(MEDIA_INVALID_PATH);
     /* Cached runtime fonts keep their .fnt descriptors open. Close them
      * before acknowledging exclusive storage so unmount cannot leave stale
      * descriptors behind in the font slots. */
@@ -400,12 +375,7 @@ void crazypod_system_prompts_usb_disconnected(void)
     lv_refr_now(NULL);
     if(prompts.host.present != NULL)
         prompts.host.present();
-    crazypod_books_invalidate_scan();
-    crazypod_organizer_invalidate();
     crazypod_artwork_resume();
-    crazypod_photos_resume();
-    crazypod_videos_resume();
-    crazypod_miniapps_feature_request_rescan();
     crazypod_music_library_schedule_rescan(
         prompts.host.now() + HZ / 2);
 }

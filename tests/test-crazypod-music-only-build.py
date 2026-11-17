@@ -85,6 +85,24 @@ def verify() -> None:
                    "CRAZYPOD_APP_LOCK"):
         assert f"case {active}:" in launcher, f"Missing critical action: {active}"
     assert "crazypod_product_launcher_allowed(id)" in launcher
+    usb_prompts = source("apps/crazypod/ui/shell/crazypod_system_prompts.c")
+    for retired_usb in ("crazypod_books_", "crazypod_photos_",
+                        "crazypod_miniapps_", "crazypod_organizer_",
+                        "crazypod_customize_"):
+        assert retired_usb not in usb_prompts, retired_usb
+    for safety_path in (
+        "prompts.storage_active = true;",
+        "crazypod_artwork_suspend();",
+        "crazypod_artwork_resume();",
+        "crazypod_music_cancel_scan();",
+        "crazypod_music_require_catalog_validation();",
+        "usb_acknowledge(SYS_USB_CONNECTED_ACK, data);",
+        "font_disable_all();",
+        "font_enable_all();",
+        "crazypod_music_library_schedule_rescan(",
+    ):
+        assert safety_path in usb_prompts, safety_path
+    assert "remove(MEDIA_INVALID_PATH);" not in usb_prompts
     coordinator = source("apps/crazypod/ui/app/crazypod_choice_coordinator.c")
     for retired in ("crazypod_books_", "crazypod_customize_",
                     "crazypod_photos_", "crazypod_photo_",
