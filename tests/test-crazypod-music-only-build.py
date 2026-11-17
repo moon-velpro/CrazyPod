@@ -19,6 +19,8 @@ def verify() -> None:
     boot = source("apps/crazypod/crazypod_main.c")
     launcher = source("apps/crazypod/ui/app/crazypod_app_launcher.c")
     desktop = source("apps/crazypod/ui/shell/crazypod_desktop.c")
+    native_home = source("apps/crazypod/ui/shell/crazypod_desktop_native.c")
+    retired_icons = source("apps/crazypod/crazypod_icons.c")
     present = source("apps/crazypod/crazypod_frameclock.c")
     present_header = source("apps/crazypod/crazypod_frameclock.h")
     home_input = source("apps/crazypod/ui/shell/crazypod_home_input.c")
@@ -100,6 +102,22 @@ def verify() -> None:
     assert "crazypod_video_disabled_host_test.c" in source(
         "tests/run-crazypod-ui-host-tests.sh"
     )
+
+    # The old horizontal 160px BMP carousel and 120px interpolation
+    # cache are not part of the vertical Home. Keep modal underlay support
+    # while preventing multi-megabyte BSS regressions and boot-time BMP I/O.
+    assert "static struct icon_slot slots[" not in retired_icons
+    assert "ICON_BYTES" not in retired_icons
+    assert "load_icon(" not in retired_icons
+    assert "open(" not in retired_icons
+    assert "crazypod_icons_init();" not in startup
+    assert "static uint8_t scaled_icons" not in native_home
+    assert "static fb_data backdrop[" not in native_home
+    assert "prepare_scaled_icon(" not in native_home
+    assert "modal_underlay[LCD_WIDTH * NATIVE_HEIGHT]" in native_home
+    assert "crazypod_desktop_native_create_modal_underlay(" in native_home
+    assert "crazypod_desktop_native_preserve_modal_underlay(" in native_home
+    assert "crazypod_desktop_native_prepare_modal(" in native_home
 
     # A real Click Wheel detent must only refresh old/new Home rows, not
     # rebuild all four labels or trigger repeated screen launches.
