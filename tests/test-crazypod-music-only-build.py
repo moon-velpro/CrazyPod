@@ -23,6 +23,17 @@ def verify() -> None:
     present_header = source("apps/crazypod/crazypod_frameclock.h")
     home_input = source("apps/crazypod/ui/shell/crazypod_home_input.c")
     home_actions = source("apps/crazypod/ui/shell/crazypod_home_actions.c")
+    capsule = source("apps/crazypod/ui/shell/crazypod_now_capsule.c")
+    native_menu = source("apps/crazypod/ui/presentation/crazypod_menu_screen.c")
+    native_refresh = source("apps/crazypod/ui/presentation/crazypod_menu_list.c")
+    preview = source("apps/crazypod/ui/app/crazypod_menu_preview.c")
+    now_screen = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_screen.c"
+    )
+    now_header = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_screen.h"
+    )
+    liquid = source("apps/crazypod/ui/presentation/crazypod_liquid_music.h")
     glass_overlay = source("apps/crazypod/ui/presentation/crazypod_overlay_glass.c")
     glass_panel = source("apps/crazypod/ui/presentation/crazypod_glass_panel.c")
     glass_sampler = source("apps/crazypod/ui/presentation/crazypod_glass_sampler.c")
@@ -139,6 +150,46 @@ def verify() -> None:
     assert "lv_obj_set_style_blur_backdrop" not in home_actions, (
         "No per-frame software backdrop blur in Home controls"
     )
+
+    # The first production pass implements the approved minimal
+    # Apple-like direction as real LVGL, not a mockup: clean full-width
+    # Music/Settings roots, quiet Home selection and a single glass mini
+    # player. No new navigation action, audio thread or wheel polling.
+    assert "CRAZYPOD_LM_NATIVE_BG" in liquid
+    assert "CRAZYPOD_LM_HOME_IDLE_OPA          0" in liquid
+    assert "CRAZYPOD_LM_HOME_SELECTION_FILL" in desktop
+    assert "CRAZYPOD_LM_NATIVE_HAIRLINE" in desktop
+    assert "native_root =" in renderer
+    assert "native_root ? CRAZYPOD_LM_NATIVE_BG" in renderer
+    assert "native_root ? CRAZYPOD_LM_NATIVE_INK" in renderer
+    assert "state->route == MUSIC_ROUTE_MENU" in native_menu
+    assert "state->route == SETTINGS_ROUTE_MENU" in native_menu
+    assert "native_root ? LCD_WIDTH - 24" in native_menu
+    assert "native_root ? LV_SYMBOL_RIGHT" in native_menu
+    assert "bool native_root" in native_refresh
+    assert "CRAZYPOD_LM_NATIVE_SELECTED" in native_refresh
+    assert "lv_obj_set_style_bg_grad_dir" in native_refresh
+    assert "Full-width native root lists do not need album cards" in preview
+    assert "No preview pane exists in these native full-width lists" in preview
+
+    # Native Quick Controls show levels, not three colored orbs.
+    assert "static int action_level_percent(enum home_action action)" in home_actions
+    assert "lv_bar_create(actions.panel)" in home_actions
+    assert "lv_bar_set_value(actions.level_bar, value, LV_ANIM_OFF)" in home_actions
+    assert "lv_arc_create(" not in home_actions
+    assert "action_level_percent(action)" in home_actions
+    assert "crazypod_overlay_glass_home_controls_panel(" in home_actions
+
+    # Now Playing retains real artwork, lyrics, status and native physical
+    # controls; it does not add touch input or synchronous image filters.
+    for glyph in ("LV_SYMBOL_PREV", "LV_SYMBOL_NEXT", "LV_SYMBOL_PAUSE"):
+        assert glyph in now_screen
+    assert "lv_obj_t *transport_status;" in now_header
+    assert "update_transport_play_state();" in now_screen
+    assert "lv_obj_add_event_cb(view->wave_surface" in now_screen
+    assert "lv_obj_add_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN)" in capsule
+    assert "capsule.play_symbol" in capsule
+    assert "lv_obj_has_flag(capsule.spectrum, LV_OBJ_FLAG_HIDDEN)" in capsule
 
     # The route ABI is stable, but all retired dispatch paths are inert.
     assert "crazypod_route_registry_product_allowed(" in registry
