@@ -30,6 +30,13 @@
 #define HOME_ROW_WIDTH (LCD_WIDTH - 2 * HOME_ROW_X)
 #define HOME_ROW_HEIGHT CRAZYPOD_PRODUCT_HOME_ROW_HEIGHT
 #define HOME_ROW_GAP CRAZYPOD_PRODUCT_HOME_ROW_GAP
+/* iPhone-style app tiles are miniature rounded-square apps, not Android
+ * Material circles. A 21px tile fits the existing 25px Home row without
+ * changing the Click Wheel or the 320x240 layout. */
+#define HOME_APP_TILE_SIZE 21
+#define HOME_APP_TILE_RADIUS 6
+#define HOME_APP_TILE_X 6
+#define HOME_APP_TILE_Y 2
 #define HOME_WHEEL_POSITIONS 96
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
 #define HOME_WHEEL_RELEASE_TICKS \
@@ -98,10 +105,33 @@ static enum crazypod_menu_icon home_entry_icon(int index)
     }
 }
 
+/* iPhone app-icon language: white Music tile with coral note,
+ * violet Podcasts tile, cool metallic Settings tile and dark player tile.
+ * These are original CrazyPod glyphs, not extracted Apple app assets. */
 static uint32_t home_entry_color(int index)
 {
     static const uint32_t colors[] = {
-        0x527FC0, 0xF24E82, 0x855ED5, 0x63758B
+        0x253047, 0xFFFFFF, 0xB45BEA, 0xC9D1D8
+    };
+
+    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
+        ? colors[index] : colors[0];
+}
+
+static uint32_t home_entry_gradient(int index)
+{
+    static const uint32_t colors[] = {
+        0x131C2B, 0xFFF9FB, 0x8136C7, 0x82909D
+    };
+
+    return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
+        ? colors[index] : colors[0];
+}
+
+static uint32_t home_entry_glyph_color(int index)
+{
+    static const uint32_t colors[] = {
+        0xFFFFFF, 0xF33C63, 0xFFFFFF, 0x303840
     };
 
     return index >= 0 && index < CRAZYPOD_HOME_DESTINATION_COUNT
@@ -299,8 +329,18 @@ lv_obj_t *crazypod_desktop_create(
             HOME_ROW_WIDTH, HOME_ROW_HEIGHT, 14,
             HOME_GLASS, LV_OPA_TRANSP);
         home_badges[i] = crazypod_ui_widget_box(
-            home_rows[i], 7, 3, 19, 19, 6,
+            home_rows[i], HOME_APP_TILE_X, HOME_APP_TILE_Y,
+            HOME_APP_TILE_SIZE, HOME_APP_TILE_SIZE,
+            HOME_APP_TILE_RADIUS,
             home_entry_color(i), LV_OPA_COVER);
+        lv_obj_set_style_bg_grad_color(
+            home_badges[i], lv_color_hex(home_entry_gradient(i)), 0);
+        lv_obj_set_style_bg_grad_dir(
+            home_badges[i], LV_GRAD_DIR_VER, 0);
+        lv_obj_set_style_border_width(home_badges[i], 1, 0);
+        lv_obj_set_style_border_color(
+            home_badges[i], lv_color_hex(COLOR_WHITE), 0);
+        lv_obj_set_style_border_opa(home_badges[i], 70, 0);
         lv_obj_remove_flag(
             home_badges[i], LV_OBJ_FLAG_CLICKABLE);
         home_symbols[i] = lv_image_create(home_badges[i]);
@@ -308,7 +348,8 @@ lv_obj_t *crazypod_desktop_create(
             home_symbols[i],
             crazypod_menu_icon_asset(home_entry_icon(i)));
         lv_obj_set_style_image_recolor(
-            home_symbols[i], lv_color_hex(COLOR_WHITE), 0);
+            home_symbols[i],
+            lv_color_hex(home_entry_glyph_color(i)), 0);
         lv_obj_set_style_image_recolor_opa(
             home_symbols[i], LV_OPA_COVER, 0);
         lv_obj_center(home_symbols[i]);
