@@ -57,6 +57,18 @@ def test_original_system_glyphs() -> None:
     assert "lv_image_set_src(" in home
     assert "crazypod_menu_icon_asset(home_entry_icon(i))" in home
 
+    # App launch entries mirror the iPhone's *app-icon* visual grammar:
+    # rounded squares, a white Music face/red note, purple Podcasts and
+    # cool-gray Settings. Navigation list glyphs stay monochrome.
+    assert "#define HOME_APP_TILE_SIZE 21" in home
+    assert "#define HOME_APP_TILE_RADIUS 6" in home
+    assert "home_entry_gradient(i)" in home
+    assert "home_entry_glyph_color(i)" in home
+    assert "lv_obj_set_style_bg_grad_dir(" in home
+    assert "0xFFFFFF, 0xF33C63, 0xFFFFFF, 0x303840" in home
+    assert "0x253047, 0xFFFFFF, 0xB45BEA, 0xC9D1D8" in home
+    assert "LV_SYMBOL_VOLUME_MID" not in home
+
 
 def test_semantic_route_coverage() -> None:
     mapping_bodies = []
