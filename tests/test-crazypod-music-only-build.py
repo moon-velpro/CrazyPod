@@ -18,6 +18,11 @@ def verify() -> None:
     workflow = source(".github/workflows/build.yml")
     boot = source("apps/crazypod/crazypod_main.c")
     launcher = source("apps/crazypod/ui/app/crazypod_app_launcher.c")
+    runtime = source("apps/crazypod/ui/app/crazypod_runtime_services.c")
+    startup = source("apps/crazypod/crazypod_ui.c")
+    theme = source(
+        "apps/crazypod/ui/features/now_playing/crazypod_now_playing_theme.c"
+    )
 
     # No legacy app catalog work or disk mutation before first music scan.
     for legacy in ("crazypod_notes_init();", "crazypod_books_init();",
@@ -55,6 +60,32 @@ def verify() -> None:
     assert "crazypod_video_disabled_host_test.c" in source(
         "tests/run-crazypod-ui-host-tests.sh"
     )
+
+    # No old app runtime may be initialized, scanned, or polled on boot.
+    for abandoned_call in (
+        "crazypod_miniapps_feature_rescan();",
+        "crazypod_miniapp_alarm_initialize();",
+        "crazypod_miniapp_alarm_tick(",
+        "crazypod_miniapps_feature_service(",
+        "crazypod_organizer_feature_service(",
+        "crazypod_books_feature_service_reader(",
+        "crazypod_photos_runtime_service(",
+        "crazypod_route_actions_service_notes();",
+    ):
+        assert abandoned_call not in runtime, (
+            f"Retired runtime still polled: {abandoned_call}"
+        )
+    for abandoned_call in (
+        "crazypod_miniapps_feature_initialize_runtime();",
+        "crazypod_miniapps_feature_initialize();",
+    ):
+        assert abandoned_call not in startup, (
+            f"Retired MiniApp startup hook: {abandoned_call}"
+        )
+    assert "crazypod_now_playing_theme_enabled(void)" in theme
+    assert "return false; /* Always render the native Now Playing screen. */" in theme
+    assert "crazypod_miniapps.h" not in theme
+    assert "THEME_CONFIG" not in theme
 
     assert "crazypod/gameboy/" not in manifest, "Game Boy linked into firmware"
     assert "crazypod_gameboy_screen.c" not in manifest
