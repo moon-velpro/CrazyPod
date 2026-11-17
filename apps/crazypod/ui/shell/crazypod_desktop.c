@@ -308,7 +308,11 @@ lv_obj_t *crazypod_desktop_create(
             lv_image_set_src(
                 home_badges[i],
                 crazypod_iphone_app_icon(
-                    (enum crazypod_home_destination)i));
+                    i == CRAZYPOD_HOME_MUSIC
+                        ? CRAZYPOD_IPHONE_ICON_MUSIC :
+                    i == CRAZYPOD_HOME_PODCASTS
+                        ? CRAZYPOD_IPHONE_ICON_PODCASTS :
+                        CRAZYPOD_IPHONE_ICON_SETTINGS));
             lv_obj_set_pos(
                 home_badges[i], HOME_APP_TILE_X, HOME_APP_TILE_Y);
         }
