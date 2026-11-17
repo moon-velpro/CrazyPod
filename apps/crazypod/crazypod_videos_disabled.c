@@ -2,6 +2,8 @@
 
 #ifdef IPOD_6G
 
+#include <stddef.h>
+
 #include "crazypod_videos.h"
 
 /*
