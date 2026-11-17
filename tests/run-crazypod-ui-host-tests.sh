@@ -183,6 +183,18 @@ cc -std=c99 -Wall -Wextra -Werror \
     "$repo_root/tests/crazypod_apple_glyph_host_test.c" \
     -o "$test_root/crazypod_apple_glyph_host_test"
 
+# Assert that the actual four user-supplied PNGs are represented exactly
+# in the compiled 21px RGB565+A8 resources, including transparent edges.
+cc -std=c99 -Wall -Wextra -Werror \
+    -I"$repo_root/tests/crazypod-image-stubs" \
+    -I"$repo_root/apps/crazypod/ui" \
+    -I"$repo_root/apps/crazypod/ui/presentation" \
+    "$repo_root/apps/crazypod/ui/presentation/crazypod_iphone_app_icons.c" \
+    "$repo_root/tests/crazypod_iphone_app_icons_host_test.c" \
+    -o "$test_root/crazypod_iphone_app_icons_host_test"
+
+"$test_root/crazypod_iphone_app_icons_host_test"
+
 "$test_root/crazypod_apple_glyph_host_test"
 
 "$test_root/crazypod_image_host_test"
