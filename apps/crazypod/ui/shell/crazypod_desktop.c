@@ -211,7 +211,7 @@ lv_obj_t *crazypod_desktop_create(
 {
     const lv_image_dsc_t *image = crazypod_custom_home_wallpaper();
     const lv_font_t *body_font = metadata_font != NULL
-        ? metadata_font : &lv_font_montserrat_14;
+        ? metadata_font : &lv_font_montserrat_12;
     int i;
 
     memset(&desktop_host, 0, sizeof(desktop_host));
