@@ -184,6 +184,7 @@ static bool set_selected_target(int selected)
     {
         int previous = selected_app;
         selected_app = selected;
+        crazypod_present_note_home_selection();
         /* Only two rows change when a detent lands. Avoid relaying out
          * and invalidating all four translated Home labels on each tick. */
         update_selection_row(previous);
@@ -363,6 +364,8 @@ void crazypod_desktop_set_selected(int selected, bool animated)
     if(changed) {
         int previous = selected_app;
         selected_app = selected;
+        if(desktop_active)
+            crazypod_present_note_home_selection();
         update_selection_row(previous);
         update_selection_row(selected);
         queue_touched_home_selection();
