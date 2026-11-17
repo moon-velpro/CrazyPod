@@ -51,7 +51,7 @@ static const char *const app_base64[APP_COUNT] = {
     "//e9////////////////////////3/////////////veXe///////////////////////////////////////////zznFKXLWmEI05z//9//"
     "/////9///////////////////////13vVa3rWuMYAAAAAAAA05z//9///////9//3//f/9//3//f/9////9VreMYAAAAAAAAQQggAAAA05z/"
     "/9//3//f/9//3//f/9//3//f/773///PewAAQQggAAAAAACCEGEIspT//7733//f/9//3//f/9//3//f/773//8QhAAAAABBCKYxz3u61gxj"
-    "UYz//7733//f/9//3//f/9//3//f/773///ve8MYz3v3vX3v/////01rMIT//7733//f/9//3//f/9//3//f/773//+Oc897///f/773nvff"
+    "UYz//7733//f/9//3//f/9//3//f/773///ve8MYz3v3vX3v/////01rMIT//7733//f/9//3/++9773vve+9573//+Oc897///f/773nvff"
     "/01rMIT//773vve+9773vve+9773vve+9573//+Oc+97//+e9573nvf//45zMIT//573vve+9773vve+9773vve+9573//+Oc897//+e9///"
     "nvea1opScYz//573vve+9773vvee9573nvee933v//+Oc897///f/1nOCELDGGEI05z//573nvee9773nvee9573nvee99////+Oc+97//9d"
     "7yhCYQgEIeMYda3f/573nvee9773nvee9573nvee99Ocy1okIXGM///73qYx4xgEIctaHOee9573nvee9573fe+e933vvvfve2EIohDDGNOc"
