@@ -13,11 +13,12 @@
 #include "../../../crazypod_playlist.h"
 #include "../../../crazypod_runtime_font.h"
 #include "../../../crazypod_soundwave.h"
+#include "../../presentation/crazypod_liquid_music.h"
 #include "crazypod_now_playing_feature.h"
 #include "crazypod_now_presentation.h"
 #include "crazypod_now_screen.h"
 
-#define NOW_SHADE_OPA 118
+#define NOW_SHADE_OPA CRAZYPOD_LM_SHADE_OPA
 #define COLOR_WHITE 0xFFFFFF
 
 static struct crazypod_artwork_palette wave_palette;
