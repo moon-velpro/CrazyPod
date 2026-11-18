@@ -615,12 +615,6 @@ static bool activate_domain(
     return false;
 }
 
-static void show_icon_choices(int group, int selected)
-{
-    crazypod_choice_coordinator_show(
-        CRAZYPOD_CHOICE_ICON_THEME, group, selected);
-}
-
 static void show_appearance_choices(int group, int selected)
 {
     crazypod_choice_coordinator_show(
@@ -643,7 +637,6 @@ static bool activate_customize(struct route_state *state)
             crazypod_route_actions_push_selected,
         .pop = action_pop,
         .appearance_changed = appearance_changed,
-        .show_icon_choices = show_icon_choices,
         .show_appearance_choices = show_appearance_choices,
         .show_background_choices = show_background_choices,
         .preset_deleted = preset_deleted,
