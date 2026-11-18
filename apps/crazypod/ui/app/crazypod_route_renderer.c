@@ -28,6 +28,7 @@
 #include "../presentation/crazypod_screen_corners.h"
 #include "../presentation/crazypod_ui_widgets.h"
 #include "../shell/crazypod_shell.h"
+#include "../shell/crazypod_home_actions.h"
 #include "../shell/crazypod_status_bar.h"
 #include "crazypod_choice_coordinator.h"
 #include "crazypod_menu_preview.h"
@@ -231,7 +232,11 @@ static void render_feature(
         crazypod_route_registry_feature(state->route);
 
     if(feature == NULL) {
-        render_menu(state);
+        if(crazypod_home_actions_is_adjustment(state->route))
+            crazypod_home_actions_render_adjustment(
+                state->route, crazypod_shell_product_content());
+        else
+            render_menu(state);
         return;
     }
     switch(feature->id) {
@@ -323,13 +328,15 @@ void crazypod_route_renderer_render(
     bool hide_status = crazypod_route_registry_has_flag(
         state->route, CRAZYPOD_ROUTE_FLAG_HIDE_STATUS);
     int theme = crazypod_books_theme();
-    uint32_t background = book_reader
+    bool home_actions =
+        crazypod_home_actions_is_route(state->route);
+    uint32_t background = home_actions ? 0xF6F9FC : book_reader
         ? crazypod_books_feature_page_colors()[theme]
         : solid_black ? 0x000000
         : fullscreen
             ? crazypod_organizer_feature_background(state->route)
             : crazypod_appearance_menu_color();
-    uint32_t foreground = book_reader
+    uint32_t foreground = home_actions ? 0x1E2938 : book_reader
         ? crazypod_books_feature_ink_colors()[theme]
         : fullscreen &&
           crazypod_route_registry_has_flag(
