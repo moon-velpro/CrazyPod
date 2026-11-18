@@ -177,8 +177,29 @@ static bool valid_ipod_music_path(const char *path)
         if(a == '\0' || a != b)
             return false;
     }
-    return path[i] != '\0' && strstr(path, "/../") == NULL &&
-        strstr(path, "//") == NULL;
+    /* Compare only normal relative path components. A malformed MHOD
+     * must not be able to select a file outside the original music tree. */
+    if(path[i] == '\0')
+        return false;
+    while(path[i] != '\0') {
+        size_t start = i;
+
+        while(path[i] != '\0' && path[i] != '/') {
+            if(path[i] == ':' || path[i] == '\\')
+                return false;
+            ++i;
+        }
+        if(i == start || (i - start == 1 && path[start] == '.') ||
+           (i - start == 2 && path[start] == '.' &&
+            path[start + 1] == '.'))
+            return false;
+        if(path[i] == '/') {
+            ++i;
+            if(path[i] == '\0')
+                return false;
+        }
+    }
+    return true;
 }
 
 static bool visit_track(

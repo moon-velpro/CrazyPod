@@ -173,6 +173,52 @@ static void test_corruption_is_bounded(void)
     assert(!crazypod_itunesdb_visit(&reader, &callbacks));
 }
 
+static void test_unsafe_path_components(void)
+{
+    static const char *const paths[] = {
+        ":iPod_Control:Music:F00:..",
+        ":iPod_Control:Music:F00:.:TRACK.mp3",
+        ":iPod_Control:Music:F00::TRACK.mp3",
+        ":iPod_Control:Music:F00:TRACK.mp3:",
+    };
+    struct crazypod_itunesdb_reader reader = {
+        .context = NULL,
+        .read_at = read_memory,
+    };
+    const struct crazypod_itunesdb_callbacks callbacks = {
+        .context = NULL, .on_track = on_track, .cancelled = NULL,
+    };
+    unsigned path_index;
+
+    for(path_index = 0;
+        path_index < sizeof(paths) / sizeof(paths[0]);
+        ++path_index) {
+        uint32_t offset = 32 + 16 + 16 + 12 + 104;
+        uint32_t original_mhod_size;
+        uint32_t replacement_length;
+        uint32_t bytes;
+        uint32_t i;
+
+        build_sample();
+        original_mhod_size = sample[offset + 8] |
+            ((uint32_t)sample[offset + 9] << 8);
+        replacement_length = (uint32_t)strlen(paths[path_index]);
+        bytes = replacement_length * 2;
+        assert(40u + bytes <= original_mhod_size);
+        put32(offset + 28, bytes);
+        memset(sample + offset + 40, 0,
+               original_mhod_size - 40);
+        for(i = 0; i < replacement_length; ++i)
+            sample[offset + 40 + i * 2] =
+                (uint8_t)paths[path_index][i];
+
+        reader.file_size = used;
+        matches = 0;
+        assert(crazypod_itunesdb_visit(&reader, &callbacks));
+        assert(matches == 0);
+    }
+}
+
 static void test_path_guard(void)
 {
     struct crazypod_itunesdb_reader reader;
@@ -198,5 +244,6 @@ int main(void)
     test_classic_metadata();
     test_corruption_is_bounded();
     test_path_guard();
+    test_unsafe_path_components();
     return 0;
 }
