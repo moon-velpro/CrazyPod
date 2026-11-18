@@ -42,7 +42,6 @@
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
-#include "crazypod_icons.h"
 #include "crazypod_lyrics.h"
 #include "crazypod_l10n.h"
 #include "crazypod_runtime_font.h"
@@ -131,7 +130,6 @@ static struct crazypod_frameclock lvgl_clock;
 static int rendered_route_depth;
 static enum crazypod_route rendered_route;
 static bool rendered_route_valid;
-static int appearance_tile_size(void);
 static struct route_state *current_route(void);
 static const char *route_item_title(
     const struct route_state *state, int index);
@@ -219,12 +217,6 @@ static void update_status_bars(lv_timer_t *timer)
         refresh_lock_clock();
 }
 
-static int appearance_tile_size(void)
-{
-    static const int sizes[] = { 88, 96, 104, 112, 120 };
-    return sizes[crazypod_appearance_get()->icon_scale];
-}
-
 static long ui_now(void)
 {
     return current_tick;
@@ -296,9 +288,6 @@ static void lock_screen_unlocked(bool transition_started)
     if(!transition_started)
         return;
     lv_refr_now(NULL);
-    if(!product_active)
-        crazypod_desktop_render_icon_snapshot(
-            appearance_tile_size());
     (void)crazypod_scene_transition_commit(
         crazypod_desktop_screen());
 }
@@ -433,8 +422,6 @@ static void close_product(void)
         crazypod_desktop_selected(), false);
     if(captured) {
         lv_refr_now(NULL);
-        crazypod_desktop_render_icon_snapshot(
-            appearance_tile_size());
         (void)crazypod_scene_transition_commit(
             crazypod_desktop_screen());
     }
@@ -791,7 +778,6 @@ void crazypod_ui_run(void)
     crazypod_now_capsule_reset_motion(current_tick);
     crazypod_image_init();
     crazypod_artwork_init();
-    crazypod_icons_init();
     crazypod_photos_init();
     crazypod_videos_init();
     crazypod_screen_recording_init();
@@ -1012,11 +998,6 @@ void crazypod_ui_run(void)
 
             if(crazypod_desktop_motion_active())
                 keep_cpu_boosted(HZ / 10 > 0 ? HZ / 10 : 1);
-            crazypod_desktop_render_icon(
-                appearance_tile_size(),
-                crazypod_shell_product_active() ||
-                modal_prompt_visible() ||
-                crazypod_scene_transition_owns_framebuffer());
             crazypod_coverflow_tick();
             coverflow_feedback =
                 crazypod_coverflow_take_wheel_feedback();
