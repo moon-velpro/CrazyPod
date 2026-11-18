@@ -35,6 +35,16 @@ CrazyPod 不是 Android 启动器，也不是纯粹复刻 2007 年像素界面�
 补充：Apple 原版也会通过长按中央键显示附加命令菜单；本项目采用**完整二级页面**呈现这些命令。
 不应将惯用操作（排序、语言、主题、播放模式、队列）做成浮层对话框。
 
+## 首页快捷操作：正式二级导航
+
+短按 MENU 从 Home 进入 `HOME_ROUTE_ACTIONS`，显示纵向菜单：播放队列、亮度、音量。
+中央键进入对应子页面；亮度/音量页使用滚轮调整，中央键或 MENU 返回上一级，
+保留原菜单选中位置。播放队列进入已有 `MUSIC_ROUTE_QUEUE` 路由，MENU 先返回
+快捷操作，再返回 Home。Home 长按 MENU 打开 Now Playing 的既有快捷方式保持不变。
+
+此设计不再复制一份浮层导航状态，避免弹窗遮挡、截图底层、误吞按键和
+原生/ LVGL 绘制权冲突。音频播放状态与用户设置仍由原有 Rockbox/领域模块维护。
+
 ## 页面层级
 
 ```text
@@ -46,6 +56,10 @@ Home
 │   ├── Playlists → Playlist → Songs
 │   ├── Album Flow
 │   └── Search → Results
+├── Home Actions (MENU short)
+│   ├── Playback Queue
+│   ├── Brightness
+│   └── Volume
 ├── Now Playing
 │   ├── Actions
 │   │   ├── Queue
