@@ -429,40 +429,32 @@ void crazypod_choice_overlay_show_receipt(
     uint32_t color = success ? COLOR_SUCCESS : COLOR_FAILURE;
     const char *symbol = success ? LV_SYMBOL_OK : LV_SYMBOL_CLOSE;
     const char *resolved_label = label != NULL ? label : "";
-    struct crazypod_popup_geometry geometry;
+    struct crazypod_popup_geometry geometry = {
+        0, 32, LCD_WIDTH, LCD_HEIGHT - 32
+    };
     lv_obj_t *old_panel;
     lv_obj_t *new_panel;
-    int label_width;
     int label_height;
-    int receipt_y = 10;
+    int receipt_y = 55;
     int receipt_size = 48;
-    int receipt_gap = 10;
+    int receipt_gap = 12;
     lv_anim_t animation;
 
     if(!crazypod_choice_overlay_visible() ||
        view.panel == NULL || view.receipt_visible)
         return;
     stop_hold_feedback(false);
-    label_width = crazypod_popup_text_width(
-        resolved_label, view.metadata_font);
-    geometry = crazypod_popup_centered_geometry(
-        crazypod_popup_clamp_width(
-            label_width, 22, 132, 208),
-        1);
     label_height = crazypod_popup_wrapped_text_height(
         resolved_label, view.metadata_font,
-        geometry.width - 20, 1);
-    geometry = crazypod_popup_centered_geometry(
-        geometry.width,
-        receipt_y + receipt_size + receipt_gap +
-            label_height + 10);
+        geometry.width - 28, 1);
     old_panel = view.panel;
     set_content_hidden(true);
     lv_refr_now(NULL);
-    new_panel = view.callbacks.create_panel(
+    /* Result feedback uses the same full page, never a center popup. */
+    new_panel = crazypod_ui_widget_box(
         view.root, geometry.x, geometry.y,
         geometry.width, geometry.height,
-        view.callbacks.context);
+        0, COLOR_PAGE, LV_OPA_COVER);
     if(new_panel == NULL) {
         set_content_hidden(false);
         return;
@@ -493,9 +485,9 @@ void crazypod_choice_overlay_show_receipt(
     lv_obj_center(view.receipt_symbol);
     view.receipt_label = crazypod_ui_widget_label(
         view.panel, resolved_label, view.metadata_font,
-        COLOR_WHITE, LV_OPA_COVER);
+        COLOR_TEXT, LV_OPA_COVER);
     lv_obj_set_width(
-        view.receipt_label, geometry.width - 20);
+        view.receipt_label, geometry.width - 28);
     lv_obj_set_height(view.receipt_label, label_height);
     lv_obj_set_style_text_align(
         view.receipt_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -504,7 +496,7 @@ void crazypod_choice_overlay_show_receipt(
     lv_obj_set_style_text_line_space(
         view.receipt_label, 1, 0);
     lv_obj_set_pos(
-        view.receipt_label, 10,
+        view.receipt_label, 14,
         receipt_y + receipt_size + receipt_gap);
     view.receipt_visible = true;
 
