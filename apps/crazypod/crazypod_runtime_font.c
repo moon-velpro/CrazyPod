@@ -56,7 +56,6 @@ static uint8_t runtime_font_coverage[
     CRAZYPOD_RUNTIME_FONT_MAX][CRAZYPOD_FONT_COVERAGE_BYTES];
 static uint8_t asset_font_coverage[
     CRAZYPOD_ASSET_FONT_MAX][CRAZYPOD_FONT_COVERAGE_BYTES];
-static bool initialized;
 static char last_error[MAX_PATH + 64];
 
 static bool asset_get_glyph_dsc(
@@ -148,21 +147,17 @@ static unsigned system_line_height(unsigned size)
     return (size * 1448u + 999u) / 1000u;
 }
 
+/* A failed boot must never turn into a false success on the next call.
+ * Resolve the actual shipped faces, including regional JP fallbacks. */
 bool crazypod_runtime_font_init(void)
 {
-    if(initialized)
-        return true;
-    initialized = true;
-    return crazypod_runtime_font_at_size(12) != NULL &&
-        crazypod_runtime_font_at_size(15) != NULL &&
-        crazypod_runtime_font_at_size(18) != NULL;
+    return crazypod_runtime_fonts_ready();
 }
 
 const lv_font_t *crazypod_runtime_font_resolve(
     enum crazypod_font_family family, unsigned size, unsigned weight,
     enum crazypod_font_style style, unsigned line_height)
 {
-    initialized = true;
     return semantic_font_resolve(
         family, size, weight, style, line_height, false);
 }
@@ -254,6 +249,12 @@ bool crazypod_runtime_fonts_ready(void)
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
         crazypod_runtime_font_resolve(
                CRAZYPOD_FONT_FAMILY_SYSTEM, 8, 700,
+               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
+        crazypod_runtime_font_resolve(
+               CRAZYPOD_FONT_FAMILY_SYSTEM, 8, 400,
+               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
+        crazypod_runtime_font_resolve(
+               CRAZYPOD_FONT_FAMILY_SYSTEM, 10, 700,
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL;
 #endif
 }

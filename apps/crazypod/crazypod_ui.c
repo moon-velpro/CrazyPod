@@ -240,6 +240,98 @@ static void configure_composition(void)
     crazypod_runtime_services_configure(render_current_route);
 }
 
+/* Recovery is deliberately independent of the user-installed fonts and
+ * of the normal desktop, artwork, playback, and localization widgets.
+ * A partial .rockbox install must be repairable without a boot loop. */
+static lv_obj_t *font_recovery_screen(void)
+{
+    static const struct {
+        const char *text;
+        int y;
+        const lv_font_t *font;
+    } lines[] = {
+        { "FONT FILES MISSING", 22, &lv_font_montserrat_16 },
+        { "Copy the complete CrazyPod-6G.zip", 69,
+          &lv_font_montserrat_12 },
+        { "including .rockbox/fonts/crazypod-aot", 93,
+          &lv_font_montserrat_12 },
+        { "USB: connect to restore files", 140,
+          &lv_font_montserrat_12 },
+        { "Eject USB, then press CENTER to reboot", 166,
+          &lv_font_montserrat_12 },
+    };
+    lv_obj_t *screen = lv_obj_create(NULL);
+    unsigned i;
+
+    lv_obj_remove_style_all(screen);
+    lv_obj_set_style_bg_color(screen, lv_color_hex(0x141820), 0);
+    lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+    for(i = 0; i < sizeof(lines) / sizeof(lines[0]); ++i) {
+        lv_obj_t *label = lv_label_create(screen);
+
+        lv_label_set_text(label, lines[i].text);
+        lv_obj_set_style_text_font(label, lines[i].font, 0);
+        lv_obj_set_style_text_color(
+            label, lv_color_hex(i == 0 ? 0xFFCF69 : 0xFFFFFF), 0);
+        lv_obj_set_width(label, LCD_WIDTH - 16);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_pos(label, 8, lines[i].y);
+    }
+    return screen;
+}
+
+static lv_obj_t *font_recovery_wait(lv_display_t *display)
+{
+    lv_obj_t *screen = font_recovery_screen();
+    bool storage_active = false;
+
+    lv_screen_load(screen);
+    lv_refr_now(display);
+    crazypod_present_tick();
+#if defined(HAVE_USB_POWER) && !defined(USB_NONE)
+    /* The USB insertion callback already registered during platform boot.
+     * In recovery only, select Data automatically instead of opening the
+     * normal themed prompt (which itself needs the missing fonts). */
+    crazypod_usb_prompt_set_ui_ready(true);
+#endif
+    set_cpu_boost(false);
+    while(true) {
+        long button = button_get_w_tmo(HZ / 4 > 0 ? HZ / 4 : 1);
+        intptr_t data;
+
+        if(button == BUTTON_NONE)
+            continue;
+        data = button_get_data();
+#if defined(HAVE_USB_POWER) && !defined(USB_NONE)
+        if(button == CRAZYPOD_USB_PROMPT_REQUEST) {
+            crazypod_usb_prompt_finish(USB_MODE_MASS_STORAGE);
+            continue;
+        }
+        if(button == SYS_USB_CONNECTED) {
+            font_disable_all();
+            storage_active = true;
+            usb_acknowledge(SYS_USB_CONNECTED_ACK, data);
+            continue;
+        }
+        if(button == SYS_USB_DISCONNECTED) {
+            font_enable_all();
+            storage_active = false;
+            continue;
+        }
+#endif
+        /* Never reboot or power off while the host owns mass storage. */
+        if(storage_active)
+            continue;
+        if(button == SYS_POWEROFF)
+            shutdown_hw(SHUTDOWN_POWER_OFF);
+        if(button == SYS_REBOOT ||
+           (button & BUTTON_MAIN) == BUTTON_SELECT)
+            shutdown_hw(SHUTDOWN_REBOOT);
+    }
+    /* No normal desktop can be reached without a fresh, verified boot. */
+    return screen;
+}
+
 static lv_obj_t *create_boot_screen(void)
 {
     lv_obj_t *screen = lv_obj_create(NULL);
@@ -673,7 +765,9 @@ void crazypod_ui_run(void)
             rockbox_tick_ms, &display_host);
     }
     font_unload_all();
-    (void)crazypod_runtime_font_init();
+    crazypod_runtime_font_error_clear();
+    if(!crazypod_runtime_font_init())
+        (void)font_recovery_wait(display);
 
     boot_screen = create_boot_screen();
     {

@@ -19,14 +19,20 @@ static const lv_font_t *readable_text_font(
     if(text_is_symbol(text))
         return font;
     if(font == &lv_font_montserrat_8 ||
-       font == &lv_font_crazypod_i18n_8)
-        return crazypod_runtime_font_at_size(12);
+       font == &lv_font_crazypod_i18n_8) {
+        const lv_font_t *face = crazypod_runtime_font_at_size(12);
+        return face != NULL ? face : font;
+    }
     if(font == &lv_font_montserrat_10 ||
-       font == &lv_font_crazypod_i18n_10)
-        return crazypod_runtime_font_at_size(15);
+       font == &lv_font_crazypod_i18n_10) {
+        const lv_font_t *face = crazypod_runtime_font_at_size(15);
+        return face != NULL ? face : font;
+    }
     if(font == &lv_font_montserrat_12 ||
-       font == &lv_font_crazypod_i18n_12)
-        return crazypod_runtime_font_at_size(18);
+       font == &lv_font_crazypod_i18n_12) {
+        const lv_font_t *face = crazypod_runtime_font_at_size(18);
+        return face != NULL ? face : font;
+    }
     return font;
 }
 

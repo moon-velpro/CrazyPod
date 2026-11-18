@@ -492,6 +492,31 @@ def verify() -> None:
     assert "crazypod_artwork_init();" in startup, (
         "Music artwork cache startup was accidentally removed"
     )
+    # An incomplete font install must never launch a NULL-font desktop.
+    runtime_font = source("apps/crazypod/crazypod_runtime_font.c")
+    assert "return crazypod_runtime_fonts_ready();" in runtime_font
+    assert "if(initialized)" not in runtime_font
+    for spec in source("tools/crazypod-runtime-font-music-only.txt").splitlines():
+        if spec.startswith("system:"):
+            _, weight, size = spec.split(":")
+            assert (
+                f"CRAZYPOD_FONT_FAMILY_SYSTEM, {size}, {weight}," in
+                runtime_font
+            ), f"Boot readiness did not check shipped font {spec}"
+    assert "if(!crazypod_runtime_font_init())" in startup
+    assert "(void)font_recovery_wait(display);" in startup
+    recovery = startup.split("static lv_obj_t *font_recovery_screen(void)", 1)[1]
+    recovery = recovery.split("static lv_obj_t *create_boot_screen(void)", 1)[0]
+    assert "&lv_font_montserrat_12" in recovery
+    assert "crazypod_runtime_font_at_size(" not in recovery
+    assert "crazypod_usb_prompt_set_ui_ready(true);" in recovery
+    assert "crazypod_usb_prompt_finish(USB_MODE_MASS_STORAGE);" in recovery
+    assert "usb_acknowledge(SYS_USB_CONNECTED_ACK, data);" in recovery
+    assert "font_disable_all();" in recovery
+    assert "font_enable_all();" in recovery
+    assert "if(storage_active)" in recovery
+    widgets = source("apps/crazypod/ui/presentation/crazypod_ui_widgets.c")
+    assert widgets.count("return face != NULL ? face : font;") == 3
     for abandoned_call in (
         "crazypod_miniapps_feature_initialize_runtime();",
         "crazypod_miniapps_feature_initialize();",
