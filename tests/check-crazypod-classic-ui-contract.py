@@ -23,6 +23,23 @@ app_input = source("app/crazypod_app_input.c")
 registry = source("navigation/crazypod_route_registry.c")
 
 assert "HOME_VISIBLE_ROWS" in home, "home must remain a vertical wheel menu"
+project_root = root.parents[2]
+customize = source("features/customize/crazypod_customize_catalog.c")
+native_header = source("shell/crazypod_desktop_native.h")
+sources = (project_root / "apps/SOURCES").read_text(encoding="utf-8")
+build_hw = (project_root / "build-hw.sh").read_text(encoding="utf-8")
+build_sim = (project_root / "build-sim.sh").read_text(encoding="utf-8")
+assert not (project_root / "assets/crazypod-icons").exists(), (
+    "unused 16-theme bitmaps must not ship in the repo"
+)
+assert "16 complete icon themes" not in customize
+assert 'CP_TR("Icons")' not in customize
+assert 'CP_TR("Icon Size")' not in customize
+assert "scaled_icons" not in native, "old native icon cache must be retired"
+assert "native_render(" not in native_header
+assert "crazypod/crazypod_icons.c" not in sources
+assert "assets/crazypod-icons" not in build_hw + build_sim
+assert "home_symbols" in home, "Home app glyphs must be a fixed set"
 assert "render_desktop_icons(" not in home, "old Android-like icon carousel returned"
 assert "crazypod_desktop_native_invalidate(" not in home, (
     "LVGL Home must not schedule an abandoned native icon redraw"
