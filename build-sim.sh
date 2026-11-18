@@ -159,7 +159,9 @@ fi
 # Clear obsolete theme assets from an existing simulator workdir.
 rm -rf "$icon_dir"
 mkdir -p "$icon_dir/basic"
-cp ../assets/crazypod-icons/basic/*.bmp "$icon_dir/basic/"
+for icon in music podcasts shuffle screen_lock settings; do
+    cp "../assets/crazypod-icons/basic/$icon.bmp" "$icon_dir/basic/"
+done
 cp ../assets/crazypod/default-home.bmp \
    simdisk/.rockbox/crazypod/default-home.bmp
 mkdir -p miniapps/packages
@@ -203,19 +205,8 @@ node ../tools/miniapp-builder/src/cli.mjs build \
     --target simulator \
     --binary miniapps/themes/signal-one/app.dylib \
     --out "miniapps/packages/$signal_theme_package"
-miniapp_package_dir="simdisk/.rockbox/crazypod/miniapps/packages"
-mkdir -p "$miniapp_package_dir"
-find "$miniapp_package_dir" -type f -name '*.cpk' -delete
-cp "miniapps/packages/$game2048_package" \
-   "$miniapp_package_dir/"
-cp "miniapps/packages/$capability_lab_package" \
-   "$miniapp_package_dir/"
-cp "miniapps/packages/$native_reference_package" \
-   "$miniapp_package_dir/"
-cp "miniapps/packages/$now_playing_theme_package" \
-   "$miniapp_package_dir/"
-cp "miniapps/packages/$signal_theme_package" \
-   "$miniapp_package_dir/"
+# Remove any old packaged app payloads from reused simulator disks.
+rm -rf simdisk/.rockbox/crazypod/miniapps/packages
 
 app_bundle="CrazyPod Simulator.app"
 mkdir -p "$app_bundle/Contents/MacOS"

@@ -268,9 +268,7 @@ mkdir -p "$PACKAGE_DIR/.rockbox/codecs"
 mkdir -p "$PACKAGE_DIR/.rockbox/codepages"
 mkdir -p "$PACKAGE_DIR/.rockbox/fonts"
 mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/icons/basic"
-mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages"
-for content_directory in Music Podcasts Books Pictures Videos Contacts \
-    Calendars MiniApps; do
+for content_directory in Music Podcasts; do
     mkdir -p "$PACKAGE_DIR/$content_directory"
 done
 CODEPAGE_TOOL="$(cd .. && pwd)/tools/codepages"
@@ -297,20 +295,12 @@ python3 ../tools/crazypod_runtime_font_audit.py \
     ../dist/miniapps/*.cpk
 cp rockbox.ipod "$PACKAGE_DIR/.rockbox/rockbox.ipod"
 [ ! -f rockbox-info.txt ] || cp rockbox-info.txt "$PACKAGE_DIR/.rockbox/rockbox-info.txt"
-cp ../assets/crazypod-icons/basic/*.bmp \
-    "$PACKAGE_DIR/.rockbox/crazypod/icons/basic/"
+for icon in music podcasts shuffle screen_lock settings; do
+    cp "../assets/crazypod-icons/basic/$icon.bmp" \
+        "$PACKAGE_DIR/.rockbox/crazypod/icons/basic/"
+done
 cp ../assets/crazypod/default-home.bmp \
     "$PACKAGE_DIR/.rockbox/crazypod/default-home.bmp"
-cp "../dist/miniapps/$GAME2048_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$CAPABILITY_LAB_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$NATIVE_REFERENCE_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$NOW_PLAYING_THEME_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
-cp "../dist/miniapps/$SIGNAL_THEME_PACKAGE" \
-   "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages/"
 for codec in lib/rbcodec/codecs/*.codec; do
     [ -f "$codec" ] || continue
     case "$codec" in
@@ -322,8 +312,7 @@ rm -f CrazyPod-6G.zip
 (
     cd "$PACKAGE_DIR"
     zip -q -r "$PACKAGE_DIR/../CrazyPod-6G.zip" \
-        .rockbox Music Podcasts Books Pictures Videos Contacts Calendars \
-        MiniApps
+        .rockbox Music Podcasts
 )
 mv "$PACKAGE_DIR/../CrazyPod-6G.zip" CrazyPod-6G.zip
 
