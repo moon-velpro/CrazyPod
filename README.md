@@ -170,7 +170,9 @@ or follow the [Chinese Mini App tutorial](miniapps/TUTORIAL.zh-CN.md).
 
 ### Appearance
 
-- A single, restrained monochrome Home glyph language. The obsolete 16\n  bitmap icon packs and icon-size controls are no longer shipped.\n- Appearance presets retain legacy fields for reading existing user files.
+- A single, restrained monochrome Home glyph language. The obsolete 16
+  bitmap icon packs and icon-size controls are no longer shipped.
+- Appearance presets retain legacy fields for reading existing user files.
 - Independent top and bottom screen corner radii.
 - Home and menu wallpapers loaded from `/Pictures`.
 - Versioned `.upodtheme` appearance presets with validated import and export.
@@ -570,7 +572,8 @@ the queue. The Favorite action adds or removes the current track from
 - `miniapps/` contains the Native ABI header, React Profile examples, 2048,
   and Capability Lab.
 - `lib/lvgl/` contains the vendored LVGL 9.5.0 source.
-- `assets/crazypod/` contains the packaged default wallpaper. Home symbols\n  are rendered directly by LVGL, without external icon-theme bitmaps.
+- `assets/crazypod/` contains the packaged default wallpaper. Home symbols
+  are rendered directly by LVGL, without external icon-theme bitmaps.
 - `tools/convert-crazypod-video.sh` creates device-ready MPEG video and poster
   pairs with FFmpeg.
 - `build-bootloader.sh` builds the optional silent boot surface but never
