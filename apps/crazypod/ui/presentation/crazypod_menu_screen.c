@@ -172,13 +172,9 @@ void crazypod_menu_screen_render(
                            selected ? COLOR_SELECTED : COLOR_WHITE,
                            LV_OPA_COVER);
         lv_obj_set_style_border_width(row_box, 0, 0);
-        if(selected)
-            make_box(row_box, 1, 5, 3, 18, 2,
-                     COLOR_ACCENT, LV_OPA_COVER);
-        else
-            make_box(row_box, 13, CRAZYPOD_MENU_ROW_HEIGHT - 1,
-                     CRAZYPOD_MENU_ROW_WIDTH - 26, 1, 0,
-                     COLOR_LINE, LV_OPA_COVER);
+        make_box(row_box, 13, CRAZYPOD_MENU_ROW_HEIGHT - 1,
+                 CRAZYPOD_MENU_ROW_WIDTH - 26, 1, 0,
+                 COLOR_LINE, LV_OPA_COVER);
         title = context->item_title(state, index);
         if(title == NULL)
             title = "";
