@@ -23,7 +23,7 @@ def main():
 
     order = apps.split("static const uint8_t default_order", 1)[1].split("};", 1)[0]
     assert re.findall(r"CRAZYPOD_APP_([A-Z_]+)", order) == expected
-    assert re.findall(r"\\{ CRAZYPOD_APP_([A-Z_]+),", catalog) == expected
+    assert re.findall(r"\{ CRAZYPOD_APP_([A-Z_]+),", catalog) == expected
     assert "#define CRAZYPOD_APP_COUNT 5" in header
     assert "#define CRAZYPOD_APP_DISK_COUNT 17" in header
     assert "#define CRAZYPOD_ICON_COUNT 5" in icon_header
