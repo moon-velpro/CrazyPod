@@ -19,6 +19,7 @@ now_actions = source("features/now_playing/crazypod_now_playing_overlay.c")
 ui_root = (root.parent / "crazypod_ui.c").read_text(encoding="utf-8")
 native = source("shell/crazypod_desktop_native.c")
 home_actions = source("shell/crazypod_home_actions.c")
+system_prompts = source("shell/crazypod_system_prompts.c")
 app_input = source("app/crazypod_app_input.c")
 registry = source("navigation/crazypod_route_registry.c")
 
@@ -75,6 +76,8 @@ assert "crazypod_popup_centered_geometry" not in home_actions, (
 assert "crazypod_home_actions_show()" not in app_input, (
     "short MENU must not open the old Home modal"
 )
+assert "crazypod_home_actions_visible()" not in system_prompts
+assert "crazypod_home_actions_dismiss(" not in system_prompts
 assert "crazypod_app_launcher_open_root(HOME_ROUTE_ACTIONS)" in app_input, (
     "short MENU should open a genuine Home action route"
 )
