@@ -160,6 +160,8 @@ if [ ! -f ../assets/crazypod/default-home.bmp ]; then
 fi
 # Clear obsolete theme assets from an existing simulator workdir.
 rm -rf "$icon_dir"
+mkdir -p "$icon_dir/basic"
+cp ../assets/crazypod-icons/basic/*.bmp "$icon_dir/basic/"
 cp ../assets/crazypod/default-home.bmp \
    simdisk/.rockbox/crazypod/default-home.bmp
 mkdir -p miniapps/packages
