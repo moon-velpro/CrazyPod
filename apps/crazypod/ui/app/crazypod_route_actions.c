@@ -30,6 +30,7 @@
 #include "../presentation/crazypod_preview_motion.h"
 #include "../shell/crazypod_app_catalog.h"
 #include "../shell/crazypod_desktop.h"
+#include "../shell/crazypod_home_actions.h"
 #include "../shell/crazypod_notification.h"
 #include "crazypod_app_launcher.h"
 #include "crazypod_choice_coordinator.h"
@@ -659,6 +660,27 @@ void crazypod_route_actions_activate(long now)
 
     if(state == NULL)
         return;
+    if(crazypod_home_actions_is_route(state->route)) {
+        if(state->route == HOME_ROUTE_ACTIONS) {
+            switch(state->selected) {
+            case 0:
+                crazypod_route_actions_push(
+                    MUSIC_ROUTE_QUEUE, -1);
+                break;
+            case 1:
+                crazypod_route_actions_push(
+                    HOME_ROUTE_BRIGHTNESS, -1);
+                break;
+            case 2:
+                crazypod_route_actions_push(
+                    HOME_ROUTE_VOLUME, -1);
+                break;
+            }
+        }
+        else
+            crazypod_route_actions_pop();
+        return;
+    }
     if(state->route == SETTINGS_ROUTE_MAIN_MENU &&
        crazypod_settings_feature_main_menu_reordering()) {
         enum crazypod_app_id id =
@@ -761,6 +783,11 @@ void crazypod_route_actions_move(int direction, long now)
 
     if(state == NULL)
         return;
+    if(crazypod_home_actions_is_adjustment(state->route)) {
+        if(crazypod_home_actions_adjust(state->route, direction))
+            host.render(false);
+        return;
+    }
     if(state->route == SETTINGS_ROUTE_MAIN_MENU &&
        crazypod_settings_feature_main_menu_reordering()) {
         int step = direction < 0 ? -1 : 1;
