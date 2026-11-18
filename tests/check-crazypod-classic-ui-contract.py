@@ -29,17 +29,28 @@ native_header = source("shell/crazypod_desktop_native.h")
 sources = (project_root / "apps/SOURCES").read_text(encoding="utf-8")
 build_hw = (project_root / "build-hw.sh").read_text(encoding="utf-8")
 build_sim = (project_root / "build-sim.sh").read_text(encoding="utf-8")
-assert not (project_root / "assets/crazypod-icons").exists(), (
-    "unused 16-theme bitmaps must not ship in the repo"
+icon_root = project_root / "assets/crazypod-icons"
+assert sorted(path.name for path in icon_root.iterdir()) == ["basic"], (
+    "only the existing original basic icon family may remain"
+)
+assert len(list((icon_root / "basic").glob("*.bmp"))) == 16, (
+    "original native icon assets must be present"
 )
 assert "16 complete icon themes" not in customize
 assert 'CP_TR("Icons")' not in customize
 assert 'CP_TR("Icon Size")' not in customize
 assert "scaled_icons" not in native, "old native icon cache must be retired"
 assert "native_render(" not in native_header
-assert "crazypod/crazypod_icons.c" not in sources
-assert "assets/crazypod-icons" not in build_hw + build_sim
-assert "home_symbols" in home, "Home app glyphs must be a fixed set"
+assert "crazypod/crazypod_icons.c" in sources
+assert "assets/crazypod-icons/basic" in build_hw + build_sim
+assert "crazypod_icon_get" in home, "Home should use the native icons"
+assert "home_symbols" in home, "Fallback glyphs must remain available"
+icon_loader = (project_root / "apps/crazypod/crazypod_icons.c").read_text(
+    encoding="utf-8"
+)
+assert "theme_paths" not in icon_loader
+assert "crazypod_icons_load_theme" not in icon_loader
+assert 'icons/basic/%s.bmp' in icon_loader
 assert "render_desktop_icons(" not in home, "old Android-like icon carousel returned"
 assert "crazypod_desktop_native_invalidate(" not in home, (
     "LVGL Home must not schedule an abandoned native icon redraw"
