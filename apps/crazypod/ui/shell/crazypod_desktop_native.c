@@ -146,8 +146,12 @@ void crazypod_desktop_native_prepare_modal(void)
 
 void crazypod_desktop_native_restore_after_modal(void)
 {
-    dirty = true;
-    modal_restore_full_present = true;
+    /* LVGL now owns Home. No native icon draw follows modal dismissal,
+     * so the retired carousel cannot consume the deferred full repaint. */
+    dirty = false;
+    modal_restore_full_present = false;
+    crazypod_present_take_fullscreen_ownership();
+    crazypod_present_queue_full();
 }
 
 lv_obj_t *crazypod_desktop_native_create_modal_underlay(
