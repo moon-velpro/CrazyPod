@@ -42,6 +42,7 @@
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
+#include "crazypod_icons.h"
 #include "crazypod_lyrics.h"
 #include "crazypod_l10n.h"
 #include "crazypod_runtime_font.h"
@@ -782,6 +783,7 @@ void crazypod_ui_run(void)
     crazypod_videos_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
+    crazypod_icons_init();
     crazypod_miniapps_feature_initialize_runtime();
     crazypod_miniapps_feature_initialize();
 
