@@ -12,6 +12,7 @@
 #include "../../crazypod_appearance.h"
 #include "../../crazypod_apps.h"
 #include "../../crazypod_frameclock.h"
+#include "../../crazypod_icons.h"
 #include "../../crazypod_wallpaper.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_ui_widgets.h"
@@ -43,6 +44,8 @@ static lv_obj_t *title;
 static lv_obj_t *home_rows[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_labels[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_symbols[HOME_VISIBLE_ROWS];
+static lv_obj_t *home_images[HOME_VISIBLE_ROWS];
+static lv_image_dsc_t icon_descriptors[CRAZYPOD_ICON_COUNT];
 static lv_obj_t *home_markers[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_scroll_thumb;
 static int selected_app;
@@ -73,6 +76,28 @@ static const struct crazypod_app_descriptor *visible_app(int index)
     return crazypod_app_catalog_find(crazypod_apps_visible_id(index));
 }
 
+static void prepare_home_icons(void)
+{
+    int index;
+
+    memset(icon_descriptors, 0, sizeof(icon_descriptors));
+    for(index = 0; index < CRAZYPOD_ICON_COUNT; ++index) {
+        const struct crazypod_icon *source = crazypod_icon_get(index);
+        lv_image_dsc_t *descriptor = &icon_descriptors[index];
+
+        if(source == NULL)
+            continue;
+        descriptor->header.magic = LV_IMAGE_HEADER_MAGIC;
+        descriptor->header.cf = LV_COLOR_FORMAT_ARGB8888;
+        descriptor->header.w = source->width;
+        descriptor->header.h = source->height;
+        descriptor->header.stride = source->stride;
+        descriptor->data_size =
+            (size_t)source->stride * source->height;
+        descriptor->data = source->pixels;
+    }
+}
+
 /* An iPod menu, not a horizontal app launcher. */
 static void update_selection_chrome(void)
 {
@@ -100,7 +125,18 @@ static void update_selection_chrome(void)
         }
         lv_obj_remove_flag(home_rows[row], LV_OBJ_FLAG_HIDDEN);
         CP_LV_LABEL_SET_TEXT(home_labels[row], app->name);
-        CP_LV_LABEL_SET_TEXT(home_symbols[row], app->symbol);
+        if(app->id >= 0 && app->id < CRAZYPOD_ICON_COUNT &&
+           icon_descriptors[app->id].data != NULL) {
+            lv_image_set_src(
+                home_images[row], &icon_descriptors[app->id]);
+            lv_obj_remove_flag(home_images[row], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(home_symbols[row], LV_OBJ_FLAG_HIDDEN);
+        }
+        else {
+            CP_LV_LABEL_SET_TEXT(home_symbols[row], app->symbol);
+            lv_obj_add_flag(home_images[row], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(home_symbols[row], LV_OBJ_FLAG_HIDDEN);
+        }
         lv_obj_set_style_bg_color(
             home_rows[row],
             lv_color_hex(selected ? HOME_SELECTED : COLOR_WHITE), 0);
@@ -109,6 +145,8 @@ static void update_selection_chrome(void)
             home_labels[row], selected ? 255 : 225, 0);
         lv_obj_set_style_text_opa(
             home_symbols[row], selected ? 255 : 165, 0);
+        lv_obj_set_style_opa(
+            home_images[row], selected ? 255 : 210, 0);
         lv_obj_set_style_text_opa(
             home_markers[row], selected ? 255 : 145, 0);
     }
@@ -248,6 +286,7 @@ lv_obj_t *crazypod_desktop_create(
     lv_obj_set_pos(title, 14, 33);
     lv_obj_set_width(title, 292);
 
+    prepare_home_icons();
     for(i = 0; i < HOME_VISIBLE_ROWS; ++i) {
         home_rows[i] = crazypod_ui_widget_box(
             screen, 8, HOME_ROW_Y + i * HOME_ROW_STEP,
@@ -264,6 +303,10 @@ lv_obj_t *crazypod_desktop_create(
             HOME_TEXT, 165);
         lv_obj_set_pos(home_symbols[i], 14, 6);
         lv_obj_set_width(home_symbols[i], 22);
+        home_images[i] = lv_image_create(home_rows[i]);
+        lv_obj_set_pos(home_images[i], 14, 4);
+        lv_obj_remove_flag(home_images[i], LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_flag(home_images[i], LV_OBJ_FLAG_HIDDEN);
         home_markers[i] = crazypod_ui_widget_label(
             home_rows[i], LV_SYMBOL_RIGHT,
             &lv_font_montserrat_10, HOME_ACCENT, 150);
