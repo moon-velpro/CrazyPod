@@ -359,10 +359,13 @@ void crazypod_route_actions_main_menu_changed(
 {
     struct route_state *parent = current_route();
 
-    if(parent != NULL && parent->route ==
-       SETTINGS_ROUTE_MAIN_MENU)
-        parent->selected =
-            crazypod_apps_order_index(changed);
+    if(parent != NULL &&
+       parent->route == SETTINGS_ROUTE_MAIN_MENU_ACTIONS &&
+       crazypod_ui_routes_depth() > 1)
+        parent = crazypod_ui_routes_at(
+            crazypod_ui_routes_depth() - 2);
+    if(parent != NULL && parent->route == SETTINGS_ROUTE_MAIN_MENU)
+        parent->selected = crazypod_apps_order_index(changed);
     persist_main_menu(preferred);
 }
 
