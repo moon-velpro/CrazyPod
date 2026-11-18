@@ -12,9 +12,9 @@
 #include "crazypod_menu_rows.h"
 
 #define VISIBLE_ROWS 6
-#define SCROLL_Y 66
-#define SCROLL_HEIGHT 164
-#define COLOR_PANEL 0x1B1B22
+#define SCROLL_Y 68
+#define SCROLL_HEIGHT 160
+#define COLOR_PANEL 0xFFFFFF
 
 static uint32_t highlight_color(int color)
 {
@@ -43,8 +43,7 @@ void crazypod_menu_rows_refresh(const struct route_state *state)
         const char *marker_text =
             visible && crazypod_route_query_item_is_current(state, index)
                 ? LV_SYMBOL_OK :
-            selected ? LV_SYMBOL_PLAY :
-            state->route == MUSIC_ROUTE_SEARCH ? "" : LV_SYMBOL_BULLET;
+            LV_SYMBOL_RIGHT;
 
         crazypod_menu_list_refresh_row(
             row, visible,
