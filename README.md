@@ -170,8 +170,10 @@ or follow the [Chinese Mini App tutorial](miniapps/TUTORIAL.zh-CN.md).
 
 ### Appearance
 
-- A single, restrained monochrome Home glyph language. The obsolete 16
-  bitmap icon packs and icon-size controls are no longer shipped.
+- Home uses the existing original `basic` application icons, downsampled
+  to 20 px in a small startup cache; system glyphs remain a fallback.
+- The other 15 bitmap icon packs and the icon-theme and icon-size selectors
+  are no longer shipped.
 - Appearance presets retain legacy fields for reading existing user files.
 - Independent top and bottom screen corner radii.
 - Home and menu wallpapers loaded from `/Pictures`.
@@ -221,7 +223,7 @@ existing build directory.
 
 The V1.0 release uses a manual install. Follow the complete procedure below;
 do not copy only `rockbox.ipod`, because the archive also contains required
-codecs, fonts, and Native Mini App packages.
+codecs, fonts, the original basic Home icons, and Native Mini App packages.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current validation level,
 release evidence, and remaining physical-device validation gaps.
@@ -238,7 +240,7 @@ and Linux. Choose one route before touching the bootloader:
 | An older CrazyPod build already boots | Use the same package-only route as an existing Rockbox user. |
 
 The complete ZIP is required in every route. Copying only `rockbox.ipod`
-creates a mismatched installation without the matching codecs, fonts,
+creates a mismatched installation without the matching codecs, fonts, basic Home icons,
 and Native Mini App packages.
 
 ### 1. Confirm the device and prepare recovery
@@ -572,8 +574,8 @@ the queue. The Favorite action adds or removes the current track from
 - `miniapps/` contains the Native ABI header, React Profile examples, 2048,
   and Capability Lab.
 - `lib/lvgl/` contains the vendored LVGL 9.5.0 source.
-- `assets/crazypod/` contains the packaged default wallpaper. Home symbols
-  are rendered directly by LVGL, without external icon-theme bitmaps.
+- `assets/crazypod/` contains the default wallpaper. The original
+  `assets/crazypod-icons/basic/` supplies the one fixed Home icon family.
 - `tools/convert-crazypod-video.sh` creates device-ready MPEG video and poster
   pairs with FFmpeg.
 - `build-bootloader.sh` builds the optional silent boot surface but never
