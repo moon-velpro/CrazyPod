@@ -88,7 +88,6 @@
 #include "ui/shell/crazypod_desktop.h"
 #include "ui/shell/crazypod_desktop_native.h"
 #include "ui/shell/crazypod_home_input.h"
-#include "ui/shell/crazypod_home_actions.h"
 #include "ui/presentation/crazypod_menu_list.h"
 #include "ui/features/miniapps/crazypod_miniapps_feature.h"
 #include "ui/features/music/crazypod_music_feature.h"
@@ -159,7 +158,6 @@ static bool modal_prompt_visible(void)
         crazypod_system_prompts_power_visible() ||
         crazypod_system_prompts_power_hold_feedback_visible() ||
         crazypod_system_prompts_headphone_visible() ||
-        crazypod_home_actions_visible() ||
         crazypod_now_playing_overlay_visible();
 }
 static bool coverflow_overlay_visible(bool locked)
