@@ -103,12 +103,6 @@ static bool push_route_state(
 void crazypod_route_actions_push_selected(
     enum crazypod_route route, int group, int selected)
 {
-    if(route == SETTINGS_ROUTE_MAIN_MENU_ACTIONS) {
-        crazypod_choice_coordinator_show(
-            CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS,
-            group, selected);
-        return;
-    }
     if(route == DIY_ROUTE_NOW_PLAYING_THEMES) {
         crazypod_choice_coordinator_show(
             CRAZYPOD_CHOICE_NOW_PLAYING_THEME,
@@ -405,15 +399,16 @@ void crazypod_route_actions_commit_pending_main_menu_reorder(void)
 
 static void show_main_menu_actions(enum crazypod_app_id id)
 {
-    crazypod_choice_coordinator_show(
-        CRAZYPOD_CHOICE_MAIN_MENU_ITEM_ACTIONS,
-        id, 0);
+    crazypod_route_actions_push_selected(
+        SETTINGS_ROUTE_MAIN_MENU_ACTIONS, id, 0);
 }
 
 static void show_setting_choices(int item, int selected)
 {
-    crazypod_choice_coordinator_show(
-        CRAZYPOD_CHOICE_SETTING, item, selected);
+    if(item < 0 || crazypod_settings_feature_choice_count(item) <= 0)
+        return;
+    crazypod_route_actions_push_selected(
+        SETTINGS_ROUTE_VALUE_CHOICES, item, selected);
 }
 
 static void appearance_changed(void)
@@ -586,6 +581,7 @@ static bool activate_domain(
             .selected_app =
                 crazypod_route_actions_selected_app,
             .push = crazypod_route_actions_push,
+            .pop = crazypod_route_actions_pop,
             .render = transaction_render,
             .main_menu_changed =
                 crazypod_route_actions_main_menu_changed,
