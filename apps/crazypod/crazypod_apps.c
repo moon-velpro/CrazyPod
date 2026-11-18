@@ -96,12 +96,15 @@ void crazypod_apps_restore(const uint8_t *order, size_t count,
         }
     }
 
-    menu_enabled_mask = enabled_mask;
+    /* Retired application bits must never survive an old state restore. */
+    menu_enabled_mask = 0;
     for(i = 0; i < CRAZYPOD_APP_COUNT; ++i) {
         enum crazypod_app_id id =
             (enum crazypod_app_id)default_order[i];
-        if(crazypod_apps_is_fixed(id))
-            menu_enabled_mask |= app_bit(id);
+        uint32_t bit = app_bit(id);
+
+        if((enabled_mask & bit) != 0 || crazypod_apps_is_fixed(id))
+            menu_enabled_mask |= bit;
     }
 }
 

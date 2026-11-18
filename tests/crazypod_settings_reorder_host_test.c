@@ -74,7 +74,9 @@ static void test_reorder_respects_bounds(void)
 static void test_retired_app_ignored_after_legacy_restore(void)
 {
     uint8_t old_order[CRAZYPOD_APP_DISK_COUNT];
+    uint8_t restored_order[CRAZYPOD_APP_COUNT];
     uint32_t enabled_mask;
+    uint32_t restored_mask;
     int i;
 
     crazypod_apps_reset();
@@ -88,6 +90,10 @@ static void test_retired_app_ignored_after_legacy_restore(void)
     assert(!crazypod_apps_is_known(CRAZYPOD_APP_RETIRED_19));
     assert(!crazypod_apps_is_enabled(CRAZYPOD_APP_RETIRED_19));
     assert(crazypod_apps_visible_index(CRAZYPOD_APP_RETIRED_19) < 0);
+    crazypod_apps_export(
+        restored_order, sizeof(restored_order), &restored_mask);
+    assert((restored_mask &
+            ((uint32_t)1u << CRAZYPOD_APP_RETIRED_19)) == 0);
     for(i = 0; i < crazypod_apps_count(); ++i)
         assert(crazypod_apps_ordered_id(i) != CRAZYPOD_APP_RETIRED_19);
 }

@@ -174,7 +174,8 @@ int crazypod_customize_overlay_current(
         return crazypod_customize_choice_index(
             (enum crazypod_appearance_field)field);
     path = crazypod_customize_background_wallpaper(
-        appearance, (enum crazypod_appearance_field)field);
+        crazypod_appearance_get(),
+        (enum crazypod_appearance_field)field);
     return path[0] != '\0'
         ? CRAZYPOD_APPEARANCE_COLOR_COUNT + 1
         : crazypod_customize_field_value(
