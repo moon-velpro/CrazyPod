@@ -240,30 +240,6 @@ static void tick_lyrics_scroll(long now)
             view->lyrics_scroll);
 }
 
-static uint32_t text_hash(const char *text)
-{
-    uint32_t hash = 2166136261u;
-
-    if(text == NULL)
-        return hash;
-    while(*text != '\0') {
-        hash ^= (unsigned char)*text++;
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-static uint32_t artwork_color(const char *text, int variant)
-{
-    static const uint32_t palette[] = {
-        0x8A2BE2, 0x1D78F2, 0xE5446D, 0xE4812C,
-        0x13A48C, 0x5A55D6, 0xB0388E, 0x276A82
-    };
-
-    return palette[(text_hash(text) + (uint32_t)variant * 3u) %
-                   (sizeof(palette) / sizeof(palette[0]))];
-}
-
 void crazypod_now_screen_render(
     const struct crazypod_now_screen_context *context)
 {
@@ -310,18 +286,11 @@ void crazypod_now_screen_render(
         lv_obj_center(backdrop);
     }
     else {
-        content_color = context->fallback_color(track);
+        /* Artwork-free tracks use a calm dark surface, not random neon. */
+        content_color = COLOR_WHITE;
         backdrop = make_box(
             context->parent, 0, 0, 320, 240, 0,
-            artwork_color(track != NULL ? track->album : "", 0),
-            LV_OPA_COVER);
-        lv_obj_set_style_bg_grad_color(
-            backdrop,
-            lv_color_hex(
-                artwork_color(track != NULL ? track->artist : "", 1)),
-            0);
-        lv_obj_set_style_bg_grad_dir(
-            backdrop, LV_GRAD_DIR_VER, 0);
+            0x171C23, LV_OPA_COVER);
     }
     shade = make_box(
         context->parent, 0, 0, 320, 240, 0,
@@ -344,8 +313,6 @@ void crazypod_now_screen_render(
             CRAZYPOD_NOW_COVER_X, CRAZYPOD_NOW_COVER_Y,
             CRAZYPOD_NOW_LYRICS_COVER_SIZE,
             lyrics_artwork, false);
-        make_box(context->parent, 134, 55, 1, 106, 0,
-                 content_color, 38);
         if(lyrics_available) {
             if(cover_caption != NULL) {
                 caption_material = lv_image_create(context->parent);
@@ -437,9 +404,9 @@ void crazypod_now_screen_render(
                 content_color, LV_OPA_COVER);
             lv_obj_set_size(title, 158, 23);
             lv_obj_set_style_text_align(
-                title, LV_TEXT_ALIGN_CENTER, 0);
+                title, LV_TEXT_ALIGN_LEFT, 0);
             crazypod_marquee_configure(title, true);
-            lv_obj_set_pos(title, 144, 71);
+            lv_obj_set_pos(title, 144, 65);
 
             artist = make_label(
                 context->parent,
@@ -448,9 +415,9 @@ void crazypod_now_screen_render(
                 content_color, 220);
             lv_obj_set_size(artist, 158, 23);
             lv_obj_set_style_text_align(
-                artist, LV_TEXT_ALIGN_CENTER, 0);
+                artist, LV_TEXT_ALIGN_LEFT, 0);
             crazypod_marquee_configure(artist, true);
-            lv_obj_set_pos(artist, 144, 95);
+            lv_obj_set_pos(artist, 144, 93);
 
             album = make_label(
                 context->parent,
@@ -460,12 +427,12 @@ void crazypod_now_screen_render(
                 content_color, 190);
             lv_obj_set_size(album, 158, 23);
             lv_obj_set_style_text_align(
-                album, LV_TEXT_ALIGN_CENTER, 0);
+                album, LV_TEXT_ALIGN_LEFT, 0);
             crazypod_marquee_configure(album, true);
-            lv_obj_set_pos(album, 144, 119);
+            lv_obj_set_pos(album, 144, 121);
 
             crazypod_ui_widget_icon(
-                context->parent, 190, 143,
+                context->parent, 144, 153,
                 CRAZYPOD_UI_ICON_HEART,
                 favorite ? COLOR_FAVORITE : content_color,
                 favorite ? LV_OPA_COVER : 120);
@@ -478,7 +445,7 @@ void crazypod_now_screen_render(
             else
                 mode_icon = CRAZYPOD_UI_ICON_PLAY;
             crazypod_ui_widget_icon(
-                context->parent, 215, 143, mode_icon,
+                context->parent, 174, 153, mode_icon,
                 crazypod_queue_repeat() != REPEAT_OFF ||
                 crazypod_queue_shuffle() ? COLOR_CYAN : content_color,
                 220);
@@ -491,8 +458,9 @@ void crazypod_now_screen_render(
     lv_obj_set_size(view->wave_surface, 288, 34);
     lv_obj_set_style_bg_opa(view->wave_surface, LV_OPA_TRANSP, 0);
     lv_obj_remove_flag(view->wave_surface, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(view->wave_surface, context->draw_wave,
-                        LV_EVENT_DRAW_MAIN, NULL);
+    /* A fine playback timeline replaces the animated waveform. */
+    make_box(view->wave_surface, 0, 16, 288, 2, 1,
+             0xA3B0C1, 115);
     view->wave_playing =
         (audio_status() & AUDIO_STATUS_PLAY) != 0 &&
         (audio_status() & AUDIO_STATUS_PAUSE) == 0;
@@ -500,10 +468,7 @@ void crazypod_now_screen_render(
     view->progress_marker = make_box(
         view->wave_surface, 0, 14, 7, 7,
         LV_RADIUS_CIRCLE, COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_set_style_shadow_width(view->progress_marker, 6, 0);
-    lv_obj_set_style_shadow_color(
-        view->progress_marker, lv_color_hex(context->primary_color), 0);
-    lv_obj_set_style_shadow_opa(view->progress_marker, 190, 0);
+    lv_obj_set_style_shadow_width(view->progress_marker, 0, 0);
     lv_obj_remove_flag(view->progress_marker, LV_OBJ_FLAG_CLICKABLE);
     view->elapsed = make_label(context->parent, "0:00",
                              &lv_font_montserrat_8,
@@ -553,8 +518,8 @@ void crazypod_now_screen_tick_wave(long now, bool active, bool blocked)
         return;
     now_view.wave_tick = now;
     now_view.wave_playing = true;
+    /* Maintain phase state for existing callers without redrawing. */
     wave_phase = (wave_phase + 1) & 0x7fff;
-    lv_obj_invalidate(now_view.wave_surface);
 }
 
 static bool label_text_changed(
