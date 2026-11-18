@@ -171,12 +171,20 @@ static void render_menu(const struct route_state *state)
         .item_is_current = host.item_is_current,
     };
 
-    create_panel_backgrounds();
-    if(item_count <= 0)
-        crazypod_menu_preview_render(state, false);
+    /*
+     * A hierarchical menu owns the entire content area. Preview objects
+     * must not overlap list rows or turn this back into a split Android UI.
+     * The status bar remains owned by Shell above STATUS_BAR_HEIGHT.
+     */
+    {
+        lv_obj_t *page = crazypod_ui_widget_box(
+            crazypod_shell_product_content(),
+            0, STATUS_BAR_HEIGHT,
+            LCD_WIDTH, LCD_HEIGHT - STATUS_BAR_HEIGHT,
+            0, 0xF6F9FC, LV_OPA_COVER);
+        lv_obj_remove_flag(page, LV_OBJ_FLAG_CLICKABLE);
+    }
     crazypod_menu_screen_render(state, &context);
-    if(item_count > 0)
-        crazypod_menu_preview_render(state, false);
 }
 
 static void render_music(const struct route_state *state)
