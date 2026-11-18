@@ -5,6 +5,8 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 
+python3 "$repo_root/tests/check-crazypod-retired-emulator.py"
+
 cc -std=c99 -Wall -Wextra -Werror \
     -I"$repo_root/apps/crazypod" \
     -I"$repo_root/apps/crazypod/ui" \

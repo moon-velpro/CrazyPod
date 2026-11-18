@@ -270,10 +270,9 @@ mkdir -p "$PACKAGE_DIR/.rockbox/fonts"
 mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/icons/basic"
 mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages"
 for content_directory in Music Podcasts Books Pictures Videos Contacts \
-    Calendars MiniApps MiniApps/Games/GB MiniApps/Games/GBC; do
+    Calendars MiniApps; do
     mkdir -p "$PACKAGE_DIR/$content_directory"
 done
-cp ../packaging/gameboy/README.txt "$PACKAGE_DIR/MiniApps/Games/README.txt"
 CODEPAGE_TOOL="$(cd .. && pwd)/tools/codepages"
 CODEPAGE_BUILD_DIR="$PACKAGE_DIR/generated-codepages"
 if [ ! -x "$CODEPAGE_TOOL" ]; then
