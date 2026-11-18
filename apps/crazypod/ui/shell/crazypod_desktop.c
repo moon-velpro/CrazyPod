@@ -4,7 +4,6 @@
 
 #ifdef IPOD_6G
 
-#include <stdint.h>
 #include <string.h>
 
 #include "button.h"
@@ -33,15 +32,10 @@
 #define HOME_ROW_HEIGHT 29
 #define HOME_ROW_STEP 30
 #define HOME_ROW_Y 53
-#define HOME_POSITION_ONE (1L << 16)
 #define HOME_WHEEL_POSITIONS 96
 #define HOME_WHEEL_CLICKS_PER_DETENT 8
 #define HOME_WHEEL_RELEASE_TICKS \
     (((HZ * 6) / 100) > 0 ? ((HZ * 6) / 100) : 1)
-#define HOME_SPRING_STIFFNESS 503
-#define HOME_SPRING_DAMPING 37
-#define HOME_SPRING_POSITION_EPSILON (HOME_POSITION_ONE / 1024)
-#define HOME_SPRING_VELOCITY_EPSILON (HOME_POSITION_ONE / 64)
 
 static struct crazypod_desktop_host desktop_host;
 static lv_obj_t *screen;
@@ -52,16 +46,12 @@ static lv_obj_t *home_labels[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_markers[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_scroll_thumb;
 static int selected_app;
-static int32_t position_q16;
-static int32_t spring_velocity_q16;
-static long motion_last_tick;
 static long wheel_last_seen;
 static int wheel_position;
 static int wheel_detent_accumulator;
 static int wheel_feedback_direction;
 static bool desktop_active;
 static bool wheel_tracking;
-static bool springing;
 static lv_obj_t *hold_feedback_root;
 static bool hold_feedback_teardown_pending;
 static struct crazypod_hold_feedback hold_feedback;
@@ -141,7 +131,6 @@ static void update_selection_chrome(void)
 static void layout(void)
 {
     update_selection_chrome();
-    crazypod_desktop_native_invalidate(false);
 }
 
 static int clamp_selected(int selected)
@@ -155,19 +144,6 @@ static int clamp_selected(int selected)
     return selected;
 }
 
-static int32_t selected_position_q16(void)
-{
-    return selected_app * HOME_POSITION_ONE;
-}
-
-static void start_spring(void)
-{
-    springing = position_q16 != selected_position_q16() ||
-        spring_velocity_q16 != 0;
-    if(springing)
-        crazypod_desktop_native_invalidate(false);
-}
-
 #ifdef HAVE_WHEEL_POSITION
 static bool set_selected_target(int selected)
 {
@@ -177,46 +153,9 @@ static bool set_selected_target(int selected)
         return false;
     selected_app = selected;
     update_selection_chrome();
-    start_spring();
     return true;
 }
 #endif
-
-static void advance_spring_tick(void)
-{
-    int32_t target = selected_position_q16();
-    int64_t acceleration;
-    int32_t maximum =
-        (crazypod_apps_visible_count() > 0
-            ? crazypod_apps_visible_count() - 1 : 0) *
-        HOME_POSITION_ONE;
-
-    if(!springing)
-        return;
-    acceleration =
-        (int64_t)(target - position_q16) * HOME_SPRING_STIFFNESS -
-        (int64_t)spring_velocity_q16 * HOME_SPRING_DAMPING;
-    spring_velocity_q16 += (int32_t)(acceleration / HZ);
-    position_q16 += spring_velocity_q16 / HZ;
-    if(position_q16 < 0) {
-        position_q16 = 0;
-        if(spring_velocity_q16 < 0)
-            spring_velocity_q16 = 0;
-    }
-    else if(position_q16 > maximum) {
-        position_q16 = maximum;
-        if(spring_velocity_q16 > 0)
-            spring_velocity_q16 = 0;
-    }
-    if(position_q16 >= target - HOME_SPRING_POSITION_EPSILON &&
-       position_q16 <= target + HOME_SPRING_POSITION_EPSILON &&
-       spring_velocity_q16 >= -HOME_SPRING_VELOCITY_EPSILON &&
-       spring_velocity_q16 <= HOME_SPRING_VELOCITY_EPSILON) {
-        position_q16 = target;
-        spring_velocity_q16 = 0;
-        springing = false;
-    }
-}
 
 #ifdef HAVE_WHEEL_POSITION
 static void apply_wheel_clicks(int delta)
@@ -229,9 +168,6 @@ static void apply_wheel_clicks(int delta)
         direction = wheel_detent_accumulator < 0 ? -1 : 1;
         if(!set_selected_target(selected_app + direction)) {
             wheel_detent_accumulator = 0;
-            if((direction < 0 && spring_velocity_q16 < 0) ||
-               (direction > 0 && spring_velocity_q16 > 0))
-                spring_velocity_q16 = 0;
             return;
         }
         wheel_detent_accumulator -=
@@ -250,7 +186,6 @@ static void sample_wheel(long now)
             wheel_tracking = true;
             wheel_position = current;
             wheel_detent_accumulator = 0;
-            motion_last_tick = now;
         }
         else {
             int delta = current - wheel_position;
@@ -272,30 +207,9 @@ static void sample_wheel(long now)
         wheel_tracking = false;
         wheel_position = -1;
         wheel_detent_accumulator = 0;
-        motion_last_tick = now;
     }
 }
 #endif
-
-static void advance_motion(long now)
-{
-    long elapsed = now - motion_last_tick;
-    long steps;
-
-    if(elapsed <= 0)
-        return;
-    motion_last_tick = now;
-    if(elapsed > HZ / 2) {
-        position_q16 = selected_position_q16();
-        spring_velocity_q16 = 0;
-        springing = false;
-        return;
-    }
-    for(steps = 0; steps < elapsed; ++steps)
-        advance_spring_tick();
-    if(springing)
-        crazypod_desktop_native_invalidate(false);
-}
 
 lv_obj_t *crazypod_desktop_create(
     long now, const lv_font_t *metadata_font,
@@ -354,16 +268,12 @@ lv_obj_t *crazypod_desktop_create(
 
     crazypod_now_capsule_create(screen, metadata_font);
     selected_app = 0;
-    position_q16 = 0;
-    spring_velocity_q16 = 0;
-    motion_last_tick = now;
     wheel_last_seen = now;
     wheel_position = -1;
     wheel_detent_accumulator = 0;
     wheel_feedback_direction = 0;
     desktop_active = true;
     wheel_tracking = false;
-    springing = false;
 #ifdef HAVE_WHEEL_POSITION
     wheel_send_events(false);
 #endif
@@ -386,24 +296,13 @@ int crazypod_desktop_selected(void)
 
 void crazypod_desktop_set_selected(int selected, bool animated)
 {
-    selected = clamp_selected(selected);
+    /* The list uses LVGL dirty rectangles; no invisible carousel spring. */
+    (void)animated;
+    selected_app = clamp_selected(selected);
     wheel_tracking = false;
+    wheel_position = -1;
     wheel_detent_accumulator = 0;
-    motion_last_tick = current_tick;
-    if(animated) {
-        if(selected != selected_app) {
-            selected_app = selected;
-            update_selection_chrome();
-        }
-        start_spring();
-    }
-    else {
-        selected_app = selected;
-        position_q16 = selected * HOME_POSITION_ONE;
-        spring_velocity_q16 = 0;
-        springing = false;
-        layout();
-    }
+    layout();
 }
 
 void crazypod_desktop_move_selection(int direction)
@@ -420,6 +319,7 @@ void crazypod_desktop_move_selection(int direction)
 
 void crazypod_desktop_set_active(bool active, long now)
 {
+    (void)now;
     desktop_active = active;
 #ifdef HAVE_WHEEL_POSITION
     wheel_send_events(!active);
@@ -430,10 +330,6 @@ void crazypod_desktop_set_active(bool active, long now)
     wheel_position = -1;
     wheel_detent_accumulator = 0;
     wheel_feedback_direction = 0;
-    advance_motion(now);
-    position_q16 = selected_app * HOME_POSITION_ONE;
-    spring_velocity_q16 = 0;
-    springing = false;
 }
 
 void crazypod_desktop_tick(long now)
@@ -445,13 +341,11 @@ void crazypod_desktop_tick(long now)
 #else
     (void)now;
 #endif
-    advance_motion(now);
 }
 
 bool crazypod_desktop_motion_active(void)
 {
-    return desktop_active &&
-        (wheel_tracking || springing);
+    return desktop_active && wheel_tracking;
 }
 
 bool crazypod_desktop_wheel_touch_active(void)
