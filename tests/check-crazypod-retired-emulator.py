@@ -21,6 +21,7 @@ def test_retired_emulator_absent() -> None:
         .glob("crazypod_gameboy_*")
     )
     for path in (
+        "apps/apps.make",
         "apps/SOURCES",
         "apps/crazypod/crazypod_apps.c",
         "apps/crazypod/ui/shell/crazypod_app_catalog.c",
