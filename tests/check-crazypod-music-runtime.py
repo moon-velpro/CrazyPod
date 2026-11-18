@@ -27,4 +27,16 @@ for required in (
     "crazypod_state_tick();",
 ):
     assert required in runtime, required
+theme = (root / "apps/crazypod/ui/features/now_playing/crazypod_now_playing_theme.c").read_text(
+    encoding="utf-8"
+)
+for forbidden in (
+    "crazypod_miniapps_prepare(", "crazypod_miniapps_event(",
+    "crazypod_now_playing_themes_open_id(", "crazypod_miniapps_feature_",
+    "crazypod_miniapps_is_open(", "THEME_CONFIG",
+):
+    assert forbidden not in theme, forbidden
+assert "CRAZYPOD_ARTWORK_CACHE_SIZE" in theme
+assert "return 1;" in theme  # only the native built-in playback screen
+
 print("Music-only service isolation checks passed")
