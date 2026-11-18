@@ -25,7 +25,6 @@
 #include "../navigation/crazypod_ui_routes.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../shell/crazypod_desktop.h"
-#include "../shell/crazypod_home_actions.h"
 #include "../shell/crazypod_home_input.h"
 #include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_screenshot_feedback.h"
@@ -391,7 +390,6 @@ static void execute_now_select_multitap(
 static bool remote_home_select_can_start(void)
 {
     if(crazypod_shell_product_active() ||
-       crazypod_home_actions_visible() ||
        crazypod_now_playing_overlay_visible() ||
        host.power_prompt_visible() ||
        host.headphone_prompt_visible() ||
@@ -686,7 +684,6 @@ void crazypod_app_input_tick(long now, bool locked)
     const struct route_state *confirmation;
     bool home_active =
         !locked && !crazypod_shell_product_active() &&
-        !crazypod_home_actions_visible() &&
         !crazypod_now_playing_overlay_visible() &&
         !crazypod_desktop_hold_feedback_visible() &&
         !host.power_prompt_visible() &&
@@ -741,8 +738,6 @@ void crazypod_app_input_tick(long now, bool locked)
             home_play_hold_pending = false;
             home_play_gesture_owned = true;
             home_play_hold_deadline = 0;
-            if(crazypod_home_actions_visible())
-                crazypod_home_actions_dismiss(true);
             if(crazypod_now_playing_overlay_visible())
                 crazypod_now_playing_overlay_dismiss(false);
             backlight_on();
@@ -904,8 +899,7 @@ void crazypod_app_input_handle(
             (long)(now - tap_deadline) < 0;
         home_hold_pending = false;
         home_menu_tap_pending = false;
-        crazypod_desktop_hold_feedback_dismiss(
-            home_menu_short_release);
+        crazypod_desktop_hold_feedback_dismiss(false);
     }
     if(handle_remote_home_select(button, remote_input))
         return;
@@ -1035,7 +1029,7 @@ void crazypod_app_input_handle(
     if(button & BUTTON_REL) {
         if(home_menu_short_release) {
             backlight_on();
-            crazypod_home_actions_show();
+            crazypod_app_launcher_open_root(HOME_ROUTE_ACTIONS);
             return;
         }
         if(!play_short_release)
@@ -1062,11 +1056,6 @@ void crazypod_app_input_handle(
 
         handle_now_playing_overlay(
             base, repeated, data, refresh_on_dismiss);
-        return;
-    }
-    if(crazypod_home_actions_visible()) {
-        (void)crazypod_home_actions_handle_button(
-            base, repeated, data);
         return;
     }
     if(crazypod_shell_product_active() &&
