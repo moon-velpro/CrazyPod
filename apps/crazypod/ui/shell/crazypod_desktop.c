@@ -12,7 +12,6 @@
 #include "../../crazypod_appearance.h"
 #include "../../crazypod_apps.h"
 #include "../../crazypod_frameclock.h"
-#include "../../crazypod_icons.h"
 #include "../../crazypod_wallpaper.h"
 #include "../presentation/crazypod_hold_feedback.h"
 #include "../presentation/crazypod_ui_widgets.h"
@@ -43,6 +42,7 @@ static lv_obj_t *wallpaper;
 static lv_obj_t *title;
 static lv_obj_t *home_rows[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_labels[HOME_VISIBLE_ROWS];
+static lv_obj_t *home_symbols[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_markers[HOME_VISIBLE_ROWS];
 static lv_obj_t *home_scroll_thumb;
 static int selected_app;
@@ -100,12 +100,15 @@ static void update_selection_chrome(void)
         }
         lv_obj_remove_flag(home_rows[row], LV_OBJ_FLAG_HIDDEN);
         CP_LV_LABEL_SET_TEXT(home_labels[row], app->name);
+        CP_LV_LABEL_SET_TEXT(home_symbols[row], app->symbol);
         lv_obj_set_style_bg_color(
             home_rows[row],
             lv_color_hex(selected ? HOME_SELECTED : COLOR_WHITE), 0);
         lv_obj_set_style_bg_opa(home_rows[row], LV_OPA_COVER, 0);
         lv_obj_set_style_text_opa(
             home_labels[row], selected ? 255 : 225, 0);
+        lv_obj_set_style_text_opa(
+            home_symbols[row], selected ? 255 : 165, 0);
         lv_obj_set_style_text_opa(
             home_markers[row], selected ? 255 : 145, 0);
     }
@@ -252,10 +255,15 @@ lv_obj_t *crazypod_desktop_create(
             COLOR_WHITE, LV_OPA_COVER);
         home_labels[i] = crazypod_ui_widget_label(
             home_rows[i], "", metadata_font, HOME_TEXT, 230);
-        lv_obj_set_pos(home_labels[i], 14, 3);
-        lv_obj_set_width(home_labels[i], 254);
+        lv_obj_set_pos(home_labels[i], 42, 3);
+        lv_obj_set_width(home_labels[i], 220);
         lv_label_set_long_mode(
             home_labels[i], LV_LABEL_LONG_MODE_DOTS);
+        home_symbols[i] = crazypod_ui_widget_label(
+            home_rows[i], "", &lv_font_montserrat_14,
+            HOME_TEXT, 165);
+        lv_obj_set_pos(home_symbols[i], 14, 6);
+        lv_obj_set_width(home_symbols[i], 22);
         home_markers[i] = crazypod_ui_widget_label(
             home_rows[i], LV_SYMBOL_RIGHT,
             &lv_font_montserrat_10, HOME_ACCENT, 150);
@@ -432,7 +440,6 @@ void crazypod_desktop_refresh_appearance(void)
     lv_obj_set_style_bg_color(
         screen, lv_color_hex(HOME_PAGE), 0);
     crazypod_status_bar_set_palette(0, HOME_TEXT, HOME_PAGE);
-    crazypod_icons_load_theme(crazypod_appearance_get()->icon_theme);
     crazypod_now_capsule_refresh_material();
     crazypod_now_capsule_refresh_appearance();
     layout();
@@ -441,21 +448,6 @@ void crazypod_desktop_refresh_appearance(void)
     if(desktop_host.refresh_lock_appearance != NULL)
         desktop_host.refresh_lock_appearance();
     lv_obj_invalidate(screen);
-}
-
-/*
- * The original native icon carousel is retired. Keep the entrypoints so
- * existing hardware frame scheduling remains ABI-compatible.
- */
-void crazypod_desktop_render_icon(int tile_size, bool blocked)
-{
-    (void)tile_size;
-    (void)blocked;
-}
-
-void crazypod_desktop_render_icon_snapshot(int tile_size)
-{
-    (void)tile_size;
 }
 
 #endif
