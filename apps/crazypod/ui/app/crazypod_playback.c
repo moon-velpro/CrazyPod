@@ -40,10 +40,11 @@
 #define SEEK_MAX_STEP_PERCENT 3
 #define SEEK_MIN_STEP_MS 500u
 #define PLAYBACK_COMMAND_STACK_SIZE (DEFAULT_STACK_SIZE + 0x1000)
-/* The worker keeps full playback and catalog-track snapshots on its stack
- * while the first font load walks the runtime-font fallback and coverage
- * paths. 3 KiB overflowed on real hardware with user-provided metadata. */
-#define LOCK_METADATA_WARM_STACK_SIZE (DEFAULT_STACK_SIZE + 0x1000)
+/* Font loading may nest filesystem, fallback and glyph-cache calls.
+ * The lock-screen metadata worker must not share its stack with large
+ * playback/catalog snapshots. Keep reserve equivalent to the scan worker
+ * until real-device stack-watermark testing establishes a lower bound. */
+#define LOCK_METADATA_WARM_STACK_SIZE (DEFAULT_STACK_SIZE + 0x3000)
 #define LOCK_METADATA_WARM_EVENT 1
 #define LOCK_TITLE_FONT_SIZE 15
 #define LOCK_ARTIST_FONT_SIZE 12
@@ -255,10 +256,13 @@ static void lock_playback_track_event(
 static void lock_metadata_warm_thread(void)
 {
     struct queue_event event;
+    /* This dedicated worker is the only owner of these snapshots. Static
+     * storage removes their potentially large frame from its call stack
+     * when Noto glyphs are first loaded for CJK metadata. */
+    static struct crazypod_lock_playback_cache cached;
+    static struct crazypod_track track;
 
     while(true) {
-        struct crazypod_lock_playback_cache cached;
-        struct crazypod_track track;
         bool have_track;
         const char *path;
         const char *title;

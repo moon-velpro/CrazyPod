@@ -6,6 +6,7 @@ test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 
 python3 "$repo_root/tests/check-crazypod-retired-emulator.py"
+python3 "$repo_root/tests/check-crazypod-lock-font-stack.py"
 
 cc -std=c99 -Wall -Wextra -Werror \
     -I"$repo_root/apps/crazypod" \
