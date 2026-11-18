@@ -320,6 +320,29 @@ static void test_failed_full_sync_retries_without_consuming_frame(void)
     assert(diagnostics.sync_submit_failures == 1);
 }
 
+static void test_lvgl_only_home_updates_selection_during_wheel_touch(void)
+{
+    reset_lcd();
+    crazypod_present_init(0);
+
+    /* Classic Home rows use LVGL: wheel touch cannot block them. */
+    crazypod_present_set_home_interaction(false);
+    crazypod_present_queue_rect(8, 53, 304, 29);
+    crazypod_present_tick();
+    assert(lcd_calls == 1);
+    assert(lcd_sync_mode == 0);
+    assert(lcd_x == 8);
+    assert(lcd_y == 53);
+    assert(lcd_width == 304);
+    assert(lcd_height == 29);
+
+    /* Music Cover Flow continues to use its own TE sync path. */
+    crazypod_present_queue_music_rect(0, 40, LCD_WIDTH, 154);
+    crazypod_present_now();
+    assert(lcd_calls == 2);
+    assert(lcd_sync_mode == 2);
+}
+
 static void test_home_touch_defers_ordinary_lvgl_until_release(void)
 {
     reset_lcd();
@@ -362,6 +385,7 @@ int main(void)
     test_fullscreen_owner_discards_stale_partial_requests();
     test_failed_home_sync_retries_without_consuming_frame();
     test_failed_full_sync_retries_without_consuming_frame();
+    test_lvgl_only_home_updates_selection_during_wheel_touch();
     test_home_touch_defers_ordinary_lvgl_until_release();
     return 0;
 }
