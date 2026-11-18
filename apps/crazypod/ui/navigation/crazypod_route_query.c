@@ -8,6 +8,7 @@
 #include "../features/books/crazypod_books_feature.h"
 #include "../features/customize/crazypod_customize_feature.h"
 #include "../shell/crazypod_app_catalog.h"
+#include "../shell/crazypod_home_actions.h"
 #include "../features/miniapps/crazypod_miniapps_feature.h"
 #include "../features/music/crazypod_music_feature.h"
 #include "../features/notes/crazypod_notes_feature.h"
@@ -24,6 +25,8 @@ int crazypod_route_query_item_count(
     const struct crazypod_feature *feature =
         crazypod_route_registry_feature(state->route);
 
+    if(crazypod_home_actions_is_route(state->route))
+        return crazypod_home_actions_item_count(state->route);
     if(feature == NULL)
         return crazypod_route_registry_is_shell(state->route)
             ? crazypod_apps_hidden_count() : 0;
@@ -65,6 +68,8 @@ const char *crazypod_route_query_item_title(
     bool handled = false;
 
     if(feature == NULL) {
+        if(crazypod_home_actions_is_route(state->route))
+            return crazypod_home_actions_item_title(index);
         if(crazypod_route_registry_is_shell(state->route)) {
             const struct crazypod_app_descriptor *app =
                 crazypod_app_catalog_find(
@@ -127,6 +132,8 @@ enum crazypod_menu_icon crazypod_route_query_item_icon(
 
     if(index < 0)
         return CRAZYPOD_MENU_ICON_NONE;
+    if(crazypod_home_actions_is_route(state->route))
+        return CRAZYPOD_MENU_ICON_NONE;
     if(feature == NULL) {
         if(crazypod_route_registry_is_shell(state->route)) {
             const struct crazypod_app_descriptor *app =
@@ -170,6 +177,8 @@ const char *crazypod_route_query_title(
     const struct crazypod_feature *feature =
         crazypod_route_registry_feature(state->route);
 
+    if(crazypod_home_actions_is_route(state->route))
+        return crazypod_home_actions_title(state->route);
     if(feature == NULL)
         return crazypod_route_registry_is_shell(state->route)
             ? CP_TR("MORE FEATURES") : "";
