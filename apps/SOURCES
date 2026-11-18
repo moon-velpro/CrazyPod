@@ -5,6 +5,7 @@ crazypod/accessory/crazypod_usb_iap.c
 #endif
 crazypod/crazypod_lcd.c
 crazypod/crazypod_runtime_font.c
+crazypod/crazypod_itunesdb.c
 crazypod/crazypod_miniapp_asset_font.c
 crazypod/crazypod_frameclock.c
 crazypod/crazypod_image.c
