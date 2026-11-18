@@ -1,5 +1,13 @@
 # CrazyPod · Classic 2025 UI 重构契约
 
+> **2026-11-19 范围变更：** 当前产品定位已改为**专用纯音乐播放器**。
+> 本文保留的“全应用视觉统一”“Books/Notes/Photos/Mini Apps 保留”
+> 等历史条目已被 [纯音乐产品与移除契约](CRAZYPOD_MUSIC_ONLY_SCOPE.zh-CN.md)
+> 覆盖，不再作为交付需求。现在应先删除非音乐功能及运行时依赖，
+> 再完成 Music/Now Playing/Settings/Lock 的视觉统一。
+> 原始 basic 16 张 BMP 仍在仓库中，分发包只包含五个音乐入口图标。
+
+
 状态：实验分支已有构建通过的基础版本；最新首页响应修复仍需 CI 与实机复测。
 设备：iPod Classic 6G/6.5G/7G，Rockbox ipod6g，320×240 RGB565，64 MiB RAM。
 设计基准：用户提供的“iPod classic 2025 concept”参考图，结合 Apple iPod classic User Guide 的实体滚轮交互。

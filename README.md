@@ -15,6 +15,15 @@
 
 # CrazyPod
 
+> **Music-only refactor in progress (PR #4).** The new product target is a
+> dedicated iPod Classic audio player, not the legacy all-app operating system.
+> The music-only Home, shipping package and some runtime scheduling have been
+> simplified; unrelated source modules are **not yet fully unlinked**.
+> Older V1.0 feature descriptions below document the historical firmware and
+> are not a promise about the pending music-only build. See
+> [music-only scope](docs/CRAZYPOD_MUSIC_ONLY_SCOPE.zh-CN.md).
+
+
 CrazyPod V1.0 is experimental standalone firmware for the iPod Classic 6G
 hardware family. It replaces the Rockbox interface with a 320×240 LVGL
 application carousel while retaining Rockbox's codecs, playback engine,
