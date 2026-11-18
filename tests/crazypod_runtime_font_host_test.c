@@ -95,6 +95,14 @@ static int loaded_count(void)
     return count;
 }
 
+static int reference_count(void)
+{
+    int count = 0;
+    for(int i = 0; i < MAXFONTS; ++i)
+        count += loaded[i].refs;
+    return count;
+}
+
 static void shell_fonts(void)
 {
     /* A single missing required font is fatal to boot readiness, but a
@@ -133,12 +141,17 @@ int main(void)
     assert(DC_NUM_ENTRIES > MAX_OPEN_FILES + MAX_OPEN_DIRS + AUX_FILEOBJS);
     shell_fonts();
     now_playing_fonts();
-    assert(loaded_count() == 19);
+    /* Custom line heights add four references, but reuse both already
+     * preloaded font *files*. Count refs and unique paths separately. */
+    assert(loaded_count() == 15);
+    assert(reference_count() == 19);
     for(int i = 0; i < 100; ++i) {
         crazypod_runtime_asset_fonts_reset();
         assert(loaded_count() == 15);
+        assert(reference_count() == 15);
         now_playing_fonts();
-        assert(loaded_count() == 19);
+        assert(loaded_count() == 15);
+        assert(reference_count() == 19);
     }
     crazypod_runtime_asset_fonts_reset();
 
@@ -146,21 +159,28 @@ int main(void)
     /* The first spare font ID fits the primary; the fallback must fail. */
     font_limit = 16;
     assert(!crazypod_runtime_font_resolve(CRAZYPOD_FONT_FAMILY_SYSTEM,
-        16, 700, CRAZYPOD_FONT_STYLE_NORMAL, 20));
+        20, 700, CRAZYPOD_FONT_STYLE_NORMAL, 30));
     assert(loaded_count() == 15);
     assert(strstr(crazypod_runtime_font_last_error(), "fallback load failed"));
     font_limit = MAXFONTS;
     crazypod_runtime_font_error_clear();
 
-    fail_path = FONT_DIR "/crazypod-aot/jp-system-400-16.fnt";
+    fail_path = FONT_DIR "/crazypod-aot/jp-system-400-20.fnt";
     assert(!crazypod_runtime_font_resolve(CRAZYPOD_FONT_FAMILY_SYSTEM,
-        16, 700, CRAZYPOD_FONT_STYLE_NORMAL, 20));
+        20, 700, CRAZYPOD_FONT_STYLE_NORMAL, 30));
     assert(loaded_count() == 15);
     assert(open_files == 0);
     fail_path = NULL;
     crazypod_runtime_font_error_clear();
+    /* The failed fallback must never poison a subsequent retry. */
+    assert(crazypod_runtime_font_resolve(CRAZYPOD_FONT_FAMILY_SYSTEM,
+        20, 700, CRAZYPOD_FONT_STYLE_NORMAL, 30));
+    assert(loaded_count() == 17);
+    crazypod_runtime_asset_fonts_reset();
+    assert(loaded_count() == 15);
     now_playing_fonts();
-    assert(loaded_count() == 19);
+    assert(loaded_count() == 15);
+    assert(reference_count() == 19);
     assert(!crazypod_runtime_font_last_error()[0]);
 
     /* Fill the advertised semantic/private pools with Rockbox fonts present. */

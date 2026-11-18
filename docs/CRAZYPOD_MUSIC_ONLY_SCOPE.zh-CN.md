@@ -211,3 +211,7 @@ Game Boy 游戏模拟器、第三方 Mini Apps/CPK 应用商店和运行时、�
 - 按硬件字体清单的九种字号/字重使用 `crazypod_runtime_font_at_size_weight` 校验，并将主字体及简中 JP fallback 标记为持久，以免正常的私有临时字体重置卸载活动的 LVGL 字体指针。
 - 宿主 C 测试增加缺失 `sc-system-700-10.fnt`、初始化失败、恢复该文件、再次初始化成功的真实字体文件模拟流程；字体生命周期计数随新的九种预加载行为改成 15 个唯一字体（九个 SC + 六个 JP）。反复执行 100 次临时字体卸载，确认持久的 15 个保留。
 - 消除 ARM 上 Cover Flow 未使用形参、图标枚举下界和路由冗余区间的警告；把翻译好的纯文本由 `snprintf(buf, CP_FMT(...))` 改为 `snprintf(buf, "%s", CP_FMT(...))`，避免翻译中百分号被解释成格式说明符。
+
+### 宿主字体对象与字体文件去重计数
+
+C99 host fixture 模拟 Rockbox 的同路径字体共享机制：9 个 SC 字体文件 + 6 个 JP fallback 文件为 15 个唯一底层文件。对已有字体请求不同 line-height 只新增 4 个 semantic slot 的引用，不新增文件，因此临时测试使用 `reference_count()==19` 而非 `loaded_count()==19`；清理后引用数复原为 15。回退字体 OOM/损坏用独立的 20px 测试规格隔离，不污染九种产品发布规格。
