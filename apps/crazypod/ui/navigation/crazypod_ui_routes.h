@@ -108,8 +108,8 @@ enum crazypod_route {
     DIY_ROUTE_LAYOUT,
     DIY_ROUTE_NOW_PLAYING_THEMES,
     DIY_ROUTE_HEADPHONE_POPUP,
-    GAMEBOY_ROUTE_LIBRARY,
-    /* Append to keep the IDs of all existing routes stable. */
+    RETIRED_ROUTE_SLOT,
+    /* Keep retired route numeric value stable; never expose a menu entry. */
     SETTINGS_ROUTE_VALUE_CHOICES,
     /* Shell-owned pages; append IDs to preserve existing route values. */
     HOME_ROUTE_ACTIONS,

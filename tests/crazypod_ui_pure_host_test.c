@@ -177,8 +177,7 @@ static void test_route_registry(void)
            CRAZYPOD_FEATURE_CUSTOMIZE);
     assert(crazypod_route_registry_feature(MINIAPP_ROUTE_VIEW)->id ==
            CRAZYPOD_FEATURE_MINIAPPS);
-    assert(crazypod_route_registry_feature(GAMEBOY_ROUTE_LIBRARY)->id ==
-           CRAZYPOD_FEATURE_MINIAPPS);
+    assert(crazypod_route_registry_is_shell(RETIRED_ROUTE_SLOT));
     assert(crazypod_route_registry_has_flag(
         CLOCK_ROUTE_VIEW, CRAZYPOD_ROUTE_FLAG_FULLSCREEN));
     assert(crazypod_route_registry_has_flag(

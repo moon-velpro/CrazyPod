@@ -116,6 +116,8 @@ static void update_selection_chrome(void)
         const struct crazypod_app_descriptor *app =
             index < count ? visible_app(index) : NULL;
         bool selected = app != NULL && index == selected_app;
+        int icon_index = app != NULL
+            ? crazypod_app_catalog_index(app->id) : -1;
 
         if(home_rows[row] == NULL)
             continue;
@@ -125,10 +127,10 @@ static void update_selection_chrome(void)
         }
         lv_obj_remove_flag(home_rows[row], LV_OBJ_FLAG_HIDDEN);
         CP_LV_LABEL_SET_TEXT(home_labels[row], app->name);
-        if(app->id >= 0 && app->id < CRAZYPOD_ICON_COUNT &&
-           icon_descriptors[app->id].data != NULL) {
+        if(icon_index >= 0 && icon_index < CRAZYPOD_ICON_COUNT &&
+           icon_descriptors[icon_index].data != NULL) {
             lv_image_set_src(
-                home_images[row], &icon_descriptors[app->id]);
+                home_images[row], &icon_descriptors[icon_index]);
             lv_obj_remove_flag(home_images[row], LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(home_symbols[row], LV_OBJ_FLAG_HIDDEN);
         }

@@ -484,8 +484,7 @@ struct crazypod_state_disk_v15 {
     uint32_t checksum;
 };
 
-/* Version 16 used a 16-entry application menu. Keep its exact layout so
- * devices upgrading to the independent GB / GBC app can migrate settings. */
+/* Version 16 used a 16-entry menu. Preserve exact historical layout. */
 struct crazypod_state_disk_v16 {
     uint32_t magic;
     uint32_t version;
@@ -559,7 +558,7 @@ struct crazypod_state_disk {
     struct crazypod_state_eq_band_disk eq_bands[EQ_NUM_BANDS];
     uint32_t menu_count;
     uint32_t menu_enabled_mask;
-    uint8_t menu_order[CRAZYPOD_APP_COUNT];
+    uint8_t menu_order[CRAZYPOD_APP_DISK_COUNT];
     int32_t reduce_motion;
     int32_t storage_mode;
     int32_t language;
@@ -738,7 +737,7 @@ static void expand_legacy_menu_order(
             (unsigned char *)state + old_suffix_offset, suffix_size);
     memset((unsigned char *)state + old_suffix_offset, 0,
            new_suffix_offset - old_suffix_offset);
-    state->menu_order[CRAZYPOD_APP_LEGACY_COUNT] = CRAZYPOD_APP_GAMEBOY;
+    state->menu_order[CRAZYPOD_APP_LEGACY_COUNT] = 0;
 }
 
 static bool read_exact(int fd, void *buffer, size_t size)
@@ -1361,7 +1360,7 @@ void crazypod_state_load(void)
         apply_runtime_settings();
         return;
     }
-    state_dirty = migrated;
+    state_dirty = migrated || state.menu_count > CRAZYPOD_APP_COUNT;
 
     reduce_motion = state.reduce_motion != 0;
     lyrics_mode = state.lyrics_mode != 0;
@@ -1383,7 +1382,7 @@ void crazypod_state_load(void)
         : CRAZYPOD_LANGUAGE_ENGLISH);
     clamp_and_apply_settings(&state);
     if(state.menu_count > 0 &&
-       state.menu_count <= CRAZYPOD_APP_COUNT)
+       state.menu_count <= CRAZYPOD_APP_DISK_COUNT)
         crazypod_apps_restore(state.menu_order, state.menu_count,
                               state.menu_enabled_mask);
     crazypod_queue_restore_begin();

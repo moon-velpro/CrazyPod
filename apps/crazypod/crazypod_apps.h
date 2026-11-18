@@ -29,11 +29,13 @@ enum crazypod_app_id {
     CRAZYPOD_APP_CONTACTS = 16,
     CRAZYPOD_APP_CALENDAR = 17,
     CRAZYPOD_APP_STOPWATCH = 18,
-    CRAZYPOD_APP_GAMEBOY = 19,
+    CRAZYPOD_APP_RETIRED_19 = 19,
 };
 
-#define CRAZYPOD_APP_COUNT 17
+#define CRAZYPOD_APP_COUNT 16
 #define CRAZYPOD_APP_LEGACY_COUNT 16
+/* Keep the v17 on-disk array shape when retired entries are dropped. */
+#define CRAZYPOD_APP_DISK_COUNT 17
 
 void crazypod_apps_reset(void);
 void crazypod_apps_restore(const uint8_t *order, size_t count,

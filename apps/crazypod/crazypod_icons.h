@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define CRAZYPOD_ICON_COUNT 17
+#define CRAZYPOD_ICON_COUNT 16
 #define CRAZYPOD_ICON_SIZE 20
 
 struct crazypod_icon {
