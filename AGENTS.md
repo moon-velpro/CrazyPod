@@ -15,6 +15,36 @@ Read `apps/crazypod/ARCHITECTURE.md` before changing UI ownership. Expose each
 feature through its `crazypod_<name>_feature.h` facade; do not reach into another
 feature's private headers.
 
+## Product Experience Standard
+
+CrazyPod is a modern interpretation of the iPod Classic, not an Android-style
+app launcher or an imitation of a phone. For every user-visible change, start
+from the task and the Click Wheel interaction, not from a visual effect.
+
+- One clear primary action per view. Use hierarchy, spacing, typography,
+  content, and a precise selection state before adding decoration.
+- Wheel scrolls, Center confirms, Menu goes back. Preserve parent selection,
+  playback continuity, focus continuity, and fast direction reversals.
+- Ordinary settings, action choices, and browsing use genuine navigation
+  routes and full secondary pages, not disguised dialogs. Reserve blocking
+  prompts for destructive or safety-critical decisions; brief HUD feedback is
+  allowed where it does not replace navigation.
+- The same navigation, type scale, icon meaning, spacing, empty states, and
+  feedback conventions apply across all built-in apps. Specialized content
+  screens (reading, video, games) keep their appropriate layouts.
+- Movement must communicate a real state change. Honor Reduce Motion and
+  avoid invisible animations, gratuitous framebuffer effects, redundant DMA,
+  and per-frame allocations.
+- First preserve Rockbox audio, data, native display synchronization, input,
+  localization, and recovery behavior. A successful build never substitutes
+  for simulator screenshots or physical iPod regression checks.
+- Before claiming a page complete, review its normal, empty, loading, error,
+  long-text, CJK, modal, and return states on a 320x240 display.
+
+Apply this review to every change, not only the Home screen. The goal is
+Apple-like product clarity and polish while retaining CrazyPod's own identity;
+not pixel-for-pixel replication of a particular Apple interface.
+
 ## Build, Test, and Development Commands
 
 - `./build-sim.sh` creates a clean macOS simulator build.
