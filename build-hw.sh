@@ -256,6 +256,10 @@ node ../tools/miniapp-builder/src/cli.mjs build \
 
 PACKAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "$PACKAGE_DIR"' EXIT HUP INT TERM
+if [ ! -d ../assets/crazypod-icons/basic ]; then
+    echo "Error: missing original basic Home icons." >&2
+    exit 1
+fi
 if [ ! -f ../assets/crazypod/default-home.bmp ]; then
     echo "Error: missing generated CrazyPod default wallpaper." >&2
     exit 1
@@ -263,6 +267,7 @@ fi
 mkdir -p "$PACKAGE_DIR/.rockbox/codecs"
 mkdir -p "$PACKAGE_DIR/.rockbox/codepages"
 mkdir -p "$PACKAGE_DIR/.rockbox/fonts"
+mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/icons/basic"
 mkdir -p "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages"
 for content_directory in Music Podcasts Books Pictures Videos Contacts \
     Calendars MiniApps MiniApps/Games/GB MiniApps/Games/GBC; do
@@ -293,6 +298,8 @@ python3 ../tools/crazypod_runtime_font_audit.py \
     ../dist/miniapps/*.cpk
 cp rockbox.ipod "$PACKAGE_DIR/.rockbox/rockbox.ipod"
 [ ! -f rockbox-info.txt ] || cp rockbox-info.txt "$PACKAGE_DIR/.rockbox/rockbox-info.txt"
+cp ../assets/crazypod-icons/basic/*.bmp \
+    "$PACKAGE_DIR/.rockbox/crazypod/icons/basic/"
 cp ../assets/crazypod/default-home.bmp \
     "$PACKAGE_DIR/.rockbox/crazypod/default-home.bmp"
 cp "../dist/miniapps/$GAME2048_PACKAGE" \
