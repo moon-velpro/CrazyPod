@@ -154,17 +154,12 @@ for codec in "$codec_dir"/*.codec; do
     cp "$codec" "$sim_codec_dir/"
 done
 icon_dir="simdisk/.rockbox/crazypod/icons"
-if [ ! -d ../assets/crazypod-icons ]; then
-    echo "Error: missing generated CrazyPod icon assets." >&2
-    exit 1
-fi
 if [ ! -f ../assets/crazypod/default-home.bmp ]; then
     echo "Error: missing generated CrazyPod default wallpaper." >&2
     exit 1
 fi
+# Clear obsolete theme assets from an existing simulator workdir.
 rm -rf "$icon_dir"
-mkdir -p "$icon_dir"
-cp -R ../assets/crazypod-icons/. "$icon_dir/"
 cp ../assets/crazypod/default-home.bmp \
    simdisk/.rockbox/crazypod/default-home.bmp
 mkdir -p miniapps/packages
