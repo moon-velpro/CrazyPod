@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -37,6 +40,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: tools/miniapp-builder/package-lock.json
+
+      - name: Run UI architecture and host regression tests
+        shell: bash
+        run: |
+          sh tests/check-crazypod-ui-architecture.sh
+          sh tests/run-crazypod-ui-host-tests.sh
 
       - name: Build host font converter
         shell: bash
