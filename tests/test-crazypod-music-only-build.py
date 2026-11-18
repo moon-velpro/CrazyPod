@@ -500,9 +500,9 @@ def verify() -> None:
         if spec.startswith("system:"):
             _, weight, size = spec.split(":")
             assert (
-                f"CRAZYPOD_FONT_FAMILY_SYSTEM, {size}, {weight}," in
+                f"crazypod_runtime_font_at_size_weight({size}, {weight})" in
                 runtime_font
-            ), f"Boot readiness did not check shipped font {spec}"
+            ), f"Boot readiness did not pin shipped font {spec}"
     assert "if(!crazypod_runtime_font_init())" in startup
     assert "(void)font_recovery_wait(display);" in startup
     recovery = startup.split("static lv_obj_t *font_recovery_screen(void)", 1)[1]
@@ -517,6 +517,11 @@ def verify() -> None:
     assert "if(storage_active)" in recovery
     widgets = source("apps/crazypod/ui/presentation/crazypod_ui_widgets.c")
     assert widgets.count("return face != NULL ? face : font;") == 3
+    font_host_test = source("tests/crazypod_runtime_font_host_test.c")
+    assert 'sc-system-700-10.fnt' in font_host_test
+    assert "assert(!crazypod_runtime_font_init());" in font_host_test
+    assert "assert(crazypod_runtime_font_init());" in font_host_test
+    assert "assert(loaded_count() == 15);" in font_host_test
     for abandoned_call in (
         "crazypod_miniapps_feature_initialize_runtime();",
         "crazypod_miniapps_feature_initialize();",

@@ -273,10 +273,10 @@ static void seed_builtins(void)
     };
 
     memset(presets, 0, sizeof(presets));
-    snprintf(presets[0].name, sizeof(presets[0].name), CP_FMT("Classic"));
+    snprintf(presets[0].name, sizeof(presets[0].name), "%s", CP_FMT("Classic"));
     presets[0].appearance = classic;
     presets[0].builtin = true;
-    snprintf(presets[1].name, sizeof(presets[1].name), CP_FMT("Black Red"));
+    snprintf(presets[1].name, sizeof(presets[1].name), "%s", CP_FMT("Black Red"));
     presets[1].appearance = black_red;
     presets[1].builtin = true;
     preset_count = CRAZYPOD_BUILTIN_PRESET_COUNT;

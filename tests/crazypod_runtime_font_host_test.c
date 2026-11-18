@@ -97,13 +97,22 @@ static int loaded_count(void)
 
 static void shell_fonts(void)
 {
+    /* A single missing required font is fatal to boot readiness, but a
+     * subsequent retry must succeed after the file is restored. */
+    fail_path = FONT_DIR "/crazypod-aot/sc-system-700-10.fnt";
+    assert(!crazypod_runtime_font_init());
+    assert(strstr(crazypod_runtime_font_last_error(), "font load failed"));
+    fail_path = NULL;
+    crazypod_runtime_font_error_clear();
+    assert(crazypod_runtime_font_init());
     assert(crazypod_runtime_font_init());
     assert(crazypod_runtime_font_at_size_weight(10, 700));
     assert(crazypod_runtime_font_at_size(15));
     assert(crazypod_runtime_font_at_size(12));
     assert(crazypod_runtime_font_at_size(10));
     assert(crazypod_runtime_font_at_size_weight(8, 700));
-    assert(loaded_count() == 11);
+    /* 9 locale faces + six distinct JP fallback faces. */
+    assert(loaded_count() == 15);
 }
 
 static void now_playing_fonts(void)
@@ -124,20 +133,21 @@ int main(void)
     assert(DC_NUM_ENTRIES > MAX_OPEN_FILES + MAX_OPEN_DIRS + AUX_FILEOBJS);
     shell_fonts();
     now_playing_fonts();
-    assert(loaded_count() == 13);
+    assert(loaded_count() == 19);
     for(int i = 0; i < 100; ++i) {
         crazypod_runtime_asset_fonts_reset();
-        assert(loaded_count() == 11);
+        assert(loaded_count() == 15);
         now_playing_fonts();
-        assert(loaded_count() == 13);
+        assert(loaded_count() == 19);
     }
     crazypod_runtime_asset_fonts_reset();
 
     /* Reproduce the old limit; a failed fallback must release its primary. */
-    font_limit = 12;
+    /* The first spare font ID fits the primary; the fallback must fail. */
+    font_limit = 16;
     assert(!crazypod_runtime_font_resolve(CRAZYPOD_FONT_FAMILY_SYSTEM,
         16, 700, CRAZYPOD_FONT_STYLE_NORMAL, 20));
-    assert(loaded_count() == 11);
+    assert(loaded_count() == 15);
     assert(strstr(crazypod_runtime_font_last_error(), "fallback load failed"));
     font_limit = MAXFONTS;
     crazypod_runtime_font_error_clear();
@@ -145,12 +155,12 @@ int main(void)
     fail_path = FONT_DIR "/crazypod-aot/jp-system-400-16.fnt";
     assert(!crazypod_runtime_font_resolve(CRAZYPOD_FONT_FAMILY_SYSTEM,
         16, 700, CRAZYPOD_FONT_STYLE_NORMAL, 20));
-    assert(loaded_count() == 11);
+    assert(loaded_count() == 15);
     assert(open_files == 0);
     fail_path = NULL;
     crazypod_runtime_font_error_clear();
     now_playing_fonts();
-    assert(loaded_count() == 13);
+    assert(loaded_count() == 19);
     assert(!crazypod_runtime_font_last_error()[0]);
 
     /* Fill the advertised semantic/private pools with Rockbox fonts present. */
@@ -178,7 +188,7 @@ int main(void)
     }
     assert(loaded_count() <= MAXFONTS);
     crazypod_runtime_asset_fonts_reset();
-    assert(loaded_count() == 11 + 12);
+    assert(loaded_count() == 15 + 12);
     puts("CrazyPod runtime font capacity/lifecycle tests passed");
     return 0;
 }

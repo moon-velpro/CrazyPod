@@ -727,7 +727,7 @@ const char *crazypod_ui_settings_choice_title(int item, int index)
         else if(value > 0)
             snprintf(text, sizeof(text), CP_FMT("Right %d%%"), value);
         else
-            snprintf(text, sizeof(text), CP_FMT("Center"));
+            snprintf(text, sizeof(text), "%s", CP_FMT("Center"));
         return text;
     case SETTINGS_ITEM_DATE_YEAR:
     case SETTINGS_ITEM_DATE_DAY:

@@ -220,17 +220,13 @@ void crazypod_runtime_font_prewarm_text(
 
 bool crazypod_runtime_fonts_ready(void)
 {
-    return crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 12, 400,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 15, 400,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 18, 400,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        /* Hardware no longer distributes legacy serif/mono CPK faces. */
+    /* Persist every shipped font face before LVGL stores its descriptor.
+     * Transient font cleanup must not invalidate live label pointers. */
+    return crazypod_runtime_font_at_size_weight(12, 400) != NULL &&
+        crazypod_runtime_font_at_size_weight(15, 400) != NULL &&
+        crazypod_runtime_font_at_size_weight(18, 400) != NULL &&
 #ifdef SIMULATOR
+        /* The simulator also ships the old MiniApp/theme font families. */
         crazypod_runtime_font_resolve(
                CRAZYPOD_FONT_FAMILY_SERIF, 12, 400,
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
@@ -238,24 +234,12 @@ bool crazypod_runtime_fonts_ready(void)
                CRAZYPOD_FONT_FAMILY_MONO, 12, 400,
                CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL;
 #else
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 16, 400,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 16, 700,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 10, 400,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 8, 700,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 8, 400,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL &&
-        crazypod_runtime_font_resolve(
-               CRAZYPOD_FONT_FAMILY_SYSTEM, 10, 700,
-               CRAZYPOD_FONT_STYLE_NORMAL, 0) != NULL;
+        crazypod_runtime_font_at_size_weight(16, 400) != NULL &&
+        crazypod_runtime_font_at_size_weight(16, 700) != NULL &&
+        crazypod_runtime_font_at_size_weight(10, 400) != NULL &&
+        crazypod_runtime_font_at_size_weight(8, 700) != NULL &&
+        crazypod_runtime_font_at_size_weight(8, 400) != NULL &&
+        crazypod_runtime_font_at_size_weight(10, 700) != NULL;
 #endif
 }
 

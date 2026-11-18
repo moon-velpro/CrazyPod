@@ -59,8 +59,7 @@ void crazypod_menu_screen_render(
         state->route == MUSIC_ROUTE_MENU ||
         state->route == SETTINGS_ROUTE_MENU;
     bool media_list =
-        (state->route >= MUSIC_ROUTE_MENU &&
-         state->route <= MUSIC_ROUTE_QUEUE) ||
+        state->route <= MUSIC_ROUTE_QUEUE ||
         state->route == PODCASTS_ROUTE_MENU;
 
     crazypod_menu_list_reset(state->route);

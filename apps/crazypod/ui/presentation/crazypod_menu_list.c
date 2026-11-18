@@ -79,8 +79,7 @@ void crazypod_menu_list_refresh_row(
         view.route == MUSIC_ROUTE_MENU ||
         view.route == SETTINGS_ROUTE_MENU;
     bool media_list =
-        (view.route >= MUSIC_ROUTE_MENU &&
-         view.route <= MUSIC_ROUTE_QUEUE) ||
+        view.route <= MUSIC_ROUTE_QUEUE ||
         view.route == PODCASTS_ROUTE_MENU;
 
     if(row < 0 || row >= CRAZYPOD_MENU_LIST_ROWS)

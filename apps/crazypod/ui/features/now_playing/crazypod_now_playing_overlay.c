@@ -649,17 +649,17 @@ static void refresh_now_actions_popup(void)
         now_actions_view.cell_icons[1],
         now_playback_mode_icon());
     if(now_action_selected == NOW_ACTION_QUEUE) {
-        snprintf(detail, sizeof(detail),
+        snprintf(detail, sizeof(detail), "%s",
                  CP_FMT("Scroll browse  Center play  Menu exits"));
     }
     else if(now_action_selected == NOW_ACTION_FAVORITE) {
         struct crazypod_track track;
 
         if(!copy_current_track(&track))
-            snprintf(detail, sizeof(detail),
+            snprintf(detail, sizeof(detail), "%s",
                      CP_FMT("No track available"));
         else
-            snprintf(detail, sizeof(detail),
+            snprintf(detail, sizeof(detail), "%s",
                      favorite
                          ? CP_FMT("Saved to My Favorites  Center removes")
                          : CP_FMT("Center adds to My Favorites"));
@@ -678,7 +678,7 @@ static void refresh_now_actions_popup(void)
                  available ? CP_FMT("Local LRC") : CP_FMT("No local LRC"));
     }
     else
-        snprintf(detail, sizeof(detail),
+        snprintf(detail, sizeof(detail), "%s",
                  CP_FMT("Center adjusts track progress"));
     CP_LV_LABEL_SET_TEXT(now_actions_view.detail, detail);
 }

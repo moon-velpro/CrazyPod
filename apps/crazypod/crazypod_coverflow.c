@@ -1298,6 +1298,7 @@ static void advance_position(long now, uint32_t now_usec)
 #ifdef HAVE_WHEEL_POSITION
     bool release_due = !wheel_tracking && input_active;
     bool tracking_input = wheel_tracking;
+    (void)now; /* The wheel-position path uses microsecond timestamps. */
 #else
     bool release_due = !wheel_tracking &&
         !TIME_BEFORE(now, last_input + FLOW_RELEASE_GRACE_TICKS);
