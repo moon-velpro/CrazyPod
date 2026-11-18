@@ -177,9 +177,9 @@ static void test_unsafe_path_components(void)
 {
     static const char *const paths[] = {
         ":iPod_Control:Music:F00:..",
-        ":iPod_Control:Music:F00:.:TRACK.mp3",
-        ":iPod_Control:Music:F00::TRACK.mp3",
-        ":iPod_Control:Music:F00:TRACK.mp3:",
+        ":iPod_Control:Music:.:A.mp3",
+        ":iPod_Control:Music:F00::A.mp3",
+        ":iPod_Control:Music:F00:A.mp3:",
     };
     struct crazypod_itunesdb_reader reader = {
         .context = NULL,
