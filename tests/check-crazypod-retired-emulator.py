@@ -51,6 +51,11 @@ def test_legacy_state_and_home_icons() -> None:
     assert "#define CRAZYPOD_ICON_COUNT 16" in icons
     assert "crazypod_app_catalog_index(app->id)" in desktop
     assert "icon_descriptors[app->id]" not in desktop
+    # Home must use fonts enabled by the firmware LVGL configuration.
+    assert "lv_font_montserrat_14" not in desktop
+    assert "#define LV_FONT_MONTSERRAT_16 1" in source(
+        "lib/lvgl/lv_conf.h"
+    )
 
     basic = ROOT / "assets/crazypod-icons/basic"
     assert len(list(basic.glob("*.bmp"))) == 16

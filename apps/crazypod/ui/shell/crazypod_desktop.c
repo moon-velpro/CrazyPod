@@ -301,7 +301,7 @@ lv_obj_t *crazypod_desktop_create(
         lv_label_set_long_mode(
             home_labels[i], LV_LABEL_LONG_MODE_DOTS);
         home_symbols[i] = crazypod_ui_widget_label(
-            home_rows[i], "", &lv_font_montserrat_14,
+            home_rows[i], "", &lv_font_montserrat_16,
             HOME_TEXT, 165);
         lv_obj_set_pos(home_symbols[i], 14, 6);
         lv_obj_set_width(home_symbols[i], 22);
