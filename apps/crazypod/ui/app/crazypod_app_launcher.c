@@ -3,8 +3,9 @@
 #ifdef IPOD_6G
 
 #include "kernel.h"
- 
+
 #include "../../crazypod_music.h"
+#include "../features/music/crazypod_music_feature.h"
 #include "../../crazypod_state.h"
 #include "../navigation/crazypod_route_registry.h"
 #include "../navigation/crazypod_ui_routes.h"

@@ -20,6 +20,7 @@
 #include "../shell/crazypod_now_capsule.h"
 #include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_system_prompts.h"
+#include "crazypod_route_actions.h"
 #include "crazypod_choice_coordinator.h"
 #include "crazypod_miniapp_repro.h"
 #include "crazypod_runtime_services.h"
