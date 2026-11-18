@@ -526,11 +526,11 @@ def verify() -> None:
     assert "font_disable_all();" in usb_prompts
     assert "storage_validation_coverage" in runtime_font
     assert "memcmp(slot->coverage, storage_validation_coverage," in runtime_font
-    assert "assert(!crazypod_runtime_fonts_storage_valid());" in font_host_test
     assert "if(storage_active)" in recovery
     widgets = source("apps/crazypod/ui/presentation/crazypod_ui_widgets.c")
     assert widgets.count("return face != NULL ? face : font;") == 3
     font_host_test = source("tests/crazypod_runtime_font_host_test.c")
+    assert "assert(!crazypod_runtime_fonts_storage_valid());" in font_host_test
     assert 'sc-system-700-10.fnt' in font_host_test
     assert "assert(!crazypod_runtime_font_init());" in font_host_test
     assert "assert(crazypod_runtime_font_init());" in font_host_test
