@@ -130,7 +130,9 @@ def test_renderer_has_no_route_fallback() -> None:
     ):
         assert forbidden not in screen
         assert forbidden not in rows
-    assert "crazypod_route_query_item_icon(state, index)" in screen
+    # Classic 2025 keeps semantic icon mappers, but the regular
+    # full-width list intentionally uses text and hierarchy chevrons.
+    assert "crazypod_route_query_item_icon(state, index)" not in screen
     assert "crazypod_route_query_item_icon(state, index)" in rows
 
 
