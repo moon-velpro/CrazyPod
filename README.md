@@ -480,7 +480,7 @@ storage. Create them manually when installing without the archive:
 | Content | Location |
 | --- | --- |
 | Music and playlists | `/Music` |
-| iTunes-managed music | `/iPod_Control/Music` when enabled in Playback settings |
+| iTunes-managed music | `/iPod_Control/Music` when enabled in Playback settings; supported classic `iTunesDB` display tags are read when available |
 | Podcasts | `/Podcasts` |
 | Books | `/Books` |
 | Photos and wallpapers | `/Pictures` |
@@ -489,6 +489,16 @@ storage. Create them manually when installing without the archive:
 | Calendars | `/Calendars/*.ics` or `/Calendar/*.ics` |
 | Mini App and theme packages | `/MiniApps/*.cpk` |
 | Theme import | `/.crazypod/import.upodtheme` |
+
+For the original iPod library, CrazyPod now tries the classic uncompressed
+`/iPod_Control/iTunes/iTunesDB` as a read-only metadata source. It matches
+database paths to scanned playable files and uses the stored title, artist,
+album and album artist when present. Unsupported, missing or malformed
+databases fall back to audio tags; neither the Apple database nor audio
+files are modified. `iTunesCDB`, SQLite variants and DRM are not supported.
+Catalog cache validation now observes the database size and modified time,
+and the cache version bump forces an initial rescan. Hardware testing with
+a real Apple-managed library is still required.
 
 CrazyPod stores settings, notes, reading progress, workout history, caches, and
 exported appearances under `/.crazypod`.

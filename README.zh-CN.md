@@ -124,7 +124,10 @@ cd build-sim
 
 ## 设备内容
 
-- 音乐：`/Music`；启用“原系统音乐”后读取 `/iPod_Control/Music`
+- 音乐：`/Music`；启用“原系统音乐”后读取 `/iPod_Control/Music`，并尝试只读
+  `/iPod_Control/iTunes/iTunesDB` 里的歌名、歌手、专辑与专辑歌手信息。
+  按实际文件路径匹配，不改写 Apple 数据库或音频标签；无法读取时退回原文件标签。
+  暂不支持 `iTunesCDB`、SQLite 数据库和 DRM，仍需实机验证。
 - 播客：`/Podcasts`
 - 图片：`/Pictures`
 - 视频：`/Videos`
