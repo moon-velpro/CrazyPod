@@ -453,17 +453,11 @@ static void show_overlay(
         .animate_panel = animate_panel,
     };
 
-    if(crazypod_choice_coordinator_visible() ||
-       crazypod_now_playing_overlay_visible())
-        crazypod_desktop_native_preserve_modal_underlay();
     if(crazypod_now_playing_overlay_visible())
         crazypod_now_playing_overlay_dismiss(false);
-    if(crazypod_coverflow_active()) {
+    if(crazypod_coverflow_active())
         crazypod_coverflow_set_compositing_suspended(true);
-        crazypod_overlay_glass_prepare(false);
-    }
-    else
-        crazypod_overlay_glass_prepare(true);
+    /* Navigating a menu page never requires modal blur or underlay capture. */
     crazypod_choice_overlay_show(
         host.parent, kind, id, selected,
         host.metadata_font, &callbacks);
