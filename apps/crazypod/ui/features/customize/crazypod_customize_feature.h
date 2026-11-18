@@ -19,7 +19,6 @@ struct crazypod_customize_activation_host {
         enum crazypod_route route, int group, int selected);
     void (*pop)(void);
     void (*appearance_changed)(void);
-    void (*show_icon_choices)(int group, int selected);
     void (*show_appearance_choices)(int group, int selected);
     void (*show_background_choices)(int group, int selected);
     void (*preset_deleted)(void);
