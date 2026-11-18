@@ -995,8 +995,10 @@ void crazypod_ui_run(void)
             bool wheel_touch_active =
                 crazypod_desktop_wheel_touch_active();
 
-            crazypod_present_set_home_interaction(
-                home_active && wheel_touch_active);
+            /* The Classic Home list is rendered entirely by LVGL.
+             * Native Cover Flow still owns TE-synchronized music frames,
+             * but wheel touch must never freeze Home row updates. */
+            crazypod_present_set_home_interaction(false);
             crazypod_now_capsule_tick(
                 current_tick, home_active, wheel_touch_active);
         }
