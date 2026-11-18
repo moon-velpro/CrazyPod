@@ -71,9 +71,9 @@ struct now_queue_popup_view {
     lv_obj_t *mode;
     lv_obj_t *count;
     lv_obj_t *empty;
-    lv_obj_t *rows[3];
-    lv_obj_t *icons[3];
-    lv_obj_t *titles[3];
+    lv_obj_t *rows[5];
+    lv_obj_t *icons[5];
+    lv_obj_t *titles[5];
 };
 
 struct now_actions_popup_view {
@@ -705,13 +705,13 @@ static int now_queue_start(int count)
 {
     int start;
 
-    if(count <= 3)
+    if(count <= 5)
         return 0;
-    start = now_queue_selected - 1;
+    start = now_queue_selected - 2;
     if(start < 0)
         start = 0;
-    if(start > count - 3)
-        start = count - 3;
+    if(start > count - 5)
+        start = count - 5;
     return start;
 }
 
@@ -747,7 +747,7 @@ static void refresh_now_queue_popup(void)
         lv_obj_remove_flag(now_queue_view.empty, LV_OBJ_FLAG_HIDDEN);
 
     start = now_queue_start(count);
-    for(row = 0; row < 3; ++row) {
+    for(row = 0; row < 5; ++row) {
         int index = start + row;
         bool selected = index == now_queue_selected;
         bool current_row = index == current;
@@ -777,133 +777,88 @@ static void refresh_now_queue_popup(void)
             current_row
                 ? ((audio_status() & AUDIO_STATUS_PAUSE)
                        ? LV_SYMBOL_PAUSE : LV_SYMBOL_VOLUME_MAX)
-                : LV_SYMBOL_BULLET);
+                : LV_SYMBOL_RIGHT);
         lv_obj_set_style_text_color(
             now_queue_view.icons[row],
-            lv_color_hex(current_row ? COLOR_CYAN : COLOR_WHITE), 0);
+            lv_color_hex(current_row ? COLOR_ACCENT : COLOR_MUTED), 0);
         lv_obj_set_style_text_opa(
             now_queue_view.icons[row], current_row ? 245 : 75, 0);
         lv_obj_set_style_bg_color(
-            now_queue_view.rows[row], lv_color_hex(COLOR_WHITE), 0);
+            now_queue_view.rows[row],
+            lv_color_hex(selected ? COLOR_SELECTED : COLOR_WHITE), 0);
         lv_obj_set_style_bg_opa(
-            now_queue_view.rows[row], selected ? 41 : LV_OPA_TRANSP, 0);
+            now_queue_view.rows[row], LV_OPA_COVER, 0);
         lv_obj_set_style_text_opa(
             now_queue_view.titles[row], selected ? 255 : 220, 0);
     }
     now_queue_generation_seen = crazypod_queue_generation();
 }
 
-static int now_queue_visible_rows(int count)
-{
-    if(count <= 0)
-        return 0;
-    return count < 3 ? count : 3;
-}
-
 static void show_now_queue_popup(void)
 {
-    struct crazypod_popup_geometry geometry;
+    lv_obj_t *title;
     int count;
-    int visible_rows;
-    int empty_height;
-    int row_width;
     int row;
 
-    if(now_overlay == CRAZYPOD_NOW_OVERLAY_NONE)
-        prepare_now_overlay_glass(false);
     begin_now_overlay(CRAZYPOD_NOW_OVERLAY_QUEUE);
     count = crazypod_queue_count();
-    if(count > 0 &&
-       (now_queue_selected < 0 ||
-        now_queue_selected >= count))
+    if(count > 0 && (now_queue_selected < 0 ||
+                     now_queue_selected >= count))
         now_queue_selected = crazypod_queue_index();
     if(now_queue_selected < 0)
         now_queue_selected = 0;
-    if(count > 0 && now_queue_selected >= count)
-        now_queue_selected = count - 1;
-    visible_rows = now_queue_visible_rows(count);
-    empty_height = lv_font_get_line_height(CRAZYPOD_METADATA_FONT);
-    geometry = crazypod_popup_centered_geometry(
-        NOW_QUEUE_POPUP_WIDTH,
-        visible_rows > 0
-            ? NOW_QUEUE_HEADER_HEIGHT +
-                visible_rows * NOW_QUEUE_ROW_HEIGHT + 8
-            : NOW_QUEUE_HEADER_HEIGHT + empty_height + 18);
-    row_width = geometry.width - 28;
-    now_overlay_panel = make_now_glass_panel(
-        geometry.x, geometry.y,
-        geometry.width, geometry.height);
+    now_overlay_panel = crazypod_ui_widget_box(
+        now_overlay_root, 0, 32, LCD_WIDTH, LCD_HEIGHT - 32,
+        0, COLOR_PAGE, LV_OPA_COVER);
+    title = crazypod_ui_widget_label(
+        now_overlay_panel, CP_TR("UP NEXT"),
+        CRAZYPOD_METADATA_FONT, COLOR_TEXT, LV_OPA_COVER);
+    lv_obj_set_pos(title, 14, 8);
+    lv_obj_set_width(title, 144);
     now_queue_view.mode_icon = crazypod_ui_widget_icon(
-        now_overlay_panel, 14, 8,
-        now_playback_mode_icon(), COLOR_WHITE, LV_OPA_COVER);
+        now_overlay_panel, 170, 10,
+        now_playback_mode_icon(), COLOR_ACCENT, 210);
     now_queue_view.mode = crazypod_ui_widget_label(
         now_overlay_panel, "",
-        &lv_font_montserrat_10,
-        COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_set_pos(now_queue_view.mode, 36, 12);
-    lv_obj_set_width(
-        now_queue_view.mode, geometry.width - 72);
-    lv_obj_set_style_text_align(
-        now_queue_view.mode, LV_TEXT_ALIGN_CENTER, 0);
+        &lv_font_montserrat_8, COLOR_MUTED, 220);
+    lv_obj_set_pos(now_queue_view.mode, 194, 13);
+    lv_obj_set_width(now_queue_view.mode, 62);
     now_queue_view.count = crazypod_ui_widget_label(
-        now_overlay_panel, "0/0",
-        &lv_font_montserrat_8,
-        COLOR_WHITE, LV_OPA_COVER);
-    lv_obj_set_width(now_queue_view.count, 54);
+        now_overlay_panel, "",
+        &lv_font_montserrat_8, COLOR_MUTED, 220);
+    lv_obj_set_pos(now_queue_view.count, 264, 13);
+    lv_obj_set_width(now_queue_view.count, 42);
     lv_obj_set_style_text_align(
         now_queue_view.count, LV_TEXT_ALIGN_RIGHT, 0);
-    lv_obj_set_pos(
-        now_queue_view.count,
-        geometry.width - 68, 14);
 
     now_queue_view.empty = crazypod_ui_widget_label(
         now_overlay_panel, CP_TR("No Queue"),
-        CRAZYPOD_METADATA_FONT,
-        COLOR_WHITE, 225);
-    lv_obj_set_width(now_queue_view.empty, row_width);
+        CRAZYPOD_METADATA_FONT, COLOR_MUTED, 220);
+    lv_obj_set_pos(now_queue_view.empty, 14, 103);
+    lv_obj_set_width(now_queue_view.empty, 292);
     lv_obj_set_style_text_align(
         now_queue_view.empty, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(
-        now_queue_view.empty, 14,
-        NOW_QUEUE_HEADER_HEIGHT +
-            (geometry.height - NOW_QUEUE_HEADER_HEIGHT -
-             empty_height) / 2);
 
-    for(row = 0; row < 3; ++row) {
-        int y = NOW_QUEUE_HEADER_HEIGHT +
-            row * NOW_QUEUE_ROW_HEIGHT;
+    for(row = 0; row < 5; ++row) {
+        int y = 43 + row * 30;
 
         now_queue_view.rows[row] = crazypod_ui_widget_box(
-            now_overlay_panel, 14, y,
-            row_width, NOW_QUEUE_ROW_HEIGHT, 6,
-            COLOR_WHITE, LV_OPA_TRANSP);
+            now_overlay_panel, 10, y,
+            300, 29, 7, COLOR_WHITE, LV_OPA_COVER);
         now_queue_view.icons[row] = crazypod_ui_widget_label(
-            now_queue_view.rows[row], LV_SYMBOL_BULLET,
-            &lv_font_montserrat_10,
-            COLOR_WHITE, 75);
-        lv_obj_set_size(now_queue_view.icons[row], 18, 12);
-        lv_obj_set_style_text_align(
-            now_queue_view.icons[row], LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_pos(
-            now_queue_view.icons[row], 7,
-            (NOW_QUEUE_ROW_HEIGHT - 12) / 2);
+            now_queue_view.rows[row], LV_SYMBOL_RIGHT,
+            &lv_font_montserrat_10, COLOR_MUTED, 180);
+        lv_obj_set_pos(now_queue_view.icons[row], 11, 8);
+        lv_obj_set_width(now_queue_view.icons[row], 20);
         now_queue_view.titles[row] = crazypod_ui_widget_label(
             now_queue_view.rows[row], "",
-            NOW_QUEUE_TITLE_FONT,
-            COLOR_WHITE, 220);
-        lv_obj_set_width(
-            now_queue_view.titles[row], row_width - 41);
-        lv_obj_set_style_text_align(
-            now_queue_view.titles[row],
-            LV_TEXT_ALIGN_LEFT, 0);
-        crazypod_ui_widget_align_row_label(
-            now_queue_view.titles[row], 32,
-            CRAZYPOD_UI_ROW_LABEL_TEXT);
-        crazypod_marquee_configure(
-            now_queue_view.titles[row], false);
+            NOW_QUEUE_TITLE_FONT, COLOR_TEXT, 220);
+        lv_obj_set_pos(now_queue_view.titles[row], 38, 5);
+        lv_obj_set_width(now_queue_view.titles[row], 246);
+        lv_label_set_long_mode(
+            now_queue_view.titles[row], LV_LABEL_LONG_MODE_DOTS);
     }
     refresh_now_queue_popup();
-    animate_now_popup(now_overlay_panel, geometry.y);
 }
 
 static void format_now_progress_time(
