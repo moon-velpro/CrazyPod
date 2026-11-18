@@ -33,6 +33,9 @@ const lv_font_t *crazypod_runtime_font_at_size_weight(
 void crazypod_runtime_font_prewarm_text(
     unsigned size, const char *text);
 bool crazypod_runtime_fonts_ready(void);
+/* Only call after USB mass storage has been unmounted and remounted.
+ * Reads font files without reopening stale Rockbox font handles. */
+bool crazypod_runtime_fonts_storage_valid(void);
 void crazypod_runtime_font_error_clear(void);
 const char *crazypod_runtime_font_last_error(void);
 

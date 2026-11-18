@@ -514,6 +514,19 @@ def verify() -> None:
     assert "usb_acknowledge(SYS_USB_CONNECTED_ACK, data);" in recovery
     assert "font_disable_all();" in recovery
     assert "font_enable_all();" in recovery
+    # Disconnect must not re-enable descriptors for removed/altered fonts.
+    font_disconnected = usb_prompts.split(
+        "void crazypod_system_prompts_usb_disconnected(void)", 1
+    )[1].split("void crazypod_system_prompts_power_off(void)", 1)[0]
+    assert font_disconnected.index("crazypod_runtime_fonts_storage_valid()") < (
+        font_disconnected.index("font_enable_all()")
+    )
+    assert "shutdown_hw(SHUTDOWN_REBOOT);" in font_disconnected
+    assert "return;" in font_disconnected
+    assert "font_disable_all();" in usb_prompts
+    assert "storage_validation_coverage" in runtime_font
+    assert "memcmp(slot->coverage, storage_validation_coverage," in runtime_font
+    assert "assert(!crazypod_runtime_fonts_storage_valid());" in font_host_test
     assert "if(storage_active)" in recovery
     widgets = source("apps/crazypod/ui/presentation/crazypod_ui_widgets.c")
     assert widgets.count("return face != NULL ? face : font;") == 3

@@ -140,6 +140,20 @@ int main(void)
     assert(MAX_OPEN_FILES >= MAXFONTS + 31);
     assert(DC_NUM_ENTRIES > MAX_OPEN_FILES + MAX_OPEN_DIRS + AUX_FILEOBJS);
     shell_fonts();
+    assert(crazypod_runtime_fonts_storage_valid());
+    /* USB detach must reject a missing font, then recover if restored. */
+    fail_path = FONT_DIR "/crazypod-aot/jp-system-400-16.fnt";
+    assert(!crazypod_runtime_fonts_storage_valid());
+    assert(open_files == 0);
+    fail_path = NULL;
+    crazypod_runtime_font_error_clear();
+    assert(crazypod_runtime_fonts_storage_valid());
+    /* Reject a silently changed repertoire even if RB12 remains parseable. */
+    runtime_font_coverage[0][0] ^= 1u;
+    assert(!crazypod_runtime_fonts_storage_valid());
+    runtime_font_coverage[0][0] ^= 1u;
+    crazypod_runtime_font_error_clear();
+    assert(crazypod_runtime_fonts_storage_valid());
     now_playing_fonts();
     /* Custom line heights add four references, but reuse both already
      * preloaded font *files*. Count refs and unique paths separately. */

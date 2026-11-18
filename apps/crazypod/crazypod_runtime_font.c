@@ -56,6 +56,8 @@ static uint8_t runtime_font_coverage[
     CRAZYPOD_RUNTIME_FONT_MAX][CRAZYPOD_FONT_COVERAGE_BYTES];
 static uint8_t asset_font_coverage[
     CRAZYPOD_ASSET_FONT_MAX][CRAZYPOD_FONT_COVERAGE_BYTES];
+/* One scratch bitmap shared by the read-only post-USB file verifier. */
+static uint8_t storage_validation_coverage[CRAZYPOD_FONT_COVERAGE_BYTES];
 static char last_error[MAX_PATH + 64];
 
 static bool asset_get_glyph_dsc(
@@ -369,6 +371,41 @@ static bool load_font_coverage(
         index += count;
     }
     close(fd);
+    return true;
+}
+
+/* USB mass storage can remove/replace fonts while Rockbox's open font
+ * handles are disabled. Do not render the old cached descriptors until
+ * every live font has passed a fresh disk read and coverage comparison.
+ * A format-compatible font with changed bitmap payload is not detected;
+ * release packaging must still require a clean reboot after font updates. */
+bool crazypod_runtime_fonts_storage_valid(void)
+{
+    unsigned i;
+
+    for(i = 0; i < CRAZYPOD_RUNTIME_FONT_MAX + CRAZYPOD_ASSET_FONT_MAX;
+        ++i) {
+        struct crazypod_asset_font_slot *slot =
+            i < CRAZYPOD_RUNTIME_FONT_MAX
+                ? &runtime_fonts[i]
+                : &asset_fonts[i - CRAZYPOD_RUNTIME_FONT_MAX];
+        bool valid;
+
+        if(!slot->used)
+            continue;
+        mutex_lock(&slot->glyph_mutex);
+        valid = slot->coverage != NULL && slot->font_id >= 0 &&
+                load_font_coverage(slot->path,
+                                   storage_validation_coverage) &&
+                memcmp(slot->coverage, storage_validation_coverage,
+                       CRAZYPOD_FONT_COVERAGE_BYTES) == 0;
+        mutex_unlock(&slot->glyph_mutex);
+        if(!valid) {
+            record_error("font storage unavailable or changed",
+                         slot->key, 0, 0, 0, slot->path);
+            return false;
+        }
+    }
     return true;
 }
 

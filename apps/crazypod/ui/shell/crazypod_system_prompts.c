@@ -9,12 +9,14 @@
 #include "kernel.h"
 #include "lvgl.h"
 #include "powermgmt.h"
+#include "system.h"
 #include "usb.h"
 
 #include "../../accessory/crazypod_iap_simple.h"
 #include "../../crazypod_artwork.h"
 #include "../../crazypod_coverflow.h"
 #include "../../crazypod_music.h"
+#include "../../crazypod_runtime_font.h"
 #include "../../crazypod_screen_recording.h"
 #include "../../crazypod_state.h"
 #include "../app/crazypod_choice_coordinator.h"
@@ -363,7 +365,14 @@ void crazypod_system_prompts_usb_connected(intptr_t data)
 
 void crazypod_system_prompts_usb_disconnected(void)
 {
-    /* SYS_USB_DISCONNECTED is broadcast after storage has been remounted. */
+    /* SYS_USB_DISCONNECTED is broadcast after storage has been remounted.
+     * Validate files BEFORE reopening Rockbox's cached font descriptors.
+     * If the host removed/corrupted fonts, the next boot enters the
+     * built-in USB recovery UI; never render with stale font state. */
+    if(!crazypod_runtime_fonts_storage_valid()) {
+        shutdown_hw(SHUTDOWN_REBOOT);
+        return;
+    }
     font_enable_all();
     prompts.storage_active = false;
 #if defined(HAVE_USB_POWER) && !defined(USB_NONE)
