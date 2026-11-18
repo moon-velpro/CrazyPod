@@ -298,7 +298,7 @@ bool crazypod_settings_feature_activate(
     else if(command.kind ==
             CRAZYPOD_SETTINGS_COMMAND_MAIN_MENU_CHANGED) {
         host->main_menu_changed(preferred, command.app_id);
-        host->render(false);
+        host->pop();
     }
     else if(command.kind == CRAZYPOD_SETTINGS_COMMAND_OPEN_EQ) {
         crazypod_eq_studio_open();
