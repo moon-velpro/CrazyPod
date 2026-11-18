@@ -48,3 +48,11 @@ CrazyPod 应是 iPod Classic 6G/6.5G/7G 上的专用本地音乐播放器，
   已完成或将 Draft PR 作为可安全刷机的正式固件。
 - 所有删减以可编译、可测试且不破坏播放的提交推进；入口隐藏不等于
   后台代码和二进制模块已经移除。
+
+## 本轮移除独立应用源与构建器示例
+
+已从工程树删除不再编译的 `miniapps/apps/`（2048、Capability Lab、
+Native Reference）和 `miniapps/themes/`（旧可安装播放页主题）示例，
+以及不再被 `apps/apps.make` 引用的 `miniapps/miniapps.make`。
+CI 不再设置 Node.js/npm 缓存或上传 CPK 包。保留的 `miniapps/sdk/`
+和固件内部运行时仍是下一批需要排查的遗留依赖。

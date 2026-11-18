@@ -59,6 +59,12 @@ def main():
     assert "miniapps/packages/" not in hw
     assert "rm -rf simdisk/.rockbox/crazypod/miniapps/packages" in sim
     assert 'nargs="*"' in read("tools/crazypod_runtime_font_audit.py")
+    workflow = read(".github/workflows/build.yml")
+    assert "Set up Node.js" not in workflow
+    assert "dist/miniapps/*.cpk" not in workflow
+    assert not (ROOT / "miniapps/miniapps.make").exists()
+    assert not list((ROOT / "miniapps/apps").glob("**/*.*"))
+    assert not list((ROOT / "miniapps/themes").glob("**/*.*"))
     assert "for content_directory in Music Podcasts; do" in hw
     assert ".rockbox Music Podcasts" in hw
     assert "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages" not in hw
