@@ -90,7 +90,7 @@ void crazypod_menu_screen_render(
             crazypod_empty_state_render(context->parent,
                 LV_SYMBOL_IMAGE,
                 CP_TR("No Favorites"),
-                               CP_TR("Hold Select on a photo to save it here."));
+                CP_TR("Hold Select on a photo to save it here."));
         else if(state->route == EXTRAS_ROUTE_MENU)
             crazypod_empty_state_render(context->parent,
                 LV_SYMBOL_DIRECTORY,
