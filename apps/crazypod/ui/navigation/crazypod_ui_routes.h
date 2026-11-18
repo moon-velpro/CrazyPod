@@ -109,9 +109,11 @@ enum crazypod_route {
     DIY_ROUTE_NOW_PLAYING_THEMES,
     DIY_ROUTE_HEADPHONE_POPUP,
     GAMEBOY_ROUTE_LIBRARY,
+    /* Append to keep the IDs of all existing routes stable. */
+    SETTINGS_ROUTE_VALUE_CHOICES,
 };
 
-#define CRAZYPOD_ROUTE_COUNT ((int)GAMEBOY_ROUTE_LIBRARY + 1)
+#define CRAZYPOD_ROUTE_COUNT ((int)SETTINGS_ROUTE_VALUE_CHOICES + 1)
 
 struct route_state {
     enum crazypod_route route;
