@@ -44,6 +44,35 @@ static void test_nested_settings_actions_restore_item(void)
     assert(state->selected == 5);
 }
 
+static void test_home_actions_are_real_nested_pages(void)
+{
+    struct route_state *state;
+
+    crazypod_ui_routes_reset(HOME_ROUTE_ACTIONS, -1, 1);
+    assert(crazypod_ui_routes_depth() == 1);
+    assert(crazypod_ui_routes_push(HOME_ROUTE_BRIGHTNESS, -1, 0));
+    assert(crazypod_ui_routes_depth() == 2);
+    assert(crazypod_ui_routes_current()->route ==
+           HOME_ROUTE_BRIGHTNESS);
+    assert(crazypod_ui_routes_pop());
+    state = crazypod_ui_routes_current();
+    assert(state->route == HOME_ROUTE_ACTIONS);
+    assert(state->selected == 1);
+
+    state->selected = 2;
+    assert(crazypod_ui_routes_push(HOME_ROUTE_VOLUME, -1, 0));
+    assert(crazypod_ui_routes_pop());
+    state = crazypod_ui_routes_current();
+    assert(state->route == HOME_ROUTE_ACTIONS);
+    assert(state->selected == 2);
+
+    state->selected = 0;
+    assert(crazypod_ui_routes_push(MUSIC_ROUTE_QUEUE, -1, 0));
+    assert(crazypod_ui_routes_pop());
+    assert(crazypod_ui_routes_current()->selected == 0);
+    assert(!crazypod_ui_routes_pop());
+}
+
 static void test_full_route_stack_does_not_corrupt_parent(void)
 {
     int depth;
@@ -63,6 +92,7 @@ int main(void)
 {
     test_settings_value_route_restores_parent_selection();
     test_nested_settings_actions_restore_item();
+    test_home_actions_are_real_nested_pages();
     test_full_route_stack_does_not_corrupt_parent();
     return 0;
 }
