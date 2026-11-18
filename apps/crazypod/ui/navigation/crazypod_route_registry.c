@@ -265,7 +265,7 @@ routes[CRAZYPOD_ROUTE_COUNT] = {
 const struct crazypod_route_descriptor *
 crazypod_route_registry_get(enum crazypod_route route)
 {
-    if((unsigned int)route >= CRAZYPOD_ROUTE_COUNT)
+    if(!crazypod_ui_route_supported(route))
         return NULL;
     return &routes[route];
 }

@@ -163,29 +163,30 @@ static void test_route_registry(void)
 
     assert(crazypod_route_registry_validate());
     for(route = 0; route < CRAZYPOD_ROUTE_COUNT; ++route)
-        assert(crazypod_route_registry_get(route) != NULL);
-    assert(crazypod_route_registry_is_shell(EXTRAS_ROUTE_MENU));
+        assert((crazypod_route_registry_get(route) != NULL) ==
+               crazypod_ui_route_supported(route));
+    assert(crazypod_route_registry_get(EXTRAS_ROUTE_MENU) == NULL);
+    assert(crazypod_route_registry_get(PHOTOS_ROUTE_MENU) == NULL);
+    assert(crazypod_route_registry_get(BOOKS_ROUTE_MENU) == NULL);
+    assert(crazypod_route_registry_get(NOTES_ROUTE_MENU) == NULL);
     assert(crazypod_route_registry_feature(MUSIC_ROUTE_MENU)->id ==
            CRAZYPOD_FEATURE_MUSIC);
     assert(crazypod_route_registry_feature(MUSIC_ROUTE_QUEUE)->id ==
            CRAZYPOD_FEATURE_NOW_PLAYING);
     assert(crazypod_route_registry_feature(
-               DIY_ROUTE_WALLPAPER_CROP)->id ==
-           CRAZYPOD_FEATURE_CUSTOMIZE);
+               DIY_ROUTE_WALLPAPER_CROP) == NULL);
     assert(crazypod_route_registry_feature(
-               DIY_ROUTE_HEADPHONE_POPUP)->id ==
-           CRAZYPOD_FEATURE_CUSTOMIZE);
-    assert(crazypod_route_registry_feature(MINIAPP_ROUTE_VIEW)->id ==
-           CRAZYPOD_FEATURE_MINIAPPS);
-    assert(crazypod_route_registry_is_shell(RETIRED_ROUTE_SLOT));
-    assert(crazypod_route_registry_has_flag(
+               DIY_ROUTE_HEADPHONE_POPUP) == NULL);
+    assert(crazypod_route_registry_feature(MINIAPP_ROUTE_VIEW) == NULL);
+    assert(crazypod_route_registry_get(RETIRED_ROUTE_SLOT) == NULL);
+    assert(!crazypod_route_registry_has_flag(
         CLOCK_ROUTE_VIEW, CRAZYPOD_ROUTE_FLAG_FULLSCREEN));
-    assert(crazypod_route_registry_has_flag(
+    assert(!crazypod_route_registry_has_flag(
         CLOCK_ROUTE_VIEW, CRAZYPOD_ROUTE_FLAG_DARK_STATUS));
-    assert(crazypod_route_registry_has_flag(
+    assert(!crazypod_route_registry_has_flag(
         DIY_ROUTE_WALLPAPER_CROP,
         CRAZYPOD_ROUTE_FLAG_SOLID_BLACK));
-    assert(crazypod_route_registry_has_flag(
+    assert(!crazypod_route_registry_has_flag(
         BOOKS_ROUTE_READER, CRAZYPOD_ROUTE_FLAG_BOOK_READER));
     assert(!crazypod_route_registry_has_flag(
         MUSIC_ROUTE_MENU, CRAZYPOD_ROUTE_FLAG_FULLSCREEN));

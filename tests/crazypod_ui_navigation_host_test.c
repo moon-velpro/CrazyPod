@@ -88,8 +88,25 @@ static void test_full_route_stack_does_not_corrupt_parent(void)
     assert(crazypod_ui_routes_current()->selected == 4);
 }
 
+static void test_retired_routes_are_never_entered(void)
+{
+    crazypod_ui_routes_reset(BOOKS_ROUTE_MENU, -1, 0);
+    assert(crazypod_ui_routes_depth() == 0);
+    assert(!crazypod_ui_routes_push(MINIAPP_ROUTE_VIEW, -1, 0));
+    assert(crazypod_ui_routes_depth() == 0);
+
+    crazypod_ui_routes_reset(MUSIC_ROUTE_MENU, -1, 2);
+    assert(!crazypod_ui_routes_push(PHOTOS_ROUTE_MENU, -1, 0));
+    assert(!crazypod_ui_routes_push(NOTES_ROUTE_READER, -1, 0));
+    assert(!crazypod_ui_routes_push(DIY_ROUTE_MENU, -1, 0));
+    assert(crazypod_ui_routes_depth() == 1);
+    assert(crazypod_ui_routes_current()->route == MUSIC_ROUTE_MENU);
+    assert(crazypod_ui_routes_current()->selected == 2);
+}
+
 int main(void)
 {
+    test_retired_routes_are_never_entered();
     test_settings_value_route_restores_parent_selection();
     test_nested_settings_actions_restore_item();
     test_home_actions_are_real_nested_pages();

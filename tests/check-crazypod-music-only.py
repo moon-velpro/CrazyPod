@@ -33,6 +33,12 @@ def main():
         assert f'"{icon}"' in icon_paths
     assert icon_paths.count('"') == 10
     assert "music_only_root_route(route)" in launcher
+    routes = read("apps/crazypod/ui/navigation/crazypod_ui_routes.h")
+    stack = read("apps/crazypod/ui/navigation/crazypod_ui_routes.c")
+    registry = read("apps/crazypod/ui/navigation/crazypod_route_registry.c")
+    assert "crazypod_ui_route_supported" in routes
+    assert "if(!crazypod_ui_route_supported(route))" in stack
+    assert "if(!crazypod_ui_route_supported(route))" in registry
     for retired in (
         "APP_MINI_APPS", "APP_PHOTOS", "APP_BOOKS", "APP_NOTES",
         "APP_CONTACTS", "APP_CALENDAR", "APP_WORKOUTS", "APP_STOPWATCH",
@@ -51,7 +57,7 @@ def main():
     assert "tools/miniapp-builder" not in hw + sim
     assert "dist/miniapps" not in hw
     assert "miniapps/packages/" not in hw
-    assert "miniapps/packages/" in sim  # purge previous simulator resources
+    assert "rm -rf simdisk/.rockbox/crazypod/miniapps/packages" in sim
     assert 'nargs="*"' in read("tools/crazypod_runtime_font_audit.py")
     assert "for content_directory in Music Podcasts; do" in hw
     assert ".rockbox Music Podcasts" in hw

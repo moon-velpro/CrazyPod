@@ -19,6 +19,10 @@ void crazypod_ui_routes_clear(void)
 void crazypod_ui_routes_reset(
     enum crazypod_route route, int group, int selected)
 {
+    if(!crazypod_ui_route_supported(route)) {
+        route_depth = 0;
+        return;
+    }
     route_stack[0].route = route;
     route_stack[0].selected = selected;
     route_stack[0].group = group;
@@ -47,7 +51,8 @@ struct route_state *crazypod_ui_routes_at(int index)
 bool crazypod_ui_routes_push(
     enum crazypod_route route, int group, int selected)
 {
-    if(route_depth >= CRAZYPOD_UI_ROUTE_CAPACITY)
+    if(!crazypod_ui_route_supported(route) ||
+       route_depth >= CRAZYPOD_UI_ROUTE_CAPACITY)
         return false;
 
     route_stack[route_depth].route = route;

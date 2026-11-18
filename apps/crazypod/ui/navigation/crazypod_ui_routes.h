@@ -119,6 +119,20 @@ enum crazypod_route {
 
 #define CRAZYPOD_ROUTE_COUNT ((int)HOME_ROUTE_VOLUME + 1)
 
+/* Retired IDs retain their historic numeric values, but no longer admit
+ * navigation or feature dispatch in the dedicated music player. */
+static inline bool crazypod_ui_route_supported(enum crazypod_route route)
+{
+    return (route >= MUSIC_ROUTE_MENU &&
+            route <= MUSIC_ROUTE_NOW_PLAYING) ||
+           (route >= SETTINGS_ROUTE_MENU &&
+            route <= SETTINGS_ROUTE_MAIN_MENU_ACTIONS) ||
+           route == PODCASTS_ROUTE_MENU ||
+           route == SETTINGS_ROUTE_VALUE_CHOICES ||
+           (route >= HOME_ROUTE_ACTIONS &&
+            route <= HOME_ROUTE_VOLUME);
+}
+
 struct route_state {
     enum crazypod_route route;
     int selected;
