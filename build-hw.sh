@@ -17,7 +17,7 @@ detect_jobs() {
 
 require_tools() {
     missing=0
-    for tool in make perl python3 zip node npm gcc "${CROSS_COMPILE}gcc" \
+    for tool in make perl python3 zip gcc "${CROSS_COMPILE}gcc" \
         "${CROSS_COMPILE}objcopy" "${CROSS_COMPILE}nm"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             echo "Error: missing required tool '$tool' on PATH." >&2
@@ -37,9 +37,6 @@ prepare_generated_headers() {
         -j1 "$builddir_unix/apps/core_asmdefs.h"
     make EXTRA_DEFINES="$CRAZYPOD_BUILD_DEFINES" \
         -j1 "$builddir_unix/ram.link"
-    mkdir -p "$builddir_unix/miniapps"
-    make EXTRA_DEFINES="$CRAZYPOD_BUILD_DEFINES" \
-        -j1 "$builddir_unix/miniapps/miniapp.link"
 }
 
 verify_stack_alignment() {
@@ -60,12 +57,7 @@ verify_stack_alignment() {
 
 verify_removed_runtime_absent() {
     forbidden='quickjs|mquickjs|crazypod_js|crazypod_script|solid_renderer|ui_command_batch'
-    for binary in rockbox.elf \
-        miniapps/apps/native-reference/app.arm \
-        miniapps/apps/capability-lab/app.arm \
-        miniapps/apps/game2048/app.arm \
-        miniapps/themes/atelier-hifi/app.arm \
-        miniapps/themes/signal-one/app.arm; do
+    for binary in rockbox.elf; do
         matches=$("${CROSS_COMPILE}nm" -a "$binary" 2>/dev/null |
             awk '{ print $3 }' |
             grep -E -i "$forbidden" || true)
@@ -147,22 +139,6 @@ if [ "$repro_enabled" -eq 1 ]; then
 fi
 require_tools
 python3 tests/test-crazypod-lvgl-layer-budget.py
-npm ci --ignore-scripts --no-audit --no-fund \
-    --prefix tools/miniapp-builder
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/native-reference \
-    --out miniapps/apps/native-reference/generated/app.c
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/capability-lab \
-    --out miniapps/apps/capability-lab/generated/app.c
-node tools/miniapp-builder/src/cli.mjs generate \
-    miniapps/apps/game2048 \
-    --out miniapps/apps/game2048/generated/app.c
-# The ABI 1.5 theme intrinsics come from the standalone Devtool. Keep its
-# generated artifact in sync with the TSX source.
-test -f miniapps/themes/atelier-hifi/generated/app.c
-test -f miniapps/themes/signal-one/generated/app.c
-
 if [ "$CRAZYPOD_BUILD_VARIANT" = "repro" ]; then
     BUILDDIR="build-hw-ipod6g-repro"
     STAMP="crazypod hardware ipod6g lvgl repro"
@@ -212,48 +188,6 @@ if [ ! -f rockbox.ipod ]; then
 fi
 verify_stack_alignment
 verify_removed_runtime_absent
-mkdir -p ../dist/miniapps
-find ../dist/miniapps -type f -name 'game2048-*.cpk' -delete
-find ../dist/miniapps -type f -name 'capability-lab-*.cpk' -delete
-find ../dist/miniapps -type f -name 'native-reference-*.cpk' -delete
-find ../dist/miniapps -type f -name 'now-playing-neon-*.cpk' -delete
-find ../dist/miniapps -type f -name 'now-playing-signal-*.cpk' -delete
-GAME2048_PACKAGE="game2048-$(node -p \
-    "require('../miniapps/apps/game2048/crazypod.config.json').manifest.version").cpk"
-CAPABILITY_LAB_PACKAGE="capability-lab-$(node -p \
-    "require('../miniapps/apps/capability-lab/crazypod.config.json').manifest.version").cpk"
-NATIVE_REFERENCE_PACKAGE="native-reference-$(node -p \
-    "require('../miniapps/apps/native-reference/crazypod.config.json').manifest.version").cpk"
-NOW_PLAYING_THEME_PACKAGE="now-playing-neon-$(node -p \
-    "require('../miniapps/themes/atelier-hifi/crazypod.config.json').manifest.version").cpk"
-SIGNAL_THEME_PACKAGE="now-playing-signal-$(node -p \
-    "require('../miniapps/themes/signal-one/crazypod.config.json').manifest.version").cpk"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/apps/game2048 \
-    --target ipod6g \
-    --binary miniapps/apps/game2048/app.arm \
-    --out "../dist/miniapps/$GAME2048_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/apps/capability-lab \
-    --target ipod6g \
-    --binary miniapps/apps/capability-lab/app.arm \
-    --out "../dist/miniapps/$CAPABILITY_LAB_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/apps/native-reference \
-    --target ipod6g \
-    --binary miniapps/apps/native-reference/app.arm \
-    --out "../dist/miniapps/$NATIVE_REFERENCE_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/themes/atelier-hifi \
-    --target ipod6g \
-    --binary miniapps/themes/atelier-hifi/app.arm \
-    --out "../dist/miniapps/$NOW_PLAYING_THEME_PACKAGE"
-node ../tools/miniapp-builder/src/cli.mjs build \
-    ../miniapps/themes/signal-one \
-    --target ipod6g \
-    --binary miniapps/themes/signal-one/app.arm \
-    --out "../dist/miniapps/$SIGNAL_THEME_PACKAGE"
-
 PACKAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "$PACKAGE_DIR"' EXIT HUP INT TERM
 if [ ! -d ../assets/crazypod-icons/basic ]; then
@@ -291,8 +225,7 @@ if [ ! -x "$RUNTIME_FONT_BUILDER" ]; then
 fi
 "$RUNTIME_FONT_BUILDER" "$PACKAGE_DIR/.rockbox/fonts"
 python3 ../tools/crazypod_runtime_font_audit.py \
-    --font-dir "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot" \
-    ../dist/miniapps/*.cpk
+    --font-dir "$PACKAGE_DIR/.rockbox/fonts/crazypod-aot"
 cp rockbox.ipod "$PACKAGE_DIR/.rockbox/rockbox.ipod"
 [ ! -f rockbox-info.txt ] || cp rockbox-info.txt "$PACKAGE_DIR/.rockbox/rockbox-info.txt"
 for icon in music podcasts shuffle screen_lock settings; do

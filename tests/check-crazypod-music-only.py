@@ -45,6 +45,14 @@ def main():
         assert "crazypod/icons" in content
     hw = read("build-hw.sh")
     sim = read("build-sim.sh")
+    make = read("apps/apps.make")
+    assert "miniapps/miniapps.make" not in make
+    assert "miniapp.link" not in hw
+    assert "tools/miniapp-builder" not in hw + sim
+    assert "dist/miniapps" not in hw
+    assert "miniapps/packages/" not in hw
+    assert "miniapps/packages/" in sim  # purge previous simulator resources
+    assert 'nargs="*"' in read("tools/crazypod_runtime_font_audit.py")
     assert "for content_directory in Music Podcasts; do" in hw
     assert ".rockbox Music Podcasts" in hw
     assert "$PACKAGE_DIR/.rockbox/crazypod/miniapps/packages" not in hw

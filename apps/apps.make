@@ -12,7 +12,6 @@ SRC += $(call preprocess, $(APPSDIR)/SOURCES)
 
 ifeq ($(MODELNAME),ipod6g)
   include $(ROOTDIR)/lib/lvgl/lvgl-rockbox.make
-  include $(ROOTDIR)/miniapps/miniapps.make
   ifeq ($(APP_TYPE),sdl-sim)
     CRAZYPOD_FFMPEG_PACKAGES := libavformat libavcodec libavutil \
       libswscale libswresample
