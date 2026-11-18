@@ -95,16 +95,15 @@ void crazypod_menu_list_refresh_row(
             selected);
         lv_obj_set_style_text_opa(view.labels[row], label_opa, 0);
     }
+    /* List selection is uniform across music, settings and tools. */
+    (void)panel_color;
+    (void)primary_color;
+    (void)secondary_color;
+    (void)gradient;
     lv_obj_set_style_bg_color(
-        box, lv_color_hex(selected ? primary_color : panel_color), 0);
-    lv_obj_set_style_bg_opa(
-        box, selected ? 220 : LV_OPA_TRANSP, 0);
-    lv_obj_set_style_border_width(box, selected ? 1 : 0, 0);
-    if(selected && gradient) {
-        lv_obj_set_style_bg_grad_color(
-            box, lv_color_hex(secondary_color), 0);
-        lv_obj_set_style_bg_grad_dir(box, LV_GRAD_DIR_HOR, 0);
-    }
+        box, lv_color_hex(selected ? 0xDDEAF7 : 0xFFFFFF), 0);
+    lv_obj_set_style_bg_opa(box, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(box, 0, 0);
 
     if(view.circles[row] != NULL) {
         lv_obj_set_style_bg_opa(
