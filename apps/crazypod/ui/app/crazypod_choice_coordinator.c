@@ -11,7 +11,6 @@
 #include "../../crazypod_appearance.h"
 #include "../../crazypod_books.h"
 #include "../../crazypod_coverflow.h"
-#include "../../crazypod_icons.h"
 #include "../../crazypod_photos.h"
 #include "../../crazypod_playlist.h"
 #include "../../crazypod_state.h"
@@ -109,8 +108,6 @@ static int choice_count(int kind_value, int id, void *context)
 
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return CRAZYPOD_ICON_THEME_COUNT;
     case CRAZYPOD_CHOICE_APPEARANCE:
         return crazypod_customize_feature_choice_count(
             (enum crazypod_appearance_field)id);
@@ -146,13 +143,8 @@ static int current_index(int kind_value, int id, void *context)
 {
     enum crazypod_choice_kind kind =
         (enum crazypod_choice_kind)kind_value;
-    const struct crazypod_appearance *appearance =
-        crazypod_appearance_get();
-
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return appearance->icon_theme;
     case CRAZYPOD_CHOICE_APPEARANCE:
         return crazypod_customize_feature_choice_index(
             (enum crazypod_appearance_field)id);
@@ -205,8 +197,6 @@ static const char *choice_title(
 
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return CP_TR("ICON THEME");
     case CRAZYPOD_CHOICE_APPEARANCE:
         return crazypod_customize_feature_field_title(id);
     case CRAZYPOD_CHOICE_BACKGROUND:
@@ -248,8 +238,6 @@ static const char *item_title(
 
     (void)context;
     switch(kind) {
-    case CRAZYPOD_CHOICE_ICON_THEME:
-        return crazypod_icon_theme_name(index);
     case CRAZYPOD_CHOICE_APPEARANCE:
         return crazypod_customize_feature_choice_title(
             id, index);
@@ -680,13 +668,7 @@ void crazypod_choice_coordinator_activate(long now)
             crazypod_queue_index());
         return;
     }
-    if(kind == CRAZYPOD_CHOICE_ICON_THEME) {
-        crazypod_appearance_set_icon_theme(selected);
-        host.appearance_changed();
-        crazypod_choice_coordinator_show_receipt(
-            CP_TR("Saved"), true, now, true);
-    }
-    else if(kind == CRAZYPOD_CHOICE_APPEARANCE) {
+    if(kind == CRAZYPOD_CHOICE_APPEARANCE) {
         enum crazypod_appearance_field field =
             (enum crazypod_appearance_field)id;
 
