@@ -48,9 +48,6 @@ static const char *current_value(const struct route_state *state)
     int current;
     int value;
 
-    if(state->route == DIY_ROUTE_ICONS)
-        return state->selected == appearance->icon_theme
-            ? CP_TR("Current selection") : CP_TR("Select to switch now");
     if(state->route == DIY_ROUTE_DETAILS) {
         field = crazypod_customize_detail_fields[state->selected];
         current = crazypod_customize_field_value(field);
@@ -138,11 +135,10 @@ static void preview_model_build(
         model->symbol = crazypod_customize_menu_symbols[state->selected];
         model->detail =
             state->selected == 0 ? CP_TR("Save and reuse appearances") :
-            state->selected == 1 ? CP_TR("16 complete icon themes") :
-            state->selected == 2 ? CP_TR("Wave, size, glow and colors") :
-            state->selected == 3 ? CP_TR("Home, menu and lock pictures") :
-            state->selected == 4 ? CP_TR("Themes") :
-            state->selected == 5 ? CP_TR("Choose the insert animation") :
+            state->selected == 1 ? CP_TR("Wave, glow and colors") :
+            state->selected == 2 ? CP_TR("Home, menu and lock pictures") :
+            state->selected == 3 ? CP_TR("Themes") :
+            state->selected == 4 ? CP_TR("Choose the insert animation") :
                                    CP_TR("Screen corner radius");
     }
     else if(state->route == DIY_ROUTE_PRESETS) {
@@ -180,8 +176,6 @@ static void preview_model_build(
         model->symbol = LV_SYMBOL_KEYBOARD;
         model->editor = true;
     }
-    else if(state->route == DIY_ROUTE_ICONS)
-        model->symbol = LV_SYMBOL_IMAGE;
     else if(state->route == DIY_ROUTE_CHOICES) {
         enum crazypod_appearance_field field =
             (enum crazypod_appearance_field)state->group;
