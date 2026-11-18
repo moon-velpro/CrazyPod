@@ -111,9 +111,13 @@ enum crazypod_route {
     GAMEBOY_ROUTE_LIBRARY,
     /* Append to keep the IDs of all existing routes stable. */
     SETTINGS_ROUTE_VALUE_CHOICES,
+    /* Shell-owned pages; append IDs to preserve existing route values. */
+    HOME_ROUTE_ACTIONS,
+    HOME_ROUTE_BRIGHTNESS,
+    HOME_ROUTE_VOLUME,
 };
 
-#define CRAZYPOD_ROUTE_COUNT ((int)SETTINGS_ROUTE_VALUE_CHOICES + 1)
+#define CRAZYPOD_ROUTE_COUNT ((int)HOME_ROUTE_VOLUME + 1)
 
 struct route_state {
     enum crazypod_route route;
