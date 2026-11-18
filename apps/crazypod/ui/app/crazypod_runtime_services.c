@@ -6,93 +6,75 @@
 #include "backlight.h"
 #include "kernel.h"
 #include "lvgl.h"
+
 #include "../../crazypod_artwork.h"
 #include "../../crazypod_coverflow.h"
 #include "../../crazypod_frameclock.h"
 #include "../../crazypod_music.h"
 #include "../../crazypod_state.h"
-#include "../features/miniapps/crazypod_miniapps_feature.h"
-#include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../navigation/crazypod_ui_routes.h"
+#include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../shell/crazypod_desktop.h"
 #include "../shell/crazypod_lock_screen.h"
 #include "../shell/crazypod_now_capsule.h"
-#include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_system_prompts.h"
-#include "crazypod_route_actions.h"
-#include "crazypod_choice_coordinator.h"
-#include "crazypod_miniapp_repro.h"
 #include "crazypod_runtime_services.h"
 #include "crazypod_screen_off_policy.h"
 
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-#define REPRO_MARK(PHASE, VALUE) \
-    crazypod_miniapp_repro_trace_marker((PHASE), (VALUE))
-#else
-#define REPRO_MARK(PHASE, VALUE) do { } while(0)
-#endif
-
-static void (*render_route)(bool transition);
-static bool screen_off_idle;
-
-#define CRAZYPOD_STATIC_WAIT_TICKS \
-    (HZ > 0 ? HZ : 1)
-#define CRAZYPOD_CLOCK_WAIT_TICKS \
+#define CRAZYPOD_STATIC_WAIT_TICKS (HZ > 0 ? HZ : 1)
+#define CRAZYPOD_SCAN_WAIT_TICKS \
     ((HZ / 4) > 0 ? (HZ / 4) : 1)
 #define CRAZYPOD_PLAYBACK_WAIT_TICKS \
     ((HZ / 10) > 0 ? (HZ / 10) : 1)
-#define CRAZYPOD_MEDIA_WAIT_TICKS \
+#define CRAZYPOD_ARTWORK_WAIT_TICKS \
     ((HZ / 20) > 0 ? (HZ / 20) : 1)
 #define CRAZYPOD_FRAME_WAIT_TICKS \
     ((HZ / CRAZYPOD_TARGET_FPS) > 0 \
         ? (HZ / CRAZYPOD_TARGET_FPS) : 1)
 
+static bool screen_off_idle;
+
 void crazypod_runtime_services_configure(
     void (*render)(bool transition))
 {
-    render_route = render;
+    /* The music-only service loop no longer renders third-party app frames.
+     * Keep this ABI entry point until the caller is removed. */
+    (void)render;
 }
 
 void crazypod_runtime_services_start(void)
 {
     screen_off_idle = false;
-    crazypod_miniapps_feature_rescan();
     crazypod_now_playing_theme_prepare();
     crazypod_now_capsule_refresh_material();
 }
 
-static int runtime_wait_ticks(long now)
+static int runtime_wait_ticks(void)
 {
     int status;
 
-    (void)now;
-    if(crazypod_miniapps_feature_rescan_pending())
-        return CRAZYPOD_MEDIA_WAIT_TICKS;
     if(crazypod_lock_screen_is_locked()) {
         if(crazypod_lock_screen_motion_active())
             return CRAZYPOD_FRAME_WAIT_TICKS;
         if(is_backlight_on(true)) {
             if(crazypod_artwork_busy())
-                return CRAZYPOD_MEDIA_WAIT_TICKS;
+                return CRAZYPOD_ARTWORK_WAIT_TICKS;
             status = audio_status();
             if((status & AUDIO_STATUS_PLAY) != 0)
                 return CRAZYPOD_PLAYBACK_WAIT_TICKS;
         }
         return CRAZYPOD_STATIC_WAIT_TICKS;
     }
-    if(crazypod_miniapps_feature_motion_active() ||
-       lv_anim_count_running() ||
+    if(lv_anim_count_running() ||
        crazypod_desktop_motion_active() ||
        crazypod_coverflow_motion_active())
         return CRAZYPOD_FRAME_WAIT_TICKS;
     if(crazypod_artwork_busy())
-        return CRAZYPOD_MEDIA_WAIT_TICKS;
+        return CRAZYPOD_ARTWORK_WAIT_TICKS;
     if(crazypod_music_is_scanning() ||
        crazypod_music_catalog_validation() ==
            CRAZYPOD_MUSIC_VALIDATION_RUNNING)
-        return CRAZYPOD_CLOCK_WAIT_TICKS;
+        return CRAZYPOD_SCAN_WAIT_TICKS;
     status = audio_status();
     if((status & AUDIO_STATUS_PLAY) != 0 &&
        (status & AUDIO_STATUS_PAUSE) == 0)
@@ -100,70 +82,17 @@ static int runtime_wait_ticks(long now)
     return CRAZYPOD_STATIC_WAIT_TICKS;
 }
 
-static void service_miniapp(
-    bool active, long now, bool frame_due)
-{
-    int events;
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-    long started = current_tick;
-#endif
-
-    events = crazypod_miniapps_feature_service(
-        active, frame_due, now, HZ);
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-    if(current_tick != started)
-        REPRO_MARK(
-            "miniapp-service-duration",
-            current_tick - started);
-#endif
-
-    if((events & CRAZYPOD_MINIAPPS_SERVICE_CLOSE) != 0) {
-        crazypod_route_actions_pop();
-        return;
-    }
-    if((events & CRAZYPOD_MINIAPPS_SERVICE_RENDER) != 0) {
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-        started = current_tick;
-#endif
-        render_route(false);
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-        if(current_tick != started)
-            REPRO_MARK(
-                "miniapp-render-duration",
-                current_tick - started);
-#endif
-    }
-}
-
 void crazypod_runtime_services_tick(
     long now, bool frame_due, bool locked)
 {
-    const struct route_state *state = crazypod_ui_routes_current();
-    bool routed = crazypod_shell_product_active() &&
-        crazypod_ui_routes_depth() > 0;
-    /* The old external Now Playing theme still uses a Mini App surface.
-     * Keep that compatibility path until a native theme renderer replaces it.
-     * Never start retired photo, note, book or organizer work here. */
-    bool theme_active = !locked && routed &&
-        state->route == MUSIC_ROUTE_NOW_PLAYING &&
-        crazypod_now_playing_theme_open();
-
-    crazypod_miniapps_feature_service_rescan();
+    (void)frame_due;
+    /* No photos, videos, calendars, notes, books, or Mini Apps are polled. */
     crazypod_music_set_scan_suspended(locked);
     crazypod_artwork_set_lock_suspended(
         locked && !is_backlight_on(true));
     crazypod_music_library_service(
         now, locked ||
              crazypod_system_prompts_storage_active());
-    if(theme_active) {
-        crazypod_now_playing_artwork_sync();
-        crazypod_miniapps_feature_refresh_now_playing_artwork();
-    }
-    service_miniapp(theme_active, now, frame_due);
 }
 
 int crazypod_runtime_services_prepare_wait(
@@ -175,7 +104,7 @@ int crazypod_runtime_services_prepare_wait(
     *screen_off = active;
     if(!active) {
         screen_off_idle = false;
-        return runtime_wait_ticks(now);
+        return runtime_wait_ticks();
     }
     if(!screen_off_idle) {
         crazypod_runtime_services_tick(now, false, true);
