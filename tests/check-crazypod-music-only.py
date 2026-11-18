@@ -21,7 +21,8 @@ def main():
         "MUSIC", "PODCASTS", "SHUFFLE", "LOCK", "SETTINGS"
     ]
 
-    order = apps.split("static const uint8_t default_order", 1)[1].split("};", 1)[0]
+    order = (apps.split("static const uint8_t default_order", 1)[1]
+             .split("{", 1)[1].split("};", 1)[0])
     assert re.findall(r"CRAZYPOD_APP_([A-Z_]+)", order) == expected
     assert re.findall(r"\{ CRAZYPOD_APP_([A-Z_]+),", catalog) == expected
     assert "#define CRAZYPOD_APP_COUNT 5" in header
