@@ -32,7 +32,7 @@ enum crazypod_app_id {
     CRAZYPOD_APP_RETIRED_19 = 19,
 };
 
-#define CRAZYPOD_APP_COUNT 16
+#define CRAZYPOD_APP_COUNT 5
 #define CRAZYPOD_APP_LEGACY_COUNT 16
 /* Keep the v17 on-disk array shape when retired entries are dropped. */
 #define CRAZYPOD_APP_DISK_COUNT 17

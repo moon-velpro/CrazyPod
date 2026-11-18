@@ -31,10 +31,7 @@ struct icon_slot {
 static struct icon_slot slots[CRAZYPOD_ICON_COUNT];
 
 static const char *const app_paths[CRAZYPOD_ICON_COUNT] = {
-    "music", "podcasts", "mini_apps", "shuffle",
-    "screen_lock", "photos", "diy", "fitness", "books", "notes",
-    "clock", "contacts", "calendar", "stopwatch",
-    "extras", "settings"
+    "music", "podcasts", "shuffle", "screen_lock", "settings"
 };
 
 static uint16_t read_le16(const uint8_t *p)

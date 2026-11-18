@@ -6,22 +6,13 @@
 
 #include "crazypod_apps.h"
 
+/* A music player, not an app launcher. Retain retired IDs solely for
+ * reading earlier persisted menu orders without reactivating old apps. */
 static const uint8_t default_order[CRAZYPOD_APP_COUNT] = {
     CRAZYPOD_APP_MUSIC,
     CRAZYPOD_APP_PODCASTS,
-    CRAZYPOD_APP_MINI_APPS,
     CRAZYPOD_APP_SHUFFLE,
     CRAZYPOD_APP_LOCK,
-    CRAZYPOD_APP_PHOTOS,
-    CRAZYPOD_APP_CUSTOMIZE,
-    CRAZYPOD_APP_WORKOUTS,
-    CRAZYPOD_APP_BOOKS,
-    CRAZYPOD_APP_NOTES,
-    CRAZYPOD_APP_CLOCK,
-    CRAZYPOD_APP_CONTACTS,
-    CRAZYPOD_APP_CALENDAR,
-    CRAZYPOD_APP_STOPWATCH,
-    CRAZYPOD_APP_EXTRAS,
     CRAZYPOD_APP_SETTINGS,
 };
 
@@ -48,8 +39,7 @@ bool crazypod_apps_is_known(enum crazypod_app_id id)
 bool crazypod_apps_is_fixed(enum crazypod_app_id id)
 {
     return id == CRAZYPOD_APP_MUSIC ||
-           id == CRAZYPOD_APP_CUSTOMIZE ||
-           id == CRAZYPOD_APP_EXTRAS ||
+           id == CRAZYPOD_APP_LOCK ||
            id == CRAZYPOD_APP_SETTINGS;
 }
 
@@ -60,13 +50,8 @@ void crazypod_apps_reset(void)
     memcpy(menu_order, default_order, sizeof(menu_order));
     menu_enabled_mask = 0;
     for(i = 0; i < CRAZYPOD_APP_COUNT; ++i)
-        if(menu_order[i] != CRAZYPOD_APP_LOCK &&
-           menu_order[i] != CRAZYPOD_APP_CLOCK &&
-           menu_order[i] != CRAZYPOD_APP_CONTACTS &&
-           menu_order[i] != CRAZYPOD_APP_CALENDAR &&
-           menu_order[i] != CRAZYPOD_APP_STOPWATCH)
-            menu_enabled_mask |=
-                app_bit((enum crazypod_app_id)menu_order[i]);
+        menu_enabled_mask |=
+            app_bit((enum crazypod_app_id)menu_order[i]);
 }
 
 void crazypod_apps_restore(const uint8_t *order, size_t count,

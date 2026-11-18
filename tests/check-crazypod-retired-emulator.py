@@ -44,11 +44,11 @@ def test_legacy_state_and_home_icons() -> None:
     icons = source("apps/crazypod/crazypod_icons.h")
     desktop = source("apps/crazypod/ui/shell/crazypod_desktop.c")
 
-    assert "#define CRAZYPOD_APP_COUNT 16" in header
+    assert "#define CRAZYPOD_APP_COUNT 5" in header
     assert "#define CRAZYPOD_APP_DISK_COUNT 17" in header
     assert "menu_order[CRAZYPOD_APP_DISK_COUNT]" in state
     assert "state.menu_count <= CRAZYPOD_APP_DISK_COUNT" in state
-    assert "#define CRAZYPOD_ICON_COUNT 16" in icons
+    assert "#define CRAZYPOD_ICON_COUNT 5" in icons
     assert "crazypod_app_catalog_index(app->id)" in desktop
     assert "icon_descriptors[app->id]" not in desktop
     # Home must use fonts enabled by the firmware LVGL configuration.
