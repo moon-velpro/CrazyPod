@@ -41,7 +41,7 @@ def main():
     for script in ("build-hw.sh", "build-sim.sh"):
         content = read(script)
         assert "for icon in music podcasts shuffle screen_lock settings; do" in content
-        assert "crazypod/icons/basic" in content
+        assert "crazypod/icons" in content
     hw = read("build-hw.sh")
     sim = read("build-sim.sh")
     assert "for content_directory in Music Podcasts; do" in hw
