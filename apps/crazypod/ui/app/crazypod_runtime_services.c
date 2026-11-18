@@ -10,25 +10,16 @@
 #include "../../crazypod_coverflow.h"
 #include "../../crazypod_frameclock.h"
 #include "../../crazypod_music.h"
-#include "../../crazypod_photos.h"
 #include "../../crazypod_state.h"
-#include "../../crazypod_videos.h"
-#include "../../miniapps/runtime/crazypod_miniapp_alarm_service.h"
-#include "../../miniapps/runtime/crazypod_miniapp_host_system.h"
-#include "../features/books/crazypod_books_feature.h"
-#include "../features/customize/crazypod_customize_feature.h"
 #include "../features/miniapps/crazypod_miniapps_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../features/organizer/crazypod_organizer_feature.h"
-#include "../features/photos/crazypod_photos_feature.h"
 #include "../navigation/crazypod_ui_routes.h"
 #include "../shell/crazypod_desktop.h"
 #include "../shell/crazypod_lock_screen.h"
 #include "../shell/crazypod_now_capsule.h"
 #include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_system_prompts.h"
-#include "crazypod_route_actions.h"
 #include "crazypod_choice_coordinator.h"
 #include "crazypod_miniapp_repro.h"
 #include "crazypod_runtime_services.h"
@@ -57,28 +48,6 @@ static bool screen_off_idle;
     ((HZ / CRAZYPOD_TARGET_FPS) > 0 \
         ? (HZ / CRAZYPOD_TARGET_FPS) : 1)
 
-static int active_route_wait_ticks(long now)
-{
-    const struct route_state *state;
-    enum crazypod_route route;
-
-    if(!crazypod_shell_product_active() ||
-       crazypod_ui_routes_depth() <= 0)
-        return CRAZYPOD_STATIC_WAIT_TICKS;
-    state = crazypod_ui_routes_current();
-    route = state->route;
-    if(route == BOOKS_ROUTE_READER &&
-       !crazypod_choice_coordinator_visible())
-        return crazypod_books_feature_reader_wait_ticks(
-            state, now, CRAZYPOD_STATIC_WAIT_TICKS);
-    if(route == CLOCK_ROUTE_VIEW)
-        return CRAZYPOD_CLOCK_WAIT_TICKS;
-    if(route == STOPWATCH_ROUTE_VIEW ||
-       route == WORKOUT_ROUTE_ACTIVE)
-        return CRAZYPOD_PLAYBACK_WAIT_TICKS;
-    return CRAZYPOD_STATIC_WAIT_TICKS;
-}
-
 void crazypod_runtime_services_configure(
     void (*render)(bool transition))
 {
@@ -89,7 +58,6 @@ void crazypod_runtime_services_start(void)
 {
     screen_off_idle = false;
     crazypod_miniapps_feature_rescan();
-    crazypod_miniapp_alarm_initialize();
     crazypod_now_playing_theme_prepare();
     crazypod_now_capsule_refresh_material();
 }
@@ -98,6 +66,7 @@ static int runtime_wait_ticks(long now)
 {
     int status;
 
+    (void)now;
     if(crazypod_miniapps_feature_rescan_pending())
         return CRAZYPOD_MEDIA_WAIT_TICKS;
     if(crazypod_lock_screen_is_locked()) {
@@ -117,8 +86,7 @@ static int runtime_wait_ticks(long now)
        crazypod_desktop_motion_active() ||
        crazypod_coverflow_motion_active())
         return CRAZYPOD_FRAME_WAIT_TICKS;
-    if(crazypod_artwork_busy() || crazypod_photos_busy() ||
-       crazypod_videos_busy())
+    if(crazypod_artwork_busy())
         return CRAZYPOD_MEDIA_WAIT_TICKS;
     if(crazypod_music_is_scanning() ||
        crazypod_music_catalog_validation() ==
@@ -128,23 +96,7 @@ static int runtime_wait_ticks(long now)
     if((status & AUDIO_STATUS_PLAY) != 0 &&
        (status & AUDIO_STATUS_PAUSE) == 0)
         return CRAZYPOD_PLAYBACK_WAIT_TICKS;
-    return active_route_wait_ticks(now);
-}
-
-static int screen_off_wait_ticks(void)
-{
-    uint32_t now = crazypod_miniapp_host_epoch_seconds();
-
-    if(crazypod_miniapp_alarm_save_pending())
-        return HZ > 0 ? HZ : 1;
-    return crazypod_screen_off_alarm_wait(
-        now, crazypod_miniapp_alarm_next_epoch(), HZ);
-}
-
-static void screen_off_alarm_tick(void)
-{
-    crazypod_miniapp_alarm_tick(
-        crazypod_miniapp_host_epoch_seconds());
+    return CRAZYPOD_STATIC_WAIT_TICKS;
 }
 
 static void service_miniapp(
@@ -189,63 +141,28 @@ static void service_miniapp(
 void crazypod_runtime_services_tick(
     long now, bool frame_due, bool locked)
 {
-    struct route_state *state = crazypod_ui_routes_current();
+    const struct route_state *state = crazypod_ui_routes_current();
     bool routed = crazypod_shell_product_active() &&
         crazypod_ui_routes_depth() > 0;
-    bool photos_route = routed &&
-        ((state->route >= PHOTOS_ROUTE_MENU &&
-          state->route <= PHOTOS_ROUTE_DETAIL) ||
-         state->route == DIY_ROUTE_WALLPAPER_FILES ||
-         state->route == DIY_ROUTE_WALLPAPER_CROP);
-    bool videos_route = routed &&
-        state->route >= PHOTOS_ROUTE_MENU &&
-        state->route <= PHOTOS_ROUTE_DETAIL;
-    bool miniapp_active = !locked && routed &&
-        ((state->route == MINIAPP_ROUTE_VIEW &&
-          crazypod_miniapps_feature_is_open()) ||
-         (state->route == MUSIC_ROUTE_NOW_PLAYING &&
-         crazypod_now_playing_theme_open()));
+    /* The old external Now Playing theme still uses a Mini App surface.
+     * Keep that compatibility path until a native theme renderer replaces it.
+     * Never start retired photo, note, book or organizer work here. */
+    bool theme_active = !locked && routed &&
+        state->route == MUSIC_ROUTE_NOW_PLAYING &&
+        crazypod_now_playing_theme_open();
 
-    crazypod_miniapp_alarm_tick(
-        crazypod_miniapp_host_epoch_seconds());
     crazypod_miniapps_feature_service_rescan();
-
     crazypod_music_set_scan_suspended(locked);
     crazypod_artwork_set_lock_suspended(
         locked && !is_backlight_on(true));
-    crazypod_photos_set_lock_suspended(locked);
-    crazypod_videos_set_lock_suspended(locked);
-    crazypod_photos_set_route_suspended(!photos_route);
-    crazypod_videos_set_route_suspended(!videos_route);
-    if(!locked) {
-        if(videos_route) {
-            crazypod_photos_ensure_catalog();
-            crazypod_videos_ensure_catalog();
-        }
-        else if(photos_route)
-            crazypod_photos_ensure_catalog();
-    }
-    if(!locked && routed)
-        crazypod_photos_runtime_service(state, now);
-    if(!locked)
-        crazypod_wallpaper_crop_runtime_service(now);
     crazypod_music_library_service(
         now, locked ||
              crazypod_system_prompts_storage_active());
-    crazypod_route_actions_service_notes();
-    if(!locked && routed && crazypod_organizer_feature_service(
-           state->route, now, HZ) &&
-       !crazypod_choice_coordinator_visible())
-        render_route(false);
-    if(!locked && routed &&
-       !crazypod_choice_coordinator_visible() &&
-       crazypod_books_feature_service_reader(state, now))
-        render_route(false);
-    if(miniapp_active && crazypod_now_playing_theme_open()) {
+    if(theme_active) {
         crazypod_now_playing_artwork_sync();
         crazypod_miniapps_feature_refresh_now_playing_artwork();
     }
-    service_miniapp(miniapp_active, now, frame_due);
+    service_miniapp(theme_active, now, frame_due);
 }
 
 int crazypod_runtime_services_prepare_wait(
@@ -265,7 +182,7 @@ int crazypod_runtime_services_prepare_wait(
         screen_off_idle = true;
     }
     return crazypod_screen_off_shorter_wait(
-        screen_off_wait_ticks(), crazypod_state_wait_ticks());
+        CRAZYPOD_STATIC_WAIT_TICKS, crazypod_state_wait_ticks());
 }
 
 bool crazypod_runtime_services_screen_off_tick(void)
@@ -275,7 +192,6 @@ bool crazypod_runtime_services_screen_off_tick(void)
         screen_off_idle = false;
         return false;
     }
-    screen_off_alarm_tick();
     crazypod_state_tick();
     return true;
 }
