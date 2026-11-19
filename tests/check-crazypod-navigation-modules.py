@@ -13,6 +13,8 @@ UI = ROOT / "apps/crazypod/ui"
 REGISTRY = UI / "navigation/crazypod_route_registry.c"
 QUERY = UI / "navigation/crazypod_route_query.c"
 INPUT = UI / "app/crazypod_feature_input.c"
+APP_INPUT = UI / "app/crazypod_app_input.c"
+RENDERER = UI / "app/crazypod_route_renderer.c"
 LAUNCHER = UI / "app/crazypod_app_launcher.c"
 ROUTES = UI / "navigation/crazypod_ui_routes.h"
 SOURCES = ROOT / "apps/SOURCES"
@@ -34,11 +36,14 @@ def check() -> None:
     registry = contents(REGISTRY)
     query = contents(QUERY)
     inputs = contents(INPUT)
+    app_input = contents(APP_INPUT)
+    renderer = contents(RENDERER)
     launcher = contents(LAUNCHER)
     routes = contents(ROUTES)
     sources = contents(SOURCES)
 
-    for path, text in ((REGISTRY, registry), (QUERY, query), (INPUT, inputs)):
+    for path, text in ((REGISTRY, registry), (QUERY, query), (INPUT, inputs),
+                       (RENDERER, renderer), (APP_INPUT, app_input)):
         for owner in RETIRED_MODULES:
             assert f"features/{owner}/" not in text, (path, owner)
         for owner in RETIRED_FEATURES:
@@ -54,6 +59,8 @@ def check() -> None:
     )
     assert "crazypod_ui_route_supported(route)" in launcher
     assert "music_only_root_route" not in launcher
+    assert "crazypod_route_registry_get(state->route)" in renderer
+    assert "crazypod_now_playing_theme_handle_input" not in inputs
 
     # All supported routes must be declared in the sparse product table.
     body = registry.split("routes[CRAZYPOD_ROUTE_COUNT] = {", 1)[1].split(
@@ -84,6 +91,8 @@ def check() -> None:
         "ui/navigation/crazypod_route_registry.c",
         "ui/navigation/crazypod_route_query.c",
         "app/crazypod_feature_input.c",
+        "ui/app/crazypod_route_renderer.c",
+        "ui/app/crazypod_app_input.c",
     ):
         assert f"crazypod/{module}" in sources, module
 
