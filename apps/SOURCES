@@ -8,19 +8,8 @@ crazypod/crazypod_runtime_font.c
 crazypod/crazypod_itunesdb.c
 crazypod/crazypod_frameclock.c
 crazypod/crazypod_image.c
-crazypod/crazypod_photos.c
 crazypod/crazypod_screenshot.c
 crazypod/crazypod_screen_recording.c
-crazypod/video/crazypod_video_catalog.c
-crazypod/video/crazypod_video_poster.c
-crazypod/video/crazypod_video_engine.c
-crazypod/video/crazypod_video_engine_mpeg.c
-#ifdef SIMULATOR
-crazypod/video/crazypod_video_engine_ffmpeg.c
-#endif
-crazypod/photos/crazypod_photo_catalog.c
-crazypod/photos/crazypod_photo_cache.c
-crazypod/photos/crazypod_photo_viewport.c
 crazypod/wallpaper/crazypod_wallpaper_crop_engine.c
 crazypod/wallpaper/crazypod_wallpaper_store.c
 crazypod/ui/app/crazypod_simulator_snapshot.c
@@ -48,8 +37,6 @@ crazypod/ui/features/settings/crazypod_eq_studio_screen.c
 crazypod/ui/features/settings/crazypod_settings_catalog.c
 crazypod/ui/features/settings/crazypod_settings_controller.c
 crazypod/ui/features/settings/crazypod_settings_preview.c
-crazypod/crazypod_videos.c
-crazypod/crazypod_video_mpeg_misc.c
 crazypod/crazypod_artwork.c
 crazypod/crazypod_artwork_palette.c
 crazypod/crazypod_coverflow.c
@@ -118,8 +105,6 @@ crazypod/ui/features/books/crazypod_books_feature.c
 crazypod/ui/features/books/crazypod_book_session.c
 crazypod/ui/features/books/crazypod_books_workflow.c
 crazypod/ui/features/notes/crazypod_notes_feature.c
-crazypod/ui/features/photos/crazypod_photos_feature.c
-crazypod/ui/features/photos/crazypod_photos_runtime.c
 crazypod/ui/features/organizer/crazypod_organizer_feature.c
 crazypod/ui/features/customize/crazypod_customize_feature.c
 crazypod/ui/features/settings/crazypod_settings_feature.c
@@ -133,9 +118,6 @@ crazypod/ui/features/books/crazypod_books_actions.c
 crazypod/ui/features/notes/crazypod_notes_controller.c
 crazypod/ui/features/notes/crazypod_notes_actions.c
 crazypod/ui/features/organizer/crazypod_organizer_actions.c
-crazypod/ui/features/photos/crazypod_photo_controller.c
-crazypod/ui/features/photos/crazypod_photo_input.c
-crazypod/ui/features/photos/crazypod_media_activation.c
 crazypod/ui/features/customize/crazypod_wallpaper_crop_controller.c
 crazypod/ui/features/customize/crazypod_wallpaper_crop_runtime.c
 crazypod/ui/features/customize/crazypod_wallpaper_crop_input.c
@@ -153,7 +135,6 @@ crazypod/ui/features/organizer/crazypod_organizer_confirmation.c
 crazypod/ui/features/organizer/crazypod_activity_input.c
 crazypod/ui/features/organizer/crazypod_calendar_input.c
 crazypod/ui/features/organizer/crazypod_clock_activation.c
-crazypod/ui/features/photos/crazypod_photo_screen.c
 crazypod/ui/features/customize/crazypod_wallpaper_crop_screen.c
 crazypod/ui/presentation/crazypod_menu_icon_assets.c
 crazypod/ui/presentation/crazypod_menu_list.c
@@ -183,7 +164,6 @@ crazypod/ui/presentation/crazypod_glass_slots.c
 crazypod/ui/presentation/crazypod_glass_panel.c
 crazypod/ui/presentation/crazypod_hold_feedback.c
 crazypod/ui/presentation/crazypod_empty_state.c
-crazypod/ui/features/photos/crazypod_photos_preview.c
 crazypod/ui/features/notes/crazypod_notes_preview.c
 crazypod/ui/features/books/crazypod_book_preview_cover.c
 crazypod/ui/features/books/crazypod_books_preview.c
@@ -202,31 +182,6 @@ pcmbuf.c
 codec_thread.c
 playback.c
 codecs.c
-
-plugins/mpegplayer/libmpeg2/decode.c
-plugins/mpegplayer/libmpeg2/header.c
-plugins/mpegplayer/libmpeg2/idct.c
-plugins/mpegplayer/libmpeg2/motion_comp.c
-plugins/mpegplayer/libmpeg2/slice.c
-#ifdef CPU_ARM
-#if ARM_ARCH >= 6
-plugins/mpegplayer/libmpeg2/idct_armv6.S
-#else
-plugins/mpegplayer/libmpeg2/idct_arm.S
-#endif
-plugins/mpegplayer/libmpeg2/motion_comp_arm_c.c
-plugins/mpegplayer/libmpeg2/motion_comp_arm_s.S
-#else
-plugins/mpegplayer/libmpeg2/motion_comp_c.c
-#endif
-plugins/mpegplayer/alloc.c
-plugins/mpegplayer/audio_thread.c
-plugins/mpegplayer/disk_buf.c
-plugins/mpegplayer/mpeg_parser.c
-plugins/mpegplayer/pcm_output.c
-plugins/mpegplayer/stream_mgr.c
-plugins/mpegplayer/video_out_rockbox.c
-plugins/mpegplayer/video_thread.c
 
 beep.c
 
