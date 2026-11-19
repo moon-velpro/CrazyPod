@@ -3,6 +3,23 @@
 
 #include "navigation/crazypod_ui_routes.h"
 
+static void test_route_support_boundaries(void)
+{
+    assert(crazypod_ui_route_supported(MUSIC_ROUTE_MENU));
+    assert(crazypod_ui_route_supported(MUSIC_ROUTE_NOW_PLAYING));
+    assert(crazypod_ui_route_supported(SETTINGS_ROUTE_MENU));
+    assert(crazypod_ui_route_supported(SETTINGS_ROUTE_MAIN_MENU_ACTIONS));
+    assert(crazypod_ui_route_supported(PODCASTS_ROUTE_MENU));
+    assert(crazypod_ui_route_supported(SETTINGS_ROUTE_VALUE_CHOICES));
+    assert(crazypod_ui_route_supported(HOME_ROUTE_ACTIONS));
+    assert(crazypod_ui_route_supported(HOME_ROUTE_VOLUME));
+
+    assert(!crazypod_ui_route_supported((enum crazypod_route)-1));
+    assert(!crazypod_ui_route_supported(
+        (enum crazypod_route)(HOME_ROUTE_VOLUME + 1)));
+    assert(!crazypod_ui_route_supported(BOOKS_ROUTE_MENU));
+}
+
 static void test_settings_value_route_restores_parent_selection(void)
 {
     struct route_state *state;
@@ -107,6 +124,7 @@ static void test_retired_routes_are_never_entered(void)
 int main(void)
 {
     test_retired_routes_are_never_entered();
+    test_route_support_boundaries();
     test_settings_value_route_restores_parent_selection();
     test_nested_settings_actions_restore_item();
     test_home_actions_are_real_nested_pages();
