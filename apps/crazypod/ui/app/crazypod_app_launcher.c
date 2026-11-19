@@ -92,12 +92,6 @@ void crazypod_app_launcher_open_root(enum crazypod_route route)
         open_route(route);
 }
 
-/* Compatibility entry point until the retired books service is unlinked. */
-void crazypod_app_launcher_open_books(void)
-{
-    /* Books are not part of the music-only product. */
-}
-
 void crazypod_app_launcher_open(enum crazypod_app_id id)
 {
     if(!crazypod_apps_is_known(id))
