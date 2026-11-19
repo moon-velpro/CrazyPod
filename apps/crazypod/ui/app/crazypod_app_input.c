@@ -1016,10 +1016,6 @@ void crazypod_app_input_handle(
     }
     if(play_initial_press)
         return;
-    if((button & BUTTON_REL) != 0 &&
-       base == BUTTON_SELECT &&
-       crazypod_choice_coordinator_cancel_select_hold())
-        return;
     if(button & BUTTON_REL) {
         if(home_menu_short_release) {
             backlight_on();
