@@ -715,9 +715,7 @@ void crazypod_app_input_tick(long now, bool locked)
                 &now_select_multitap, now), now);
 
     confirmation = crazypod_choice_coordinator_tick(now);
-    if(confirmation != NULL &&
-       (host.handle_confirmation == NULL ||
-        !host.handle_confirmation(confirmation)))
+    if(confirmation != NULL)
         (void)crazypod_choice_coordinator_cancel_select_hold();
 #if defined(HAVE_USB_POWER) && !defined(USB_NONE)
     home_active = home_active && !host.usb_prompt_visible();
@@ -1068,11 +1066,6 @@ void crazypod_app_input_handle(
        crazypod_ui_routes_depth() > 0 &&
        base == BUTTON_SELECT && repeated) {
         if(crazypod_choice_coordinator_handle_select_repeat())
-            return;
-        if(host.handle_confirmation(
-               crazypod_choice_coordinator_confirmation_visible()
-                   ? crazypod_choice_coordinator_route_state()
-                   : crazypod_ui_routes_current()))
             return;
     }
     if(!crazypod_shell_product_active()) {
