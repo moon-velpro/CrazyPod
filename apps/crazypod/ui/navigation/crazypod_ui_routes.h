@@ -123,8 +123,7 @@ enum crazypod_route {
  * navigation or feature dispatch in the dedicated music player. */
 static inline bool crazypod_ui_route_supported(enum crazypod_route route)
 {
-    return (route >= MUSIC_ROUTE_MENU &&
-            route <= MUSIC_ROUTE_NOW_PLAYING) ||
+    return (unsigned)route <= (unsigned)MUSIC_ROUTE_NOW_PLAYING ||
            (route >= SETTINGS_ROUTE_MENU &&
             route <= SETTINGS_ROUTE_MAIN_MENU_ACTIONS) ||
            route == PODCASTS_ROUTE_MENU ||
