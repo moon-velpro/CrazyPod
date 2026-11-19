@@ -680,7 +680,6 @@ int crazypod_app_input_wait_ticks(long now)
 
 void crazypod_app_input_tick(long now, bool locked)
 {
-    const struct route_state *confirmation;
     bool home_active =
         !locked && !crazypod_shell_product_active() &&
         !crazypod_now_playing_overlay_visible() &&
@@ -714,9 +713,7 @@ void crazypod_app_input_tick(long now, bool locked)
             crazypod_remote_multitap_tick(
                 &now_select_multitap, now), now);
 
-    confirmation = crazypod_choice_coordinator_tick(now);
-    if(confirmation != NULL)
-        (void)crazypod_choice_coordinator_cancel_select_hold();
+    crazypod_choice_coordinator_tick(now);
 #if defined(HAVE_USB_POWER) && !defined(USB_NONE)
     home_active = home_active && !host.usb_prompt_visible();
 #endif
@@ -1061,12 +1058,6 @@ void crazypod_app_input_handle(
         if(base == BUTTON_MENU && !repeated)
             host.close_product();
         return;
-    }
-    if(crazypod_shell_product_active() &&
-       crazypod_ui_routes_depth() > 0 &&
-       base == BUTTON_SELECT && repeated) {
-        if(crazypod_choice_coordinator_handle_select_repeat())
-            return;
     }
     if(!crazypod_shell_product_active()) {
         const struct crazypod_input_event event =
