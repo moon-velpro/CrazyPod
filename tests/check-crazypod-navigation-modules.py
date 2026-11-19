@@ -70,7 +70,9 @@ def check() -> None:
     selected_track = actions.split(
         "static void play_selected_track(", 1
     )[1].split("static void persist_main_menu(", 1)[0]
-    assert "default:\n        return;" in selected_track
+    assert re.search(r"default:[^{}]*\\breturn;", selected_track), (
+        "unhandled routes must return before playback failure"
+    )
     for track_route in (
         "MUSIC_ROUTE_ALL", "MUSIC_ROUTE_SONGS",
         "MUSIC_ROUTE_PLAYLIST_SONGS", "MUSIC_ROUTE_ARTIST_SONGS",
