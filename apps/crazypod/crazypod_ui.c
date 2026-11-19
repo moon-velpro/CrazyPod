@@ -782,7 +782,6 @@ void crazypod_ui_run(void)
             crazypod_playback_warm_album_flow(
                 current_tick, false);
             crazypod_playback_process_artwork();
-            crazypod_playback_process_media();
         }
         {
             bool home_active =
