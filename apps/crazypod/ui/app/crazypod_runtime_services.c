@@ -45,7 +45,8 @@ void crazypod_runtime_services_configure(
 void crazypod_runtime_services_start(void)
 {
     screen_off_idle = false;
-    crazypod_now_playing_theme_prepare();
+    crazypod_now_playing_artwork_set_source_size(
+        CRAZYPOD_ARTWORK_CACHE_SIZE);
     crazypod_now_capsule_refresh_material();
 }
 
