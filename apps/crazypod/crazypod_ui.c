@@ -22,7 +22,6 @@
 #include "settings.h"
 #include "sound.h"
 #include "system.h"
-#include "timefuncs.h"
 #include "usb.h"
 #ifdef SIMULATOR
 #include <stdlib.h>
@@ -38,7 +37,6 @@
 #include "crazypod_artwork.h"
 #include "crazypod_appearance.h"
 #include "crazypod_book_cover.h"
-#include "crazypod_books.h"
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
@@ -49,17 +47,11 @@
 #include "crazypod_screen_recording.h"
 #include "crazypod_lcd.h"
 #include "crazypod_music.h"
-#include "crazypod_miniapp_input.h"
-#include "crazypod_miniapp_font.h"
-#include "crazypod_notes.h"
-#include "crazypod_organizer.h"
 #include "crazypod_playlist.h"
-#include "crazypod_photos.h"
 #include "crazypod_presets.h"
 #include "crazypod_state.h"
 #include "crazypod_ui.h"
 #include "platform/crazypod_platform_display.h"
-#include "ui/app/crazypod_miniapp_repro.h"
 #include "ui/app/crazypod_simulator_snapshot.h"
 #include "ui/app/crazypod_choice_coordinator.h"
 #include "ui/app/crazypod_menu_preview.h"
@@ -74,22 +66,17 @@
 #include "ui/app/crazypod_feature_input.h"
 #include "ui/app/crazypod_playback.h"
 #include "ui/app/crazypod_composition.h"
-#include "ui/features/organizer/crazypod_organizer_feature.h"
 #include "ui/navigation/crazypod_ui_routes.h"
 #include "ui/features/settings/crazypod_settings_feature.h"
 #include "ui/presentation/crazypod_ui_text.h"
 #include "ui/presentation/crazypod_ui_widgets.h"
 #include "ui/presentation/crazypod_artwork_widget.h"
 #include "ui/presentation/crazypod_alpha_jump_hud.h"
-#include "ui/features/books/crazypod_books_feature.h"
-#include "ui/features/notes/crazypod_notes_feature.h"
-#include "ui/features/photos/crazypod_photos_feature.h"
 #include "ui/shell/crazypod_app_catalog.h"
 #include "ui/shell/crazypod_desktop.h"
 #include "ui/shell/crazypod_desktop_native.h"
 #include "ui/shell/crazypod_home_input.h"
 #include "ui/presentation/crazypod_menu_list.h"
-#include "ui/features/miniapps/crazypod_miniapps_feature.h"
 #include "ui/features/music/crazypod_music_feature.h"
 #include "ui/navigation/crazypod_feature_dispatcher.h"
 #include "ui/navigation/crazypod_input_event.h"
@@ -105,7 +92,6 @@
 #include "ui/presentation/crazypod_screen_corners.h"
 #include "ui/presentation/crazypod_glass_panel.h"
 #include "ui/presentation/crazypod_glass_sampler.h"
-#include "ui/features/customize/crazypod_customize_feature.h"
 #include "ui/shell/crazypod_lock_screen.h"
 #include "ui/shell/crazypod_now_capsule.h"
 #include "ui/shell/crazypod_power_prompt.h"
@@ -115,7 +101,6 @@
 #include "ui/shell/crazypod_system_event.h"
 #include "ui/shell/crazypod_system_prompts.h"
 #include "ui/shell/crazypod_usb_prompt.h"
-#include "crazypod_videos.h"
 #include "crazypod_wallpaper.h"
 #include "crazypod_workouts.h"
 
@@ -397,10 +382,6 @@ static void close_product(void)
     crazypod_app_launcher_cancel_pending();
     crazypod_music_library_leave(current_tick);
     crazypod_artwork_cancel_product_requests();
-    if(crazypod_miniapps_feature_is_open()) {
-        crazypod_miniapps_feature_reset_input();
-        crazypod_miniapps_feature_close();
-    }
     crazypod_route_actions_commit_pending_main_menu_reorder();
     crazypod_choice_coordinator_dismiss(false);
     crazypod_now_playing_overlay_dismiss(false);
@@ -640,13 +621,9 @@ void crazypod_ui_run(void)
     crazypod_now_capsule_reset_motion(current_tick);
     crazypod_image_init();
     crazypod_artwork_init();
-    crazypod_photos_init();
-    crazypod_videos_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
     crazypod_icons_init();
-    crazypod_miniapps_feature_initialize_runtime();
-    crazypod_miniapps_feature_initialize();
 
     {
         const struct crazypod_platform_display_host display_host = {
@@ -699,8 +676,6 @@ void crazypod_ui_run(void)
     crazypod_playback_initialize();
     crazypod_now_playing_navigation_initialize();
     crazypod_now_capsule_initialize_artwork();
-    crazypod_photos_feature_initialize_media();
-    crazypod_customize_feature_initialize_media();
 #ifdef SIMULATOR
     crazypod_scene_transition_demo_init();
     simulator_snapshot_pending =
@@ -727,11 +702,6 @@ void crazypod_ui_run(void)
 #endif
     crazypod_music_library_initialize(current_tick);
     crazypod_lock_screen_initialize_backlight_state();
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-    (void)crazypod_miniapp_repro_start(
-        current_tick);
-#endif
     while(true) {
         long button;
         bool locked;
@@ -786,15 +756,6 @@ void crazypod_ui_run(void)
                     wait_ticks = 1;
                 else if(snapshot_wait < wait_ticks)
                     wait_ticks = (int)snapshot_wait;
-            }
-#endif
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-            {
-                int repro_wait = crazypod_miniapp_repro_wait_ticks();
-
-                if(repro_wait < wait_ticks)
-                    wait_ticks = repro_wait;
             }
 #endif
         }
@@ -893,16 +854,7 @@ void crazypod_ui_run(void)
         if(!locked)
             crazypod_playback_service_after_unlock(
                 crazypod_present_sequence());
-#if defined(CRAZYPOD_REPRO_DIAGNOSTICS) && \
-    !defined(SIMULATOR)
-        crazypod_miniapp_repro_service(
-            current_tick);
-        if(crazypod_miniapp_repro_cpu_boost_requested())
-            keep_cpu_boosted(HZ / 10);
-#endif
 #ifdef SIMULATOR
-        crazypod_miniapp_repro_service(
-            current_tick);
         if(simulator_recording_pending &&
            !TIME_BEFORE(current_tick, simulator_recording_due)) {
             (void)crazypod_screen_recording_stop(current_tick);
@@ -933,8 +885,7 @@ void crazypod_ui_run(void)
 #endif
         if(lv_anim_count_running())
             keep_cpu_boosted(HZ / 10 > 0 ? HZ / 10 : 1);
-        if(crazypod_artwork_busy() || crazypod_photos_busy() ||
-           crazypod_videos_busy())
+        if(crazypod_artwork_busy())
             keep_cpu_boosted(HZ / 10);
         if(crazypod_music_is_scanning() && !locked)
             keep_cpu_boosted(HZ / 10);
@@ -945,8 +896,6 @@ void crazypod_ui_run(void)
                 crazypod_coverflow_motion_active())) &&
            (!crazypod_music_is_scanning() || locked) &&
            !crazypod_artwork_busy() &&
-           !crazypod_photos_busy() &&
-           !crazypod_videos_busy() &&
            !TIME_BEFORE(current_tick, boost_until))
             set_cpu_boost(false);
     }
