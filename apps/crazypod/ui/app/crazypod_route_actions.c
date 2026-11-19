@@ -655,7 +655,8 @@ void crazypod_route_actions_activate(long now)
     struct route_state *state = current_route();
     const struct crazypod_feature *feature;
 
-    if(state == NULL)
+    if(state == NULL ||
+       !crazypod_ui_route_supported(state->route))
         return;
     if(crazypod_home_actions_is_route(state->route)) {
         if(state->route == HOME_ROUTE_ACTIONS) {
@@ -728,7 +729,8 @@ void crazypod_route_actions_activate_overlay_state(
     struct route_state state;
     const struct crazypod_feature *feature;
 
-    if(source == NULL)
+    if(source == NULL ||
+       !crazypod_ui_route_supported(source->route))
         return;
     state = *source;
     overlay_dispatch = true;
@@ -778,7 +780,8 @@ void crazypod_route_actions_move(int direction, long now)
     int count;
     int next;
 
-    if(state == NULL)
+    if(state == NULL ||
+       !crazypod_ui_route_supported(state->route))
         return;
     if(crazypod_home_actions_is_adjustment(state->route)) {
         if(crazypod_home_actions_adjust(state->route, direction))
