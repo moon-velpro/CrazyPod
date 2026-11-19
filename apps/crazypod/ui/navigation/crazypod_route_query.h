@@ -8,8 +8,7 @@ int crazypod_route_query_item_count(
     const struct route_state *state, const char *music_search_query);
 const char *crazypod_route_query_item_title(
     const struct route_state *state, int index,
-    const char *music_search_query,
-    bool stopwatch_running, bool workout_running);
+    const char *music_search_query);
 enum crazypod_menu_icon crazypod_route_query_item_icon(
     const struct route_state *state, int index);
 const char *crazypod_route_query_title(

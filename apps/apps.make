@@ -11,9 +11,7 @@ INCLUDES += -I$(APPSDIR) $(patsubst %,-I$(APPSDIR)/%,$(subst :, ,$(APPEXTRA)))
 SRC += $(call preprocess, $(APPSDIR)/SOURCES)
 
 ifeq ($(MODELNAME),ipod6g)
-  include $(APPSDIR)/crazypod/gameboy/crazypod_gameboy.make
   include $(ROOTDIR)/lib/lvgl/lvgl-rockbox.make
-  include $(ROOTDIR)/miniapps/miniapps.make
   ifeq ($(APP_TYPE),sdl-sim)
     CRAZYPOD_FFMPEG_PACKAGES := libavformat libavcodec libavutil \
       libswscale libswresample

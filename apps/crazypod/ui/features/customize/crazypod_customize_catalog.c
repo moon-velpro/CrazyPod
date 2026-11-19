@@ -12,13 +12,13 @@
 #include "crazypod_customize_catalog.h"
 
 const char *const crazypod_customize_menu_titles[] = {
-    CP_TR("Presets"), CP_TR("Icons"), CP_TR("Details"),
+    CP_TR("Presets"), CP_TR("Details"),
     CP_TR("Backgrounds"), CP_TR("Themes"),
     CP_TR("Headphones"), CP_TR("Layout")
 };
 
 const char *const crazypod_customize_menu_symbols[] = {
-    LV_SYMBOL_SAVE, LV_SYMBOL_IMAGE, LV_SYMBOL_SETTINGS,
+    LV_SYMBOL_SAVE, LV_SYMBOL_SETTINGS,
     LV_SYMBOL_DIRECTORY, LV_SYMBOL_AUDIO, LV_SYMBOL_AUDIO,
     LV_SYMBOL_SHUFFLE
 };
@@ -32,13 +32,12 @@ const char *const crazypod_customize_preset_edit_actions[] = {
 };
 
 const char *const crazypod_customize_detail_titles[] = {
-    CP_TR("Icon Size"), CP_TR("Wave Style"), CP_TR("Glow"), CP_TR("Highlight"),
+    CP_TR("Wave Style"), CP_TR("Glow"), CP_TR("Highlight"),
     CP_TR("Primary"), CP_TR("Secondary")
 };
 
 const enum crazypod_appearance_field
 crazypod_customize_detail_fields[] = {
-    CRAZYPOD_APPEARANCE_ICON_SCALE,
     CRAZYPOD_APPEARANCE_SOUND_WAVE_STYLE,
     CRAZYPOD_APPEARANCE_GLOW,
     CRAZYPOD_APPEARANCE_HIGHLIGHT_STYLE,

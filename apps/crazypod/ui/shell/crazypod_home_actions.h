@@ -2,22 +2,19 @@
 #define CRAZYPOD_HOME_ACTIONS_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
 #include "lvgl.h"
+#include "../navigation/crazypod_ui_routes.h"
 
-struct crazypod_home_actions_callbacks {
-    void (*open_queue)(void);
-    void (*toggle_playback)(void);
-};
-
-void crazypod_home_actions_configure(
-    lv_obj_t *parent,
-    const struct crazypod_home_actions_callbacks *callbacks);
-void crazypod_home_actions_show(void);
-void crazypod_home_actions_dismiss(bool restore_desktop);
-bool crazypod_home_actions_visible(void);
-bool crazypod_home_actions_handle_button(
-    long base, bool repeated, intptr_t data);
+/* The Home quick actions are Shell routes, not modal UI state. */
+bool crazypod_home_actions_is_route(enum crazypod_route route);
+bool crazypod_home_actions_is_adjustment(enum crazypod_route route);
+int crazypod_home_actions_item_count(enum crazypod_route route);
+const char *crazypod_home_actions_item_title(int index);
+const char *crazypod_home_actions_title(enum crazypod_route route);
+bool crazypod_home_actions_adjust(
+    enum crazypod_route route, int direction);
+void crazypod_home_actions_render_adjustment(
+    enum crazypod_route route, lv_obj_t *parent);
 
 #endif

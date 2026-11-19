@@ -1,7 +1,6 @@
 #ifndef CRAZYPOD_ROUTE_ACTIONS_H
 #define CRAZYPOD_ROUTE_ACTIONS_H
 
-#include <stdint.h>
 
 #include "../../crazypod_apps.h"
 #include "../navigation/crazypod_ui_routes.h"
@@ -30,13 +29,6 @@ void crazypod_route_actions_activate_overlay_state(
 void crazypod_route_actions_move(int direction, long now);
 bool crazypod_route_actions_alpha_jump(
     int direction, long now);
-void crazypod_route_actions_begin_note(
-    uint32_t id, bool resume_draft);
-void crazypod_route_actions_show_calendar_day(int date);
-bool crazypod_route_actions_confirm_photos(
-    const struct route_state *state, long now);
-bool crazypod_route_actions_note_dirty(void);
-void crazypod_route_actions_service_notes(void);
 enum crazypod_app_id crazypod_route_actions_selected_app(void);
 void crazypod_route_actions_main_menu_changed(
     enum crazypod_app_id preferred,

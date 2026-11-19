@@ -20,10 +20,8 @@
 #include "../../crazypod_playlist.h"
 #include "../../crazypod_runtime_font.h"
 #include "../../crazypod_state.h"
-#include "../features/customize/crazypod_customize_feature.h"
 #include "../features/music/crazypod_music_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
-#include "../features/photos/crazypod_photos_feature.h"
 #include "../navigation/crazypod_render_scheduler.h"
 #include "../navigation/crazypod_ui_routes.h"
 #include "../presentation/crazypod_menu_list.h"
@@ -40,10 +38,11 @@
 #define SEEK_MAX_STEP_PERCENT 3
 #define SEEK_MIN_STEP_MS 500u
 #define PLAYBACK_COMMAND_STACK_SIZE (DEFAULT_STACK_SIZE + 0x1000)
-/* The worker keeps full playback and catalog-track snapshots on its stack
- * while the first font load walks the runtime-font fallback and coverage
- * paths. 3 KiB overflowed on real hardware with user-provided metadata. */
-#define LOCK_METADATA_WARM_STACK_SIZE (DEFAULT_STACK_SIZE + 0x1000)
+/* Font loading may nest filesystem, fallback and glyph-cache calls.
+ * The lock-screen metadata worker must not share its stack with large
+ * playback/catalog snapshots. Keep reserve equivalent to the scan worker
+ * until real-device stack-watermark testing establishes a lower bound. */
+#define LOCK_METADATA_WARM_STACK_SIZE (DEFAULT_STACK_SIZE + 0x3000)
 #define LOCK_METADATA_WARM_EVENT 1
 #define LOCK_TITLE_FONT_SIZE 15
 #define LOCK_ARTIST_FONT_SIZE 12
@@ -255,10 +254,13 @@ static void lock_playback_track_event(
 static void lock_metadata_warm_thread(void)
 {
     struct queue_event event;
+    /* This dedicated worker is the only owner of these snapshots. Static
+     * storage removes their potentially large frame from its call stack
+     * when Noto glyphs are first loaded for CJK metadata. */
+    static struct crazypod_lock_playback_cache cached;
+    static struct crazypod_track track;
 
     while(true) {
-        struct crazypod_lock_playback_cache cached;
-        struct crazypod_track track;
         bool have_track;
         const char *path;
         const char *title;
@@ -823,8 +825,6 @@ void crazypod_playback_update_timer(lv_timer_t *timer)
     if(crazypod_ui_routes_depth() <= 0 ||
        current_route()->route != MUSIC_ROUTE_NOW_PLAYING)
         return;
-    if(crazypod_now_playing_theme_open())
-        return;
     if(have_track &&
        strcmp(
            crazypod_now_playing_feature_rendered_track_path(),
@@ -911,13 +911,12 @@ void crazypod_playback_process_artwork(void)
        crazypod_music_library_loading() ||
        crazypod_render_scheduler_blocked() ||
        crazypod_coverflow_active() ||
-       current_route()->route >= DIY_ROUTE_MENU)
+       (current_route()->route != MUSIC_ROUTE_NOW_PLAYING &&
+        !crazypod_menu_preview_is_music_route(
+            current_route()->route)))
         return;
     if(current_route()->route == MUSIC_ROUTE_NOW_PLAYING &&
        crazypod_now_playing_overlay_visible())
-        return;
-    if(current_route()->route == MUSIC_ROUTE_NOW_PLAYING &&
-       crazypod_now_playing_theme_open())
         return;
     if(current_route()->route == MUSIC_ROUTE_NOW_PLAYING) {
         if(!crazypod_now_playing_artwork_changed())
@@ -953,40 +952,13 @@ void crazypod_playback_process_artwork(void)
         playback.host.render(false);
 }
 
-void crazypod_playback_process_media(void)
-{
-    enum crazypod_feature_media_update update =
-        CRAZYPOD_FEATURE_MEDIA_NONE;
-    enum crazypod_route route;
-
-    if(!crazypod_shell_product_active() ||
-       crazypod_ui_routes_depth() <= 0 ||
-       crazypod_choice_coordinator_visible())
-        return;
-    route = current_route()->route;
-    if(route >= PHOTOS_ROUTE_MENU &&
-       route <= PHOTOS_ROUTE_DETAIL)
-        update = crazypod_photos_feature_poll_media(
-            route, crazypod_render_scheduler_blocked(),
-            crazypod_preview_motion_active());
-    else if(route == DIY_ROUTE_WALLPAPER_FILES ||
-            route == DIY_ROUTE_WALLPAPER_CROP)
-        update = crazypod_customize_feature_poll_media(
-            route, crazypod_render_scheduler_blocked());
-    if(update == CRAZYPOD_FEATURE_MEDIA_PREVIEW)
-        crazypod_menu_preview_render(current_route(), false);
-    else if(update == CRAZYPOD_FEATURE_MEDIA_ROUTE)
-        playback.host.render(false);
-}
-
 void crazypod_playback_tick_wave(long now)
 {
     bool active = crazypod_shell_product_active() &&
         crazypod_ui_routes_depth() > 0 &&
         current_route()->route == MUSIC_ROUTE_NOW_PLAYING;
 
-    if(!crazypod_now_playing_theme_open())
-        crazypod_now_playing_feature_tick_wave(now, active);
+    crazypod_now_playing_feature_tick_wave(now, active);
 }
 
 void crazypod_playback_sync_album_flow(void)

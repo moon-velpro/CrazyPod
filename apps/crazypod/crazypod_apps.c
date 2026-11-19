@@ -6,24 +6,14 @@
 
 #include "crazypod_apps.h"
 
+/* A music player, not an app launcher. Retain retired IDs solely for
+ * reading earlier persisted menu orders without reactivating old apps. */
 static const uint8_t default_order[CRAZYPOD_APP_COUNT] = {
     CRAZYPOD_APP_MUSIC,
     CRAZYPOD_APP_PODCASTS,
-    CRAZYPOD_APP_MINI_APPS,
     CRAZYPOD_APP_SHUFFLE,
     CRAZYPOD_APP_LOCK,
-    CRAZYPOD_APP_PHOTOS,
-    CRAZYPOD_APP_CUSTOMIZE,
-    CRAZYPOD_APP_WORKOUTS,
-    CRAZYPOD_APP_BOOKS,
-    CRAZYPOD_APP_NOTES,
-    CRAZYPOD_APP_CLOCK,
-    CRAZYPOD_APP_CONTACTS,
-    CRAZYPOD_APP_CALENDAR,
-    CRAZYPOD_APP_STOPWATCH,
-    CRAZYPOD_APP_EXTRAS,
     CRAZYPOD_APP_SETTINGS,
-    CRAZYPOD_APP_GAMEBOY,
 };
 
 static uint8_t menu_order[CRAZYPOD_APP_COUNT];
@@ -49,10 +39,8 @@ bool crazypod_apps_is_known(enum crazypod_app_id id)
 bool crazypod_apps_is_fixed(enum crazypod_app_id id)
 {
     return id == CRAZYPOD_APP_MUSIC ||
-           id == CRAZYPOD_APP_CUSTOMIZE ||
-           id == CRAZYPOD_APP_EXTRAS ||
-           id == CRAZYPOD_APP_SETTINGS ||
-           id == CRAZYPOD_APP_GAMEBOY;
+           id == CRAZYPOD_APP_LOCK ||
+           id == CRAZYPOD_APP_SETTINGS;
 }
 
 void crazypod_apps_reset(void)
@@ -62,13 +50,8 @@ void crazypod_apps_reset(void)
     memcpy(menu_order, default_order, sizeof(menu_order));
     menu_enabled_mask = 0;
     for(i = 0; i < CRAZYPOD_APP_COUNT; ++i)
-        if(menu_order[i] != CRAZYPOD_APP_LOCK &&
-           menu_order[i] != CRAZYPOD_APP_CLOCK &&
-           menu_order[i] != CRAZYPOD_APP_CONTACTS &&
-           menu_order[i] != CRAZYPOD_APP_CALENDAR &&
-           menu_order[i] != CRAZYPOD_APP_STOPWATCH)
-            menu_enabled_mask |=
-                app_bit((enum crazypod_app_id)menu_order[i]);
+        menu_enabled_mask |=
+            app_bit((enum crazypod_app_id)menu_order[i]);
 }
 
 void crazypod_apps_restore(const uint8_t *order, size_t count,
@@ -98,12 +81,15 @@ void crazypod_apps_restore(const uint8_t *order, size_t count,
         }
     }
 
-    menu_enabled_mask = enabled_mask;
+    /* Retired application bits must never survive an old state restore. */
+    menu_enabled_mask = 0;
     for(i = 0; i < CRAZYPOD_APP_COUNT; ++i) {
         enum crazypod_app_id id =
             (enum crazypod_app_id)default_order[i];
-        if(crazypod_apps_is_fixed(id))
-            menu_enabled_mask |= app_bit(id);
+        uint32_t bit = app_bit(id);
+
+        if((enabled_mask & bit) != 0 || crazypod_apps_is_fixed(id))
+            menu_enabled_mask |= bit;
     }
 }
 

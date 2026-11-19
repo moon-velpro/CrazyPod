@@ -21,7 +21,6 @@
 #include "crazypod_appearance.h"
 #include "crazypod_image.h"
 #include "crazypod_wallpaper.h"
-#include "wallpaper/crazypod_wallpaper_crop_engine.h"
 #include "wallpaper/crazypod_wallpaper_store.h"
 #include "src/misc/cache/instance/lv_image_cache.h"
 
@@ -401,69 +400,6 @@ bool crazypod_wallpaper_select(
     release_frosted_target(target);
     return crazypod_appearance_set_wallpaper(
         appearance_field_for_target(target), path);
-}
-
-int crazypod_wallpaper_crop_max_zoom(
-    const lv_image_dsc_t *source_descriptor)
-{
-    return crazypod_wallpaper_crop_engine_max_zoom(source_descriptor);
-}
-
-enum crazypod_wallpaper_apply_result crazypod_wallpaper_apply_crop(
-    enum crazypod_wallpaper_target target, const char *path,
-    const lv_image_dsc_t *source_descriptor,
-    int crop_x, int crop_y, int crop_width, int crop_height,
-    crazypod_wallpaper_progress_cb progress_cb,
-    void *progress_user_data)
-{
-    fb_data *destination;
-    lv_image_dsc_t *descriptor;
-    int source_width;
-    int source_height;
-    enum crazypod_wallpaper_apply_result result =
-        CRAZYPOD_WALLPAPER_APPLY_OK;
-
-    if(!valid_target(target) ||
-       path == NULL || path[0] == '\0' ||
-       source_descriptor == NULL ||
-       source_descriptor->header.magic != LV_IMAGE_HEADER_MAGIC ||
-       source_descriptor->header.cf != LV_COLOR_FORMAT_RGB565)
-        return CRAZYPOD_WALLPAPER_APPLY_INVALID_SOURCE;
-    destination = pixels_for_target(target);
-    descriptor = descriptor_for_target(target);
-    source_width = source_descriptor->header.w;
-    source_height = source_descriptor->header.h;
-    if(source_width <= 0 || source_height <= 0 ||
-       crop_x < 0 || crop_y < 0 ||
-       crop_width <= 1 || crop_height <= 1 ||
-       crop_x + crop_width > source_width ||
-        crop_y + crop_height > source_height)
-        return CRAZYPOD_WALLPAPER_APPLY_INVALID_SOURCE;
-    if(progress_cb != NULL)
-        progress_cb(5, progress_user_data);
-    result = crazypod_wallpaper_crop_engine_render(
-        path, source_descriptor,
-        crop_x, crop_y, crop_width, crop_height,
-        destination, progress_cb, progress_user_data);
-    if(result != CRAZYPOD_WALLPAPER_APPLY_OK)
-        return result;
-    if(!crazypod_wallpaper_store_save(
-           target, path, destination, &result))
-        return result;
-    if(progress_cb != NULL)
-        progress_cb(96, progress_user_data);
-    if(!crazypod_appearance_set_wallpaper(
-           appearance_field_for_target(target), path))
-        return CRAZYPOD_WALLPAPER_APPLY_SETTINGS_FAILED;
-    if(!crazypod_image_configure_rgb565(
-           descriptor, destination,
-           WALLPAPER_WIDTH, WALLPAPER_HEIGHT))
-        return CRAZYPOD_WALLPAPER_APPLY_ACTIVATE_FAILED;
-    set_target_valid(target, true);
-    release_frosted_target(target);
-    if(progress_cb != NULL)
-        progress_cb(100, progress_user_data);
-    return CRAZYPOD_WALLPAPER_APPLY_OK;
 }
 
 void crazypod_wallpaper_clear(enum crazypod_wallpaper_target target)

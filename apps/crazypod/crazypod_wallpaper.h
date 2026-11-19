@@ -31,14 +31,6 @@ void crazypod_wallpaper_init(void);
 void crazypod_wallpaper_reload_custom(void);
 bool crazypod_wallpaper_select(
     enum crazypod_wallpaper_target target, const char *path);
-enum crazypod_wallpaper_apply_result crazypod_wallpaper_apply_crop(
-    enum crazypod_wallpaper_target target, const char *path,
-    const lv_image_dsc_t *source,
-    int crop_x, int crop_y, int crop_width, int crop_height,
-    crazypod_wallpaper_progress_cb progress_cb,
-    void *progress_user_data);
-int crazypod_wallpaper_crop_max_zoom(
-    const lv_image_dsc_t *source);
 void crazypod_wallpaper_clear(enum crazypod_wallpaper_target target);
 bool crazypod_wallpaper_prepare_frosted_capsule(
     uint32_t tint, unsigned tint_opa);

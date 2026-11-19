@@ -14,6 +14,7 @@
 struct crazypod_settings_activation_host {
     enum crazypod_app_id (*selected_app)(void);
     void (*push)(enum crazypod_route route, int group);
+    void (*pop)(void);
     void (*render)(bool transition);
     void (*main_menu_changed)(
         enum crazypod_app_id preferred,

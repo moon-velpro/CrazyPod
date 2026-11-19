@@ -45,7 +45,6 @@ static struct crazypod_customize_command_result result(
 bool crazypod_customize_controller_handles(enum crazypod_route route)
 {
     return route == DIY_ROUTE_MENU ||
-        route == DIY_ROUTE_ICONS ||
         route == DIY_ROUTE_DETAILS ||
         route == DIY_ROUTE_CHOICES ||
         route == DIY_ROUTE_BACKGROUNDS ||
@@ -68,25 +67,15 @@ crazypod_customize_controller_select(
             return result(
                 CRAZYPOD_CUSTOMIZE_COMMAND_PUSH_ROUTE,
                 DIY_ROUTE_PRESETS, -1, 0);
-        if(selected == 1)
-            return result(
-                CRAZYPOD_CUSTOMIZE_COMMAND_SHOW_ICON_CHOICES,
-                route, CRAZYPOD_APPEARANCE_ICON_THEME,
-                crazypod_appearance_get()->icon_theme);
         return result(
             CRAZYPOD_CUSTOMIZE_COMMAND_PUSH_ROUTE,
-            selected == 2 ? DIY_ROUTE_DETAILS :
-            selected == 3 ? DIY_ROUTE_BACKGROUNDS :
-            selected == 4 ? DIY_ROUTE_NOW_PLAYING_THEMES :
-            selected == 5 ? DIY_ROUTE_HEADPHONE_POPUP :
+            selected == 1 ? DIY_ROUTE_DETAILS :
+            selected == 2 ? DIY_ROUTE_BACKGROUNDS :
+            selected == 3 ? DIY_ROUTE_NOW_PLAYING_THEMES :
+            selected == 4 ? DIY_ROUTE_HEADPHONE_POPUP :
                             DIY_ROUTE_LAYOUT,
-            -1, selected == 5
+            -1, selected == 4
                 ? crazypod_state_headphone_popup_style() : 0);
-    case DIY_ROUTE_ICONS:
-        crazypod_appearance_set_icon_theme(selected);
-        return result(
-            CRAZYPOD_CUSTOMIZE_COMMAND_APPEARANCE_CHANGED,
-            route, 0, 0);
     case DIY_ROUTE_DETAILS:
         field = crazypod_customize_detail_fields[selected];
         return result(
@@ -170,8 +159,6 @@ crazypod_customize_controller_select(
 int crazypod_customize_overlay_count(
     enum crazypod_customize_overlay overlay, int field)
 {
-    if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_ICONS)
-        return CRAZYPOD_ICON_THEME_COUNT;
     if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_APPEARANCE)
         return crazypod_customize_choice_count(
             (enum crazypod_appearance_field)field);
@@ -181,17 +168,14 @@ int crazypod_customize_overlay_count(
 int crazypod_customize_overlay_current(
     enum crazypod_customize_overlay overlay, int field)
 {
-    const struct crazypod_appearance *appearance =
-        crazypod_appearance_get();
     const char *path;
 
-    if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_ICONS)
-        return appearance->icon_theme;
     if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_APPEARANCE)
         return crazypod_customize_choice_index(
             (enum crazypod_appearance_field)field);
     path = crazypod_customize_background_wallpaper(
-        appearance, (enum crazypod_appearance_field)field);
+        crazypod_appearance_get(),
+        (enum crazypod_appearance_field)field);
     return path[0] != '\0'
         ? CRAZYPOD_APPEARANCE_COLOR_COUNT + 1
         : crazypod_customize_field_value(
@@ -201,8 +185,6 @@ int crazypod_customize_overlay_current(
 const char *crazypod_customize_overlay_title(
     enum crazypod_customize_overlay overlay, int field)
 {
-    if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_ICONS)
-        return CP_TR("ICON THEME");
     if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_APPEARANCE)
         return crazypod_customize_field_title(
             (enum crazypod_appearance_field)field);
@@ -213,8 +195,6 @@ const char *crazypod_customize_overlay_title(
 const char *crazypod_customize_overlay_item_title(
     enum crazypod_customize_overlay overlay, int field, int index)
 {
-    if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_ICONS)
-        return crazypod_icon_theme_name(index);
     if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_APPEARANCE)
         return crazypod_customize_choice_title(
             (enum crazypod_appearance_field)field, index);
@@ -256,12 +236,6 @@ struct crazypod_customize_command_result
 crazypod_customize_overlay_apply(
     enum crazypod_customize_overlay overlay, int field, int selected)
 {
-    if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_ICONS) {
-        crazypod_appearance_set_icon_theme(selected);
-        return result(
-            CRAZYPOD_CUSTOMIZE_COMMAND_APPEARANCE_CHANGED,
-            DIY_ROUTE_ICONS, 0, 0);
-    }
     if(overlay == CRAZYPOD_CUSTOMIZE_OVERLAY_APPEARANCE) {
         enum crazypod_appearance_field appearance_field =
             (enum crazypod_appearance_field)field;

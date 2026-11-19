@@ -19,6 +19,7 @@
 #include "system.h"
 
 #include "crazypod_collation.h"
+#include "crazypod_itunesdb.h"
 #include "crazypod_music.h"
 #include "crazypod_music_storage.h"
 #include "crazypod_playlist.h"
@@ -35,13 +36,14 @@
     CRAZYPOD_CACHE_DIRECTORY "/music-library.tmp"
 #define CRAZYPOD_MEDIA_INVALID_PATH \
     CRAZYPOD_CACHE_DIRECTORY "/media.invalid"
+#define CRAZYPOD_ITUNESDB_PATH "/iPod_Control/iTunes/iTunesDB"
 #define CRAZYPOD_FAVORITES_PATH \
     CRAZYPOD_STATE_DIRECTORY "/favorites.m3u8"
 #define CRAZYPOD_FAVORITES_TEMP \
     CRAZYPOD_STATE_DIRECTORY "/favorites.tmp"
 #define CRAZYPOD_FAVORITES_NAME CP_TR("My Favorites")
 #define CRAZYPOD_MUSIC_CACHE_MAGIC 0x43504d4cu
-#define CRAZYPOD_MUSIC_CACHE_VERSION 7u
+#define CRAZYPOD_MUSIC_CACHE_VERSION 8u
 
 struct music_source_fingerprint {
     uint32_t file_count;
@@ -610,6 +612,28 @@ static int compare_path_track_indices(const void *left_ptr,
     return compare_text(left->path, right->path);
 }
 
+/* Detect Apple library edits even when audio files have not changed. */
+static void fingerprint_itunesdb(struct music_source_fingerprint *target)
+{
+    DIR *directory = opendir("/iPod_Control/iTunes");
+    struct DIRENT *entry;
+
+    if(directory == NULL)
+        return;
+    while((entry = readdir(directory)) != NULL) {
+        if(compare_text(entry->d_name, "iTunesDB") == 0) {
+            struct dirinfo info = dir_get_info(directory, entry);
+
+            if((info.attribute & ATTR_DIRECTORY) == 0)
+                fingerprint_add(
+                    target, CRAZYPOD_ITUNESDB_PATH,
+                    info.size, info.mtime, 4);
+            break;
+        }
+    }
+    closedir(directory);
+}
+
 static bool count_directory_tracks(
     const char *path, int depth, uint32_t *count)
 {
@@ -955,6 +979,98 @@ static int find_track_by_path(const char *path)
             high = middle - 1;
     }
     return -1;
+}
+
+/* Restore official-library display tags by exact path matching only.
+ * Audio decoding and regular /Music tags are left unchanged. */
+static bool original_ipod_apply_metadata(
+    void *context, const struct crazypod_itunesdb_track *metadata)
+{
+    struct crazypod_track *track;
+    bool album_artist_follows_artist;
+    int index;
+
+    (void)context;
+    if(scan_abort_requested)
+        return false;
+    index = find_track_by_path(metadata->path);
+    if(index < 0)
+        return true;
+    track = &tracks[index];
+    album_artist_follows_artist =
+        compare_text(track->album_artist, track->artist) == 0 ||
+        compare_text(track->album_artist, CP_TR("Unknown Artist")) == 0;
+    if(metadata->title[0] != '\0')
+        copy_text(track->title, sizeof(track->title), metadata->title, "");
+    if(metadata->artist[0] != '\0')
+        copy_text(track->artist, sizeof(track->artist), metadata->artist, "");
+    if(metadata->album[0] != '\0')
+        copy_text(track->album, sizeof(track->album), metadata->album, "");
+    if(metadata->album_artist[0] != '\0')
+        copy_text(track->album_artist, sizeof(track->album_artist),
+                  metadata->album_artist, "");
+    else if(album_artist_follows_artist && metadata->artist[0] != '\0')
+        copy_text(track->album_artist, sizeof(track->album_artist),
+                  metadata->artist, "");
+    if(metadata->year > 0 && metadata->year <= UINT16_MAX)
+        track->year = (uint16_t)metadata->year;
+    if(metadata->track_number > 0 &&
+       metadata->track_number <= UINT16_MAX)
+        track->track_number = (uint16_t)metadata->track_number;
+    if(metadata->disc_number > 0 &&
+       metadata->disc_number <= UINT16_MAX)
+        track->disc_number = (uint16_t)metadata->disc_number;
+    return true;
+}
+
+static bool original_ipod_read_at(
+    void *context, uint32_t offset, void *buffer, size_t count)
+{
+    int fd = *(int *)context;
+
+    return lseek(fd, (off_t)offset, SEEK_SET) == (off_t)offset &&
+        read_exact(fd, buffer, count);
+}
+
+static bool original_ipod_cancelled(void *context)
+{
+    (void)context;
+    wait_for_scan_resume();
+    return scan_abort_requested;
+}
+
+static void overlay_original_ipod_metadata(void)
+{
+    struct crazypod_itunesdb_reader reader;
+    const struct crazypod_itunesdb_callbacks callbacks = {
+        .context = NULL,
+        .on_track = original_ipod_apply_metadata,
+        .cancelled = original_ipod_cancelled,
+    };
+    off_t file_size;
+    int fd, i;
+
+    if(track_count == 0 || scan_abort_requested)
+        return;
+    fd = open(CRAZYPOD_ITUNESDB_PATH, O_RDONLY);
+    if(fd < 0)
+        return;
+    file_size = filesize(fd);
+    if(file_size <= 0 || (uint64_t)file_size > UINT32_MAX) {
+        close(fd);
+        return;
+    }
+    /* Allocate the temporary lookup within the existing catalog storage. */
+    for(i = 0; i < track_count; ++i)
+        path_track_indices[i] = (uint32_t)i;
+    if(track_count > 1)
+        qsort(path_track_indices, track_count,
+              sizeof(path_track_indices[0]), compare_path_track_indices);
+    reader.file_size = (uint32_t)file_size;
+    reader.context = &fd;
+    reader.read_at = original_ipod_read_at;
+    (void)crazypod_itunesdb_visit(&reader, &callbacks);
+    close(fd);
 }
 
 static void normalize_playlist_path(char *output, size_t size,
@@ -1349,6 +1465,8 @@ void crazypod_music_scan(void)
     if(!scan_abort_requested &&
        scan_failure == CRAZYPOD_MUSIC_SCAN_OK)
         scan_directory(ROCKBOX_DIR "/albumart", 0, false);
+    if(!scan_abort_requested && include_ipod_music)
+        fingerprint_itunesdb(&scan_fingerprint);
     if(!scan_abort_requested &&
        scan_failure == CRAZYPOD_MUSIC_SCAN_OK) {
         crazypod_music_storage_shrink_tracks(
@@ -1357,6 +1475,9 @@ void crazypod_music_scan(void)
                &catalog_storage, (size_t)track_count))
             scan_failure = CRAZYPOD_MUSIC_SCAN_NO_MEMORY;
     }
+    if(!scan_abort_requested && include_ipod_music &&
+       scan_failure == CRAZYPOD_MUSIC_SCAN_OK)
+        overlay_original_ipod_metadata();
     if(!scan_abort_requested &&
        scan_failure == CRAZYPOD_MUSIC_SCAN_OK) {
         wait_for_scan_resume();
@@ -1450,6 +1571,8 @@ static void validation_thread(void)
             "/Podcasts", 0, &fingerprint, true) &&
         validate_directory(
             ROCKBOX_DIR "/albumart", 0, &fingerprint, false);
+    if(complete && include_ipod_music && !scan_abort_requested)
+        fingerprint_itunesdb(&fingerprint);
     mutex_lock(&catalog_mutex);
     if(expected_epoch == catalog_epoch && catalog_ready) {
         if(scan_abort_requested)

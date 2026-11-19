@@ -20,6 +20,8 @@ int crazypod_settings_feature_item_count(
     const struct route_state *state)
 {
     switch(state->route) {
+    case SETTINGS_ROUTE_VALUE_CHOICES:
+        return crazypod_ui_settings_choice_count(state->group);
     case SETTINGS_ROUTE_MENU:
     case SETTINGS_ROUTE_SOUND:
     case SETTINGS_ROUTE_EQ_STUDIO:
@@ -41,6 +43,8 @@ int crazypod_settings_feature_item_count(
 const char *crazypod_settings_feature_title(
     const struct route_state *state)
 {
+    if(state->route == SETTINGS_ROUTE_VALUE_CHOICES)
+        return crazypod_ui_settings_item_title(state->group);
     switch(state->route) {
     case SETTINGS_ROUTE_MENU:
         return CP_TR("SETTINGS");
@@ -75,6 +79,8 @@ const char *crazypod_settings_feature_title(
 bool crazypod_settings_feature_item_is_current(
     const struct route_state *state, int index)
 {
+    if(state->route == SETTINGS_ROUTE_VALUE_CHOICES)
+        return index == crazypod_ui_settings_choice_index(state->group);
     if(state->route == SETTINGS_ROUTE_MAIN_MENU &&
        crazypod_settings_main_menu_reordering())
         return false;
@@ -87,6 +93,10 @@ bool crazypod_settings_feature_item_title(
     const char **title)
 {
     switch(state->route) {
+    case SETTINGS_ROUTE_VALUE_CHOICES:
+        *title = crazypod_ui_settings_choice_title(
+            state->group, index);
+        return true;
     case SETTINGS_ROUTE_MENU:
         *title = index >= 0 &&
             index < CRAZYPOD_SETTINGS_MENU_COUNT
@@ -221,6 +231,8 @@ enum crazypod_menu_icon crazypod_settings_feature_item_icon(
     if(index < 0)
         return CRAZYPOD_MENU_ICON_NONE;
     switch(state->route) {
+    case SETTINGS_ROUTE_VALUE_CHOICES:
+        return CRAZYPOD_MENU_ICON_NONE;
     case SETTINGS_ROUTE_MENU:
         return index < (int)(sizeof(root_icons) / sizeof(root_icons[0]))
             ? root_icons[index] : CRAZYPOD_MENU_ICON_NONE;
@@ -263,6 +275,15 @@ bool crazypod_settings_feature_activate(
     struct crazypod_settings_command command;
     enum crazypod_app_id preferred;
 
+    if(state->route == SETTINGS_ROUTE_VALUE_CHOICES) {
+        if(!crazypod_ui_settings_apply_choice(
+               state->group, state->selected)) {
+            host->render(false);
+            return true;
+        }
+        host->pop();
+        return true;
+    }
     if(!crazypod_settings_catalog_handles(state->route) ||
        state->route == SETTINGS_ROUTE_EQ_STUDIO)
         return false;
@@ -277,7 +298,7 @@ bool crazypod_settings_feature_activate(
     else if(command.kind ==
             CRAZYPOD_SETTINGS_COMMAND_MAIN_MENU_CHANGED) {
         host->main_menu_changed(preferred, command.app_id);
-        host->render(false);
+        host->pop();
     }
     else if(command.kind == CRAZYPOD_SETTINGS_COMMAND_OPEN_EQ) {
         crazypod_eq_studio_open();

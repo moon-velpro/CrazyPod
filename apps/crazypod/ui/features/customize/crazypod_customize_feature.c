@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "../../../crazypod_appearance.h"
-#include "../../../crazypod_icons.h"
 #include "../../../crazypod_photos.h"
 #include "../../../crazypod_presets.h"
 #include "../../../crazypod_state.h"
@@ -66,8 +65,6 @@ int crazypod_customize_feature_item_count(
         return 3;
     case DIY_ROUTE_PRESET_RENAME:
         return 39;
-    case DIY_ROUTE_ICONS:
-        return CRAZYPOD_ICON_THEME_COUNT;
     case DIY_ROUTE_DETAILS:
         return CRAZYPOD_CUSTOMIZE_DETAIL_COUNT;
     case DIY_ROUTE_CHOICES:
@@ -112,8 +109,6 @@ const char *crazypod_customize_feature_title(
         return CP_TR("EDIT");
     case DIY_ROUTE_PRESET_RENAME:
         return CP_TR("RENAME");
-    case DIY_ROUTE_ICONS:
-        return CP_TR("ICONS");
     case DIY_ROUTE_DETAILS:
         return CP_TR("DETAILS");
     case DIY_ROUTE_CHOICES:
@@ -161,8 +156,6 @@ bool crazypod_customize_feature_item_is_current(
     case DIY_ROUTE_HEADPHONE_POPUP:
         return index ==
             (int)crazypod_state_headphone_popup_style();
-    case DIY_ROUTE_ICONS:
-        return index == appearance->icon_theme;
     case DIY_ROUTE_CHOICES: {
         enum crazypod_appearance_field field =
             (enum crazypod_appearance_field)state->group;
@@ -235,9 +228,6 @@ bool crazypod_customize_feature_item_title(
         return true;
     case DIY_ROUTE_PRESET_RENAME:
         *title = editor_title(index);
-        return true;
-    case DIY_ROUTE_ICONS:
-        *title = crazypod_icon_theme_name(index);
         return true;
     case DIY_ROUTE_DETAILS:
         *title = index >= 0 && index < CRAZYPOD_CUSTOMIZE_DETAIL_COUNT
@@ -350,10 +340,6 @@ bool crazypod_customize_feature_activate(
             host->push_selected(
                 command.route, command.group, command.selected);
         else if(command.action ==
-                CRAZYPOD_CUSTOMIZE_COMMAND_SHOW_ICON_CHOICES)
-            host->show_icon_choices(
-                command.group, command.selected);
-        else if(command.action ==
                 CRAZYPOD_CUSTOMIZE_COMMAND_SHOW_APPEARANCE_CHOICES)
             host->show_appearance_choices(
                 command.group, command.selected);
@@ -418,10 +404,6 @@ bool crazypod_customize_feature_activate(
 static enum crazypod_menu_icon appearance_field_icon(int field)
 {
     switch((enum crazypod_appearance_field)field) {
-    case CRAZYPOD_APPEARANCE_ICON_THEME:
-        return CRAZYPOD_MENU_ICON_ICONS;
-    case CRAZYPOD_APPEARANCE_ICON_SCALE:
-        return CRAZYPOD_MENU_ICON_ICON_SIZE;
     case CRAZYPOD_APPEARANCE_SOUND_WAVE_STYLE:
         return CRAZYPOD_MENU_ICON_WAVE;
     case CRAZYPOD_APPEARANCE_GLOW:
@@ -452,7 +434,6 @@ enum crazypod_menu_icon crazypod_customize_feature_item_icon(
 {
     static const enum crazypod_menu_icon root_icons[] = {
         CRAZYPOD_MENU_ICON_PRESETS,
-        CRAZYPOD_MENU_ICON_ICONS,
         CRAZYPOD_MENU_ICON_DETAILS,
         CRAZYPOD_MENU_ICON_BACKGROUNDS,
         CRAZYPOD_MENU_ICON_THEMES,
@@ -460,7 +441,6 @@ enum crazypod_menu_icon crazypod_customize_feature_item_icon(
         CRAZYPOD_MENU_ICON_LAYOUT,
     };
     static const enum crazypod_menu_icon detail_icons[] = {
-        CRAZYPOD_MENU_ICON_ICON_SIZE,
         CRAZYPOD_MENU_ICON_WAVE,
         CRAZYPOD_MENU_ICON_GLOW,
         CRAZYPOD_MENU_ICON_HIGHLIGHT,
@@ -491,8 +471,6 @@ enum crazypod_menu_icon crazypod_customize_feature_item_icon(
             index == 1 ? CRAZYPOD_MENU_ICON_APPLY :
             index == 2 ? CRAZYPOD_MENU_ICON_TRASH :
             CRAZYPOD_MENU_ICON_NONE;
-    case DIY_ROUTE_ICONS:
-        return CRAZYPOD_MENU_ICON_ICONS;
     case DIY_ROUTE_DETAILS:
         return index < (int)(sizeof(detail_icons) / sizeof(detail_icons[0]))
             ? detail_icons[index] : CRAZYPOD_MENU_ICON_NONE;

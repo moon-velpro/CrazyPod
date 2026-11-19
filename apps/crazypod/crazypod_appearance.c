@@ -76,13 +76,6 @@ struct appearance_disk_v1 {
 static struct crazypod_appearance appearance;
 static bool lock_inheritance_migrated;
 
-static const char *const theme_names[CRAZYPOD_ICON_THEME_COUNT] = {
-    CP_TR("Basic"), CP_TR("Cel Frame"), CP_TR("Anime Pop"), CP_TR("Mecha Spec"),
-    CP_TR("Toy"), CP_TR("Y2K"), CP_TR("Flat"), CP_TR("Skeuo"),
-    CP_TR("Lucid Pop"), CP_TR("Noize Bloom"), CP_TR("Soft Skeuo"), CP_TR("Acrylic"),
-    CP_TR("Ink"), CP_TR("Sticker"), CP_TR("Sticker 2"), CP_TR("Voxel")
-};
-
 static const char *const color_names[CRAZYPOD_APPEARANCE_COLOR_COUNT] = {
     CP_TR("Charcoal"), CP_TR("Rose"), CP_TR("Violet"), CP_TR("Cyan"),
     CP_TR("Amber"), CP_TR("Emerald"), CP_TR("Blue"), CP_TR("White")
@@ -149,7 +142,7 @@ bool crazypod_appearance_valid(const struct crazypod_appearance *value)
     if(value == NULL)
         return false;
     return value->icon_theme >= 0 &&
-           value->icon_theme < CRAZYPOD_ICON_THEME_COUNT &&
+           value->icon_theme < CRAZYPOD_LEGACY_ICON_THEME_COUNT &&
            value->icon_scale >= 0 && value->icon_scale < 5 &&
            value->sound_wave_style >= 0 &&
            value->sound_wave_style < CRAZYPOD_SOUND_WAVE_STYLE_COUNT &&
@@ -323,11 +316,9 @@ bool crazypod_appearance_set_value(enum crazypod_appearance_field field,
 
     switch(field) {
     case CRAZYPOD_APPEARANCE_ICON_THEME:
-        next.icon_theme = value;
-        break;
     case CRAZYPOD_APPEARANCE_ICON_SCALE:
-        next.icon_scale = value;
-        break;
+        /* Legacy serialized fields remain readable but not editable. */
+        return false;
     case CRAZYPOD_APPEARANCE_SOUND_WAVE_STYLE:
         next.sound_wave_style = value;
         break;
@@ -366,14 +357,6 @@ bool crazypod_appearance_set_value(enum crazypod_appearance_field field,
     return true;
 }
 
-void crazypod_appearance_set_icon_theme(int theme)
-{
-    if(theme < 0 || theme >= CRAZYPOD_ICON_THEME_COUNT)
-        return;
-    appearance.icon_theme = theme;
-    crazypod_appearance_save();
-}
-
 bool crazypod_appearance_set_wallpaper(
     enum crazypod_appearance_field field, const char *path)
 {
@@ -404,12 +387,6 @@ bool crazypod_appearance_take_lock_inheritance_migration(void)
 
     lock_inheritance_migrated = false;
     return migrated;
-}
-
-const char *crazypod_icon_theme_name(int theme)
-{
-    return theme >= 0 && theme < CRAZYPOD_ICON_THEME_COUNT
-        ? theme_names[theme] : "";
 }
 
 const char *crazypod_appearance_color_name(int color)

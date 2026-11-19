@@ -15,6 +15,15 @@
 
 # CrazyPod
 
+> **Music-only refactor in progress (PR #4).** The new product target is a
+> dedicated iPod Classic audio player, not the legacy all-app operating system.
+> The music-only Home, shipping package and some runtime scheduling have been
+> simplified; unrelated source modules are **not yet fully unlinked**.
+> Older V1.0 feature descriptions below document the historical firmware and
+> are not a promise about the pending music-only build. See
+> [music-only scope](docs/CRAZYPOD_MUSIC_ONLY_SCOPE.zh-CN.md).
+
+
 CrazyPod V1.0 is experimental standalone firmware for the iPod Classic 6G
 hardware family. It replaces the Rockbox interface with a 320×240 LVGL
 application carousel while retaining Rockbox's codecs, playback engine,
@@ -95,11 +104,6 @@ pipeline, USB Audio, HID, and iPod accessory protocol.
 - **Mini Apps:** React-style TypeScript/TSX is AOT-compiled to C and then to
   native `app.arm`; Native ABI 1 drives host-owned LVGL. The device runs no
   JavaScript engine. Reference apps are 2048 and Capability Lab.
-- **GB / GBC:** A dedicated **GB / GBC** desktop app opens the Rockboy game library
-  for `.gb` and `.gbc` ROMs in `/MiniApps/Games`. It includes audio, wheel controls,
-  battery saves and RTC.
-  No games are bundled. Compatibility and speed need real-device testing;
-  see the [GB/GBC guide](docs/CRAZYPOD_GAMEBOY.zh-CN.md).
 - **Now Playing themes:** installable pure-TSX source packages can replace the
   playback page after explicit user selection. Firmware keeps the default
   page, audio engine, cover decoder, and sound-wave renderer. ABI 1.7 exposes
@@ -170,7 +174,11 @@ or follow the [Chinese Mini App tutorial](miniapps/TUTORIAL.zh-CN.md).
 
 ### Appearance
 
-- 16 packaged icon themes with scale, glow, and highlight controls.
+- Home uses the existing original `basic` application icons, downsampled
+  to 20 px in a small startup cache; system glyphs remain a fallback.
+- The other 15 bitmap icon packs and the icon-theme and icon-size selectors
+  are no longer shipped.
+- Appearance presets retain legacy fields for reading existing user files.
 - Independent top and bottom screen corner radii.
 - Home and menu wallpapers loaded from `/Pictures`.
 - Versioned `.upodtheme` appearance presets with validated import and export.
@@ -219,7 +227,7 @@ existing build directory.
 
 The V1.0 release uses a manual install. Follow the complete procedure below;
 do not copy only `rockbox.ipod`, because the archive also contains required
-codecs, fonts, icons, and Native Mini App packages.
+codecs, fonts, the original basic Home icons, and Native Mini App packages.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current validation level,
 release evidence, and remaining physical-device validation gaps.
@@ -236,7 +244,7 @@ and Linux. Choose one route before touching the bootloader:
 | An older CrazyPod build already boots | Use the same package-only route as an existing Rockbox user. |
 
 The complete ZIP is required in every route. Copying only `rockbox.ipod`
-creates a mismatched installation without the matching codecs, fonts, icons,
+creates a mismatched installation without the matching codecs, fonts, basic Home icons,
 and Native Mini App packages.
 
 ### 1. Confirm the device and prepare recovery
@@ -481,7 +489,7 @@ storage. Create them manually when installing without the archive:
 | Content | Location |
 | --- | --- |
 | Music and playlists | `/Music` |
-| iTunes-managed music | `/iPod_Control/Music` when enabled in Playback settings |
+| iTunes-managed music | `/iPod_Control/Music` when enabled in Playback settings; supported classic `iTunesDB` display tags are read when available |
 | Podcasts | `/Podcasts` |
 | Books | `/Books` |
 | Photos and wallpapers | `/Pictures` |
@@ -489,9 +497,17 @@ storage. Create them manually when installing without the archive:
 | Contacts | `/Contacts/*.vcf` |
 | Calendars | `/Calendars/*.ics` or `/Calendar/*.ics` |
 | Mini App and theme packages | `/MiniApps/*.cpk` |
-| GB / GBC ROMs | `/MiniApps/Games`, `/MiniApps/Games/GB`, `/MiniApps/Games/GBC` |
-| GB / GBC battery saves | `/.crazypod/gameboy` |
 | Theme import | `/.crazypod/import.upodtheme` |
+
+For the original iPod library, CrazyPod now tries the classic uncompressed
+`/iPod_Control/iTunes/iTunesDB` as a read-only metadata source. It matches
+database paths to scanned playable files and uses the stored title, artist,
+album and album artist when present. Unsupported, missing or malformed
+databases fall back to audio tags; neither the Apple database nor audio
+files are modified. `iTunesCDB`, SQLite variants and DRM are not supported.
+Catalog cache validation now observes the database size and modified time,
+and the cache version bump forces an initial rescan. Hardware testing with
+a real Apple-managed library is still required.
 
 CrazyPod stores settings, notes, reading progress, workout history, caches, and
 exported appearances under `/.crazypod`.
@@ -570,8 +586,8 @@ the queue. The Favorite action adds or removes the current track from
 - `miniapps/` contains the Native ABI header, React Profile examples, 2048,
   and Capability Lab.
 - `lib/lvgl/` contains the vendored LVGL 9.5.0 source.
-- `assets/crazypod/` and `assets/crazypod-icons/` contain packaged runtime
-  graphics.
+- `assets/crazypod/` contains the default wallpaper. The original
+  `assets/crazypod-icons/basic/` supplies the one fixed Home icon family.
 - `tools/convert-crazypod-video.sh` creates device-ready MPEG video and poster
   pairs with FFmpeg.
 - `build-bootloader.sh` builds the optional silent boot surface but never

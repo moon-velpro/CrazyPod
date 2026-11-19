@@ -108,10 +108,29 @@ enum crazypod_route {
     DIY_ROUTE_LAYOUT,
     DIY_ROUTE_NOW_PLAYING_THEMES,
     DIY_ROUTE_HEADPHONE_POPUP,
-    GAMEBOY_ROUTE_LIBRARY,
+    RETIRED_ROUTE_SLOT,
+    /* Keep retired route numeric value stable; never expose a menu entry. */
+    SETTINGS_ROUTE_VALUE_CHOICES,
+    /* Shell-owned pages; append IDs to preserve existing route values. */
+    HOME_ROUTE_ACTIONS,
+    HOME_ROUTE_BRIGHTNESS,
+    HOME_ROUTE_VOLUME,
 };
 
-#define CRAZYPOD_ROUTE_COUNT ((int)GAMEBOY_ROUTE_LIBRARY + 1)
+#define CRAZYPOD_ROUTE_COUNT ((int)HOME_ROUTE_VOLUME + 1)
+
+/* Retired IDs retain their historic numeric values, but no longer admit
+ * navigation or feature dispatch in the dedicated music player. */
+static inline bool crazypod_ui_route_supported(enum crazypod_route route)
+{
+    return (unsigned)route <= (unsigned)MUSIC_ROUTE_NOW_PLAYING ||
+           (route >= SETTINGS_ROUTE_MENU &&
+            route <= SETTINGS_ROUTE_MAIN_MENU_ACTIONS) ||
+           route == PODCASTS_ROUTE_MENU ||
+           route == SETTINGS_ROUTE_VALUE_CHOICES ||
+           (route >= HOME_ROUTE_ACTIONS &&
+            route <= HOME_ROUTE_VOLUME);
+}
 
 struct route_state {
     enum crazypod_route route;

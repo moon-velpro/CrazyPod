@@ -1294,6 +1294,9 @@ static void advance_position(long now, uint32_t now_usec)
         !TIME_BEFORE(now, last_input + FLOW_RELEASE_GRACE_TICKS);
     bool tracking_input = !release_due && !wheel_tracking;
 #endif
+#ifdef HAVE_WHEEL_POSITION
+    (void)now;
+#endif
 
     if(release_due && input_active) {
         int32_t projected_position_q16;

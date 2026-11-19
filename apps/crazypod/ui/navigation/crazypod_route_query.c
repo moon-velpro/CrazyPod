@@ -1,80 +1,56 @@
 #include "config.h"
 
-#include "../../crazypod_l10n.h"
-
 #ifdef IPOD_6G
 
-#include "../../crazypod_apps.h"
-#include "../features/books/crazypod_books_feature.h"
-#include "../features/customize/crazypod_customize_feature.h"
-#include "../shell/crazypod_app_catalog.h"
-#include "../features/miniapps/crazypod_miniapps_feature.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../features/notes/crazypod_notes_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
-#include "../features/organizer/crazypod_organizer_feature.h"
-#include "../features/photos/crazypod_photos_feature.h"
 #include "../features/settings/crazypod_settings_feature.h"
-#include "../navigation/crazypod_route_registry.h"
+#include "../shell/crazypod_home_actions.h"
 #include "crazypod_route_query.h"
+#include "crazypod_route_registry.h"
 
+/* Navigation reads the music product's feature facades only. Retired
+ * applications have neither route metadata nor query dispatch here. */
 int crazypod_route_query_item_count(
     const struct route_state *state, const char *music_search_query)
 {
-    const struct crazypod_feature *feature =
-        crazypod_route_registry_feature(state->route);
+    const struct crazypod_feature *feature;
 
+    if(state == NULL)
+        return 0;
+    if(crazypod_home_actions_is_route(state->route))
+        return crazypod_home_actions_item_count(state->route);
+    feature = crazypod_route_registry_feature(state->route);
     if(feature == NULL)
-        return crazypod_route_registry_is_shell(state->route)
-            ? crazypod_apps_hidden_count() : 0;
-
+        return 0;
     switch(feature->id) {
     case CRAZYPOD_FEATURE_MUSIC:
         return crazypod_music_feature_item_count(
             state, music_search_query);
     case CRAZYPOD_FEATURE_NOW_PLAYING:
         return crazypod_now_playing_feature_item_count(state);
-    case CRAZYPOD_FEATURE_BOOKS:
-        return crazypod_books_feature_item_count(state);
-    case CRAZYPOD_FEATURE_NOTES:
-        return crazypod_notes_feature_item_count(state);
-    case CRAZYPOD_FEATURE_PHOTOS:
-        return crazypod_photos_feature_item_count(state);
-    case CRAZYPOD_FEATURE_ORGANIZER:
-        return crazypod_organizer_feature_item_count(state);
-    case CRAZYPOD_FEATURE_CUSTOMIZE:
-        return crazypod_customize_feature_item_count(state);
     case CRAZYPOD_FEATURE_SETTINGS:
         return crazypod_settings_feature_item_count(state);
-    case CRAZYPOD_FEATURE_MINIAPPS:
-        return crazypod_miniapps_feature_item_count(state);
-    case CRAZYPOD_FEATURE_COUNT:
+    default:
         return 0;
     }
-    return 0;
 }
 
 const char *crazypod_route_query_item_title(
     const struct route_state *state, int index,
-    const char *music_search_query,
-    bool stopwatch_running, bool workout_running)
+    const char *music_search_query)
 {
-    const struct crazypod_feature *feature =
-        crazypod_route_registry_feature(state->route);
+    const struct crazypod_feature *feature;
     const char *title = "";
     bool handled = false;
 
-    if(feature == NULL) {
-        if(crazypod_route_registry_is_shell(state->route)) {
-            const struct crazypod_app_descriptor *app =
-                crazypod_app_catalog_find(
-                    crazypod_apps_hidden_id(index));
-
-            return app != NULL ? app->name : "";
-        }
+    if(state == NULL)
         return "";
-    }
-
+    if(crazypod_home_actions_is_route(state->route))
+        return crazypod_home_actions_item_title(index);
+    feature = crazypod_route_registry_feature(state->route);
+    if(feature == NULL)
+        return "";
     switch(feature->id) {
     case CRAZYPOD_FEATURE_MUSIC:
         handled = crazypod_music_feature_item_title(
@@ -84,36 +60,11 @@ const char *crazypod_route_query_item_title(
         handled = crazypod_now_playing_feature_item_title(
             state, index, &title);
         break;
-    case CRAZYPOD_FEATURE_BOOKS:
-        handled = crazypod_books_feature_item_title(
-            state, index, &title);
-        break;
-    case CRAZYPOD_FEATURE_NOTES:
-        handled = crazypod_notes_feature_item_title(
-            state, index, &title);
-        break;
-    case CRAZYPOD_FEATURE_PHOTOS:
-        handled = crazypod_photos_feature_item_title(
-            state, index, &title);
-        break;
-    case CRAZYPOD_FEATURE_ORGANIZER:
-        handled = crazypod_organizer_feature_item_title(
-            state, index, stopwatch_running,
-            workout_running, &title);
-        break;
-    case CRAZYPOD_FEATURE_CUSTOMIZE:
-        handled = crazypod_customize_feature_item_title(
-            state, index, &title);
-        break;
     case CRAZYPOD_FEATURE_SETTINGS:
         handled = crazypod_settings_feature_item_title(
             state, index, &title);
         break;
-    case CRAZYPOD_FEATURE_MINIAPPS:
-        handled = crazypod_miniapps_feature_item_title(
-            state, index, &title);
-        break;
-    case CRAZYPOD_FEATURE_COUNT:
+    default:
         break;
     }
     return handled ? title : "";
@@ -122,98 +73,61 @@ const char *crazypod_route_query_item_title(
 enum crazypod_menu_icon crazypod_route_query_item_icon(
     const struct route_state *state, int index)
 {
-    const struct crazypod_feature *feature =
-        crazypod_route_registry_feature(state->route);
+    const struct crazypod_feature *feature;
 
-    if(index < 0)
+    if(state == NULL || index < 0 ||
+       crazypod_home_actions_is_route(state->route))
         return CRAZYPOD_MENU_ICON_NONE;
-    if(feature == NULL) {
-        if(crazypod_route_registry_is_shell(state->route)) {
-            const struct crazypod_app_descriptor *app =
-                crazypod_app_catalog_find(
-                    crazypod_apps_hidden_id(index));
-
-            return app != NULL
-                ? app->menu_icon : CRAZYPOD_MENU_ICON_NONE;
-        }
+    feature = crazypod_route_registry_feature(state->route);
+    if(feature == NULL)
         return CRAZYPOD_MENU_ICON_NONE;
-    }
-
     switch(feature->id) {
     case CRAZYPOD_FEATURE_MUSIC:
         return crazypod_music_feature_item_icon(state, index);
     case CRAZYPOD_FEATURE_NOW_PLAYING:
         return crazypod_now_playing_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_BOOKS:
-        return crazypod_books_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_NOTES:
-        return crazypod_notes_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_PHOTOS:
-        return crazypod_photos_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_ORGANIZER:
-        return crazypod_organizer_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_CUSTOMIZE:
-        return crazypod_customize_feature_item_icon(state, index);
     case CRAZYPOD_FEATURE_SETTINGS:
         return crazypod_settings_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_MINIAPPS:
-        return crazypod_miniapps_feature_item_icon(state, index);
-    case CRAZYPOD_FEATURE_COUNT:
+    default:
         return CRAZYPOD_MENU_ICON_NONE;
     }
-    return CRAZYPOD_MENU_ICON_NONE;
 }
 
 const char *crazypod_route_query_title(
     const struct route_state *state)
 {
-    const struct crazypod_feature *feature =
-        crazypod_route_registry_feature(state->route);
+    const struct crazypod_feature *feature;
 
+    if(state == NULL)
+        return "";
+    if(crazypod_home_actions_is_route(state->route))
+        return crazypod_home_actions_title(state->route);
+    feature = crazypod_route_registry_feature(state->route);
     if(feature == NULL)
-        return crazypod_route_registry_is_shell(state->route)
-            ? CP_TR("MORE FEATURES") : "";
-
+        return "";
     switch(feature->id) {
     case CRAZYPOD_FEATURE_MUSIC:
         return crazypod_music_feature_title(state);
     case CRAZYPOD_FEATURE_NOW_PLAYING:
         return crazypod_now_playing_feature_title(state);
-    case CRAZYPOD_FEATURE_BOOKS:
-        return crazypod_books_feature_title(state);
-    case CRAZYPOD_FEATURE_NOTES:
-        return crazypod_notes_feature_title(state);
-    case CRAZYPOD_FEATURE_PHOTOS:
-        return crazypod_photos_feature_title(state);
-    case CRAZYPOD_FEATURE_ORGANIZER:
-        return crazypod_organizer_feature_title(state);
-    case CRAZYPOD_FEATURE_CUSTOMIZE:
-        return crazypod_customize_feature_title(state);
     case CRAZYPOD_FEATURE_SETTINGS:
         return crazypod_settings_feature_title(state);
-    case CRAZYPOD_FEATURE_MINIAPPS:
-        return crazypod_miniapps_feature_title(state);
-    case CRAZYPOD_FEATURE_COUNT:
+    default:
         return "";
     }
-    return "";
 }
 
 bool crazypod_route_query_item_is_current(
     const struct route_state *state, int index)
 {
-    const struct crazypod_feature *feature =
-        crazypod_route_registry_feature(state->route);
+    const struct crazypod_feature *feature;
 
-    if(feature == NULL)
+    if(state == NULL)
         return false;
-    if(feature->id == CRAZYPOD_FEATURE_SETTINGS)
-        return crazypod_settings_feature_item_is_current(
-            state, index);
-    if(feature->id == CRAZYPOD_FEATURE_CUSTOMIZE)
-        return crazypod_customize_feature_item_is_current(
-            state, index);
-    return false;
+    feature = crazypod_route_registry_feature(state->route);
+    return feature != NULL &&
+           feature->id == CRAZYPOD_FEATURE_SETTINGS &&
+           crazypod_settings_feature_item_is_current(state, index);
 }
 
 #endif

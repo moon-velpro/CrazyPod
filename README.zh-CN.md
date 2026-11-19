@@ -14,6 +14,14 @@
 
 # CrazyPod
 
+> **纯音乐播放器方向（PR #4，仍在开发）：** 下面的 V1.0 功能清单描述旧版
+> 多应用固件，不是新版保留功能的承诺。新版只围绕本地音乐、播放控制、
+> Click Wheel 与必要设备设置展开；非音乐应用已从首页与安装包移除，
+> 但底层实现尚未全部从源码与固件中解绑。
+> 以 [纯音乐产品与移除契约](docs/CRAZYPOD_MUSIC_ONLY_SCOPE.zh-CN.md)
+> 为后续开发依据。**当前 Draft 不可作为正式刷机版本。**
+
+
 CrazyPod V1.0 是面向 iPod Classic 6G 硬件系列的实验性独立固件。它使用
 320×240 LVGL 应用轮播界面替换 Rockbox 原界面，同时保留 Rockbox 的编解码器、
 播放引擎、存储、电源、USB 和设备驱动。
@@ -72,7 +80,9 @@ WPS、皮肤引擎、主题系统、插件界面、录音流程、USB Audio、HI
 
 ### 外观
 
-- 16 套图标主题，支持缩放、辉光和高亮设置。
+- 首页保留项目原有的 `basic` 应用图标，启动时缩小缓存，并在资源缺失时使用系统符号兜底。
+- 不再提供其余 15 套位图图标、主题切换及图标缩放选项。
+- 旧外观预设仍兼容读取，其他外观设置不受影响。
 - 主屏幕与菜单壁纸、独立上下圆角设置。
 - 可验证导入与导出的版本化 `.upodtheme` 外观预设。
 - Music、Media、Notes 和 Books 使用对象化拟物预览转场。
@@ -117,21 +127,20 @@ cd build-sim
 1. 仅有 Apple 原厂固件：先安装双启动引导程序。
 2. 已安装 Rockbox 或 CrazyPod：保留现有引导程序，只替换固件资源。
 
-不要只复制 `rockbox.ipod`。发布包还包含必需的编解码器、字体、图标和原生 Mini App。
+不要只复制 `rockbox.ipod`。发布包还包含必需的编解码器、字体、单套基础应用图标和原生 Mini App。
 安装前请确认设备型号、磁盘格式、备份和恢复路径。
 
 ## 设备内容
 
-- 音乐：`/Music`；启用“原系统音乐”后读取 `/iPod_Control/Music`
+- 音乐：`/Music`；启用“原系统音乐”后读取 `/iPod_Control/Music`，并尝试只读
+  `/iPod_Control/iTunes/iTunesDB` 里的歌名、歌手、专辑与专辑歌手信息。
+  按实际文件路径匹配，不改写 Apple 数据库或音频标签；无法读取时退回原文件标签。
+  暂不支持 `iTunesCDB`、SQLite 数据库和 DRM，仍需实机验证。
 - 播客：`/Podcasts`
 - 图片：`/Pictures`
 - 视频：`/Videos`
 - 图书：`/Books`
 - Mini Apps：`/MiniApps`
-- GB / GBC 游戏：`/MiniApps/Games`、`/MiniApps/Games/GB`、`/MiniApps/Games/GBC`，
-  入口为桌面上的“GB / GBC”图标，支持音频、滚轮操作、卡带存档和 RTC。
-  不附带游戏；兼容性和速度需真机验证。详见
-  [GB/GBC 使用说明](docs/CRAZYPOD_GAMEBOY.zh-CN.md)。
 
 ## 控制方式
 

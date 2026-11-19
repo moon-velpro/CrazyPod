@@ -8,30 +8,15 @@
 
 #include "audio.h"
 #include "button.h"
-#include "dir.h"
-#include "file.h"
 #include "kernel.h"
 #include "lvgl.h"
 
-#include "../../crazypod_books.h"
-#include "../../crazypod_frameclock.h"
 #include "../../crazypod_l10n.h"
-#include "../../crazypod_lcd.h"
-#include "../../crazypod_miniapps.h"
-#include "../../miniapps/runtime/crazypod_miniapp_native_runtime.h"
 #include "../../crazypod_music.h"
-#include "../../crazypod_notes.h"
-#include "../../crazypod_organizer.h"
 #include "../../crazypod_runtime_font.h"
 #include "../../crazypod_state.h"
-#include "../../crazypod_videos.h"
-#include "../../crazypod_workouts.h"
-#include "../features/books/crazypod_books_feature.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../features/miniapps/crazypod_miniapps_feature.h"
-#include "../features/notes/crazypod_notes_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
-#include "../features/organizer/crazypod_organizer_feature.h"
 #include "../navigation/crazypod_route_query.h"
 #include "../shell/crazypod_desktop.h"
 #include "../shell/crazypod_headphone_popup.h"
@@ -39,8 +24,10 @@
 #include "../shell/crazypod_notification.h"
 #include "../shell/crazypod_shell.h"
 #include "crazypod_app_input.h"
-#include "crazypod_choice_coordinator.h"
 #include "crazypod_simulator_snapshot.h"
+
+/* Simulator scenarios are a testing facade for the shipping music player.
+ * Retired apps and CPK themes do not have screenshot entry points. */
 
 long crazypod_simulator_snapshot_settle_ticks(void)
 {
@@ -166,558 +153,6 @@ static void select_bounded(
     host->render(false);
 }
 
-static int notes_home_note_start(void)
-{
-    return crazypod_notes_feature_draft_available() ? 2 : 1;
-}
-
-static int notes_home_deleted_index(void)
-{
-    return notes_home_note_start() + crazypod_notes_count(false) + 1;
-}
-
-static bool books_has_continue(void)
-{
-    int index = crazypod_books_recent_index();
-    const struct crazypod_book *book = crazypod_book_get(index);
-
-    return book != NULL && book->progress > 0;
-}
-
-static void open_photos_route(
-    const struct crazypod_simulator_snapshot_host *host,
-    enum crazypod_route route)
-{
-    host->open_app(CRAZYPOD_APP_PHOTOS);
-    host->push_route(route, -1);
-}
-
-static bool apply_cpk_actions(
-    const struct crazypod_simulator_snapshot_host *host,
-    bool now_playing_theme)
-{
-    const char *actions = getenv("CRAZYPOD_SIM_ACTIONS");
-    struct cp_input_event event = {
-        .struct_size = sizeof(event),
-        .steps = 1,
-    };
-    char buffer[1025];
-    char *cursor;
-    char *save = NULL;
-    unsigned count = 0;
-
-    if(actions == NULL || actions[0] == '\0')
-        return true;
-    if(strlen(actions) >= sizeof(buffer))
-        return false;
-    strlcpy(buffer, actions, sizeof(buffer));
-    cursor = strtok_r(buffer, ",", &save);
-    while(cursor != NULL && count++ < 64u) {
-        char *separator = strchr(cursor, ':');
-        int steps = 1;
-
-        if(separator != NULL) {
-            char *end = NULL;
-            *separator++ = '\0';
-            steps = (int)strtol(separator, &end, 10);
-            if(end == separator || *end != '\0' ||
-               steps < 1 || steps > 32)
-                return false;
-        }
-        if(strcmp(cursor, "cw") == 0)
-            event.type = CP_INPUT_WHEEL_CLOCKWISE;
-        else if(strcmp(cursor, "ccw") == 0)
-            event.type = CP_INPUT_WHEEL_COUNTERCLOCKWISE;
-        else if(strcmp(cursor, "left") == 0)
-            event.type = CP_INPUT_LEFT;
-        else if(strcmp(cursor, "right") == 0)
-            event.type = CP_INPUT_RIGHT;
-        else if(strcmp(cursor, "select") == 0)
-            event.type = CP_INPUT_SELECT;
-        else if(strcmp(cursor, "play") == 0)
-            event.type = CP_INPUT_PLAY;
-        else if(strcmp(cursor, "menu") == 0)
-            event.type = CP_INPUT_MENU;
-        else
-            return false;
-        event.steps = (uint8_t)steps;
-        (void)crazypod_miniapps_event(&event);
-        if(now_playing_theme
-               ? !crazypod_now_playing_theme_open()
-               : !crazypod_miniapps_is_open())
-            return false;
-        host->render(false);
-        cursor = strtok_r(NULL, ",", &save);
-    }
-    return cursor == NULL;
-}
-
-static bool open_miniapp_snapshot(
-    const struct crazypod_simulator_snapshot_host *host,
-    const char *id, int page)
-{
-    struct cp_input_event event = {
-        .struct_size = sizeof(event),
-        .steps = 1,
-    };
-    int app_index;
-
-    host->open_app(CRAZYPOD_APP_MINI_APPS);
-    app_index = crazypod_miniapps_find(id);
-    if(app_index < 0)
-        return false;
-    current_route()->selected = app_index;
-    host->activate_selected();
-    if(current_route()->route != MINIAPP_ROUTE_VIEW) {
-        fprintf(
-            stderr,
-            "CrazyPod Mini App smoke failed: %d\n",
-            crazypod_miniapps_feature_last_error());
-        return false;
-    }
-    if(page >= 0) {
-        if(page > 0) {
-            event.type = CP_INPUT_WHEEL_CLOCKWISE;
-            event.steps = (uint8_t)page;
-            (void)crazypod_miniapps_event(&event);
-        }
-        event.type = CP_INPUT_SELECT;
-        event.steps = 1;
-        (void)crazypod_miniapps_event(&event);
-        if(!crazypod_miniapps_is_open())
-            return false;
-        host->render(false);
-    }
-    return apply_cpk_actions(host, false);
-}
-
-void crazypod_simulator_snapshot_write_profile(void)
-{
-    struct cp_diagnostics_snapshot snapshot;
-    char line[512];
-    int file;
-    int length;
-
-    if(getenv("CRAZYPOD_SIM_PROFILE") == NULL ||
-       !crazypod_miniapp_native_diagnostics(&snapshot))
-        return;
-    mkdir("/.crazypod");
-    file = open("/.crazypod/scenario-profile.json",
-                O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if(file < 0)
-        return;
-    length = snprintf(
-        line, sizeof(line),
-        "{\"format\":1,\"memoryUsed\":%lu,\"memoryHighWater\":%lu,"
-        "\"memoryLimit\":%lu,\"uiHandlesUsed\":%lu,"
-        "\"uiHandlesHighWater\":%lu,\"updateLastMs\":%lu,"
-        "\"updateMaxMs\":%lu,\"logCount\":%lu,\"logDropped\":%lu}\n",
-        (unsigned long)snapshot.memory_used,
-        (unsigned long)snapshot.memory_high_water,
-        (unsigned long)snapshot.memory_limit,
-        (unsigned long)snapshot.ui_handles_used,
-        (unsigned long)snapshot.ui_handles_high_water,
-        (unsigned long)snapshot.update_last_ms,
-        (unsigned long)snapshot.update_max_ms,
-        (unsigned long)snapshot.log_count,
-        (unsigned long)snapshot.log_dropped);
-    if(length > 0)
-        (void)write(file, line,
-            (size_t)length < sizeof(line) ? (size_t)length : sizeof(line) - 1u);
-    close(file);
-}
-
-static bool open_now_playing_theme_snapshot(
-    const struct crazypod_simulator_snapshot_host *host,
-    const char *id)
-{
-    bool custom = id != NULL;
-    (void)crazypod_now_playing_theme_choice_count();
-    int theme_index = custom
-        ? crazypod_now_playing_themes_find(id) : -1;
-    int index = custom ? theme_index + 1 : 0;
-
-    if((custom && theme_index < 0) ||
-       !crazypod_now_playing_theme_select(index)) {
-        fprintf(stderr,
-                "CrazyPod now-playing theme smoke failed: index=%d count=%d\n",
-                theme_index, crazypod_now_playing_themes_count());
-        return false;
-    }
-    host->open_root_route(MUSIC_ROUTE_NOW_PLAYING);
-    if(custom && !crazypod_now_playing_theme_open())
-        fprintf(stderr,
-                "CrazyPod now-playing theme open failed: %d\n",
-                crazypod_now_playing_theme_last_error());
-    return custom
-        ? crazypod_now_playing_theme_open() &&
-            apply_cpk_actions(host, true)
-        : !crazypod_now_playing_theme_open();
-}
-
-static bool cycle_all_now_playing_themes(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    int count = crazypod_now_playing_theme_choice_count();
-    int index;
-
-    if(count <= 1)
-        return false;
-    for(index = 1; index < count; ++index) {
-        if(!crazypod_now_playing_theme_select(index))
-            return false;
-        host->open_root_route(MUSIC_ROUTE_NOW_PLAYING);
-        if(!crazypod_now_playing_theme_open()) {
-            fprintf(stderr,
-                    "CrazyPod theme cycle failed: index=%d error=%d\n",
-                    index, crazypod_now_playing_theme_last_error());
-            return false;
-        }
-        host->render(false);
-    }
-    return true;
-}
-
-static bool open_now_playing_theme_from_home_hold(void)
-{
-    int theme_index;
-    const struct route_state *route;
-
-    (void)crazypod_now_playing_theme_choice_count();
-    theme_index = crazypod_now_playing_themes_find(
-        "now-playing-neon");
-    if(theme_index < 0 ||
-       !crazypod_now_playing_theme_select(theme_index + 1) ||
-       crazypod_shell_product_active())
-        return false;
-
-    crazypod_app_input_handle(BUTTON_MENU, 0, current_tick);
-    crazypod_app_input_tick(current_tick + HZ, false);
-    route = crazypod_ui_routes_current();
-    if(route == NULL || route->route != MUSIC_ROUTE_NOW_PLAYING ||
-       !crazypod_now_playing_theme_open())
-        return false;
-
-    crazypod_app_input_handle(
-        BUTTON_MENU | BUTTON_REPEAT, 0, current_tick + HZ / 2 + 1);
-    crazypod_app_input_handle(
-        BUTTON_MENU | BUTTON_REL, 0, current_tick + HZ / 2 + 2);
-    route = crazypod_ui_routes_current();
-    return route != NULL && route->route == MUSIC_ROUTE_NOW_PLAYING &&
-        crazypod_now_playing_theme_open();
-}
-
-static bool exercise_now_playing_theme_controls(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    static const long buttons[] = {
-        BUTTON_SCROLL_FWD,
-        BUTTON_SCROLL_BACK,
-        BUTTON_LEFT,
-        BUTTON_RIGHT,
-        BUTTON_SELECT,
-        BUTTON_PLAY,
-    };
-    unsigned int index;
-
-    if(!open_now_playing_theme_snapshot(
-           host, "now-playing-neon"))
-        return false;
-    for(index = 0; index <
-         sizeof(buttons) / sizeof(buttons[0]); ++index) {
-        struct crazypod_input_event event =
-            crazypod_input_event_make(buttons[index], 0);
-
-        if(!crazypod_now_playing_theme_handle_input(&event) ||
-           !crazypod_now_playing_theme_open())
-            return false;
-    }
-    host->render(false);
-    return crazypod_now_playing_theme_open();
-}
-
-static bool exercise_signal_theme_controls(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    static const long buttons[] = {
-        BUTTON_SCROLL_FWD,
-        BUTTON_SCROLL_BACK,
-        BUTTON_LEFT,
-        BUTTON_RIGHT,
-        BUTTON_SELECT,
-        BUTTON_PLAY,
-    };
-    unsigned int index;
-
-    if(!open_now_playing_theme_snapshot(
-           host, "now-playing-signal"))
-        return false;
-    for(index = 0; index <
-         sizeof(buttons) / sizeof(buttons[0]); ++index) {
-        struct crazypod_input_event event =
-            crazypod_input_event_make(buttons[index], 0);
-
-        if(!crazypod_now_playing_theme_handle_input(&event) ||
-           !crazypod_now_playing_theme_open())
-            return false;
-    }
-    host->render(false);
-    return crazypod_now_playing_theme_open();
-}
-
-static bool open_signal_theme_panel(
-    const struct crazypod_simulator_snapshot_host *host,
-    int action)
-{
-    struct crazypod_input_event right =
-        crazypod_input_event_make(BUTTON_RIGHT, 0);
-    struct crazypod_input_event select =
-        crazypod_input_event_make(BUTTON_SELECT, 0);
-    int index;
-
-    if(crazypod_music_track_count() < 2 ||
-       !crazypod_music_play(CRAZYPOD_SCOPE_ALL, 0, 0) ||
-       !open_now_playing_theme_snapshot(host, "now-playing-signal") ||
-       !crazypod_now_playing_theme_handle_input(&select))
-        return false;
-    if(action >= 0) {
-        for(index = 0; index < action; ++index)
-            if(!crazypod_now_playing_theme_handle_input(&right))
-                return false;
-        if(!crazypod_now_playing_theme_handle_input(&select))
-            return false;
-    }
-    host->render(false);
-    return crazypod_now_playing_theme_open();
-}
-
-static bool exercise_signal_theme_panels(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    struct crazypod_input_event right =
-        crazypod_input_event_make(BUTTON_RIGHT, 0);
-    struct crazypod_input_event select =
-        crazypod_input_event_make(BUTTON_SELECT, 0);
-    struct crazypod_input_event menu =
-        crazypod_input_event_make(BUTTON_MENU, 0);
-    struct crazypod_input_event wheel =
-        crazypod_input_event_make(BUTTON_SCROLL_FWD, 0);
-
-    if(crazypod_music_track_count() < 2 ||
-       !crazypod_music_play(CRAZYPOD_SCOPE_ALL, 0, 0) ||
-       !open_now_playing_theme_snapshot(host, "now-playing-signal") ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&menu) ||
-       !crazypod_miniapps_feature_modal_visible())
-        return false;
-
-    if(!crazypod_now_playing_theme_handle_input(&right) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&right) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible())
-        return false;
-
-    if(!crazypod_now_playing_theme_handle_input(&right) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&menu) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&right) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&wheel) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&menu) ||
-       crazypod_miniapps_feature_modal_visible())
-        return false;
-
-    host->render(false);
-    return crazypod_now_playing_theme_open();
-}
-
-static bool open_now_playing_theme_panel(
-    const struct crazypod_simulator_snapshot_host *host,
-    bool queue)
-{
-    struct crazypod_input_event select =
-        crazypod_input_event_make(BUTTON_SELECT, 0);
-
-    if(crazypod_music_track_count() < 2 ||
-       !crazypod_music_play(CRAZYPOD_SCOPE_ALL, 0, 0) ||
-       !open_now_playing_theme_snapshot(
-           host, "now-playing-neon") ||
-       !crazypod_now_playing_theme_handle_input(&select))
-        return false;
-    if(queue && !crazypod_now_playing_theme_handle_input(&select))
-        return false;
-    host->render(false);
-    return crazypod_now_playing_theme_open();
-}
-
-static bool scroll_now_playing_theme_panel_repeated(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    struct crazypod_input_event wheel =
-        crazypod_input_event_make(
-            BUTTON_SCROLL_FWD | BUTTON_REPEAT, 0);
-
-    if(!open_now_playing_theme_panel(host, false) ||
-       !crazypod_now_playing_theme_handle_input(&wheel) ||
-       !crazypod_now_playing_theme_handle_input(&wheel) ||
-       !crazypod_now_playing_theme_handle_input(&wheel))
-        return false;
-    return crazypod_miniapps_feature_input_count() == 1 &&
-        crazypod_now_playing_theme_open();
-}
-
-static bool exercise_now_playing_transform_layers(
-    const struct crazypod_simulator_snapshot_host *host,
-    bool playback_mode)
-{
-    const char *theme_id = getenv("CRAZYPOD_SIM_THEME_ID");
-    struct crazypod_input_event select =
-        crazypod_input_event_make(BUTTON_SELECT, 0);
-    struct crazypod_input_event right =
-        crazypod_input_event_make(BUTTON_RIGHT, 0);
-    struct crazypod_input_event wheel =
-        crazypod_input_event_make(BUTTON_SCROLL_FWD, 0);
-
-    if(theme_id == NULL || theme_id[0] == '\0' ||
-       !open_now_playing_theme_snapshot(host, theme_id) ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible())
-        return false;
-    if(playback_mode) {
-        if(!crazypod_now_playing_theme_handle_input(&right) ||
-           !crazypod_now_playing_theme_handle_input(&right) ||
-           !crazypod_now_playing_theme_handle_input(&select) ||
-           !crazypod_now_playing_theme_handle_input(&wheel) ||
-           !crazypod_now_playing_theme_handle_input(&wheel) ||
-           !crazypod_now_playing_theme_handle_input(&wheel))
-            return false;
-    }
-    else if(!crazypod_now_playing_theme_handle_input(&wheel) ||
-            !crazypod_now_playing_theme_handle_input(&wheel))
-        return false;
-    host->render(false);
-    return crazypod_now_playing_theme_open() &&
-        crazypod_miniapps_feature_modal_visible();
-}
-
-static bool return_from_saved_seek_with_menu(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    struct crazypod_input_event right =
-        crazypod_input_event_make(BUTTON_RIGHT, 0);
-    struct crazypod_input_event select =
-        crazypod_input_event_make(BUTTON_SELECT, 0);
-    struct crazypod_input_event menu =
-        crazypod_input_event_make(BUTTON_MENU, 0);
-    unsigned index;
-
-    if(!open_now_playing_theme_panel(host, false))
-        return false;
-    for(index = 0; index < 4; ++index)
-        if(!crazypod_now_playing_theme_handle_input(&right))
-            return false;
-    if(!crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&select) ||
-       !crazypod_miniapps_feature_modal_visible() ||
-       !crazypod_now_playing_theme_handle_input(&menu) ||
-       crazypod_miniapps_feature_modal_visible())
-        return false;
-    host->render(false);
-    return crazypod_now_playing_theme_open();
-}
-
-static bool exit_now_playing_theme_with_menu(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    struct crazypod_input_event menu =
-        crazypod_input_event_make(BUTTON_MENU, 0);
-
-    if(!open_now_playing_theme_snapshot(
-           host, "now-playing-neon") ||
-       crazypod_now_playing_theme_handle_input(&menu))
-        return false;
-    host->pop_route();
-    return !crazypod_now_playing_theme_open();
-}
-
-static bool open_now_playing_theme_media(
-    const struct crazypod_simulator_snapshot_host *host,
-    unsigned selected_index)
-{
-    const char *theme_id = getenv("CRAZYPOD_SIM_THEME_ID");
-
-    if(theme_id == NULL || theme_id[0] == '\0')
-        theme_id = "now-playing-neon";
-    if(crazypod_music_track_count() < 2 ||
-       selected_index >= (unsigned)crazypod_music_track_count() ||
-       !crazypod_music_play(
-           CRAZYPOD_SCOPE_ALL, 0, (int)selected_index) ||
-       !open_now_playing_theme_snapshot(
-           host, theme_id))
-        return false;
-    return crazypod_now_playing_theme_open();
-}
-
-static bool open_now_playing_theme_media_next(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    struct crazypod_input_event event =
-        crazypod_input_event_make(BUTTON_RIGHT, 0);
-
-    return open_now_playing_theme_media(host, 0) &&
-        crazypod_now_playing_theme_handle_input(&event) &&
-        crazypod_now_playing_theme_open();
-}
-
-static bool open_now_playing_theme_real_library(
-    const struct crazypod_simulator_snapshot_host *host,
-    const char *id)
-{
-    crazypod_music_cancel_scan();
-    crazypod_music_scan();
-    if(crazypod_music_track_count() <= 0 ||
-       !crazypod_music_play(CRAZYPOD_SCOPE_ALL, 0, 0))
-        return false;
-    return open_now_playing_theme_snapshot(host, id);
-}
-
-static bool exercise_now_playing_theme_media_controls(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    if(!open_now_playing_theme_media(host, 0))
-        return false;
-    return exercise_now_playing_theme_controls(host);
-}
-
-static bool build_now_playing_theme_media_catalog(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    crazypod_music_cancel_scan();
-    crazypod_music_scan();
-    return crazypod_music_track_count() >= 2 &&
-        open_now_playing_theme_snapshot(host, NULL);
-}
-
-static bool open_now_playing_default_media(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    return crazypod_music_track_count() >= 2 &&
-        crazypod_music_play(CRAZYPOD_SCOPE_ALL, 0, 0) &&
-        open_now_playing_theme_snapshot(host, NULL);
-}
-
 static bool open_lock_playback_snapshot(
     const struct crazypod_simulator_snapshot_host *host,
     bool paused)
@@ -755,17 +190,14 @@ static bool open_lock_cjk_snapshot(
     return true;
 }
 
-static bool open_now_playing_default_lyrics(
+static bool open_now_playing_default_media(
     const struct crazypod_simulator_snapshot_host *host)
 {
-    if(!open_now_playing_default_media(host))
+    if(crazypod_music_track_count() < 2 ||
+       !crazypod_music_play(CRAZYPOD_SCOPE_ALL, 0, 0))
         return false;
-    crazypod_now_playing_overlay_show_actions();
-    crazypod_now_playing_overlay_move(3);
-    crazypod_now_playing_overlay_activate();
-    crazypod_now_playing_overlay_dismiss(true);
-    host->render(false);
-    return crazypod_now_playing_lyrics_mode();
+    host->open_root_route(MUSIC_ROUTE_NOW_PLAYING);
+    return true;
 }
 
 static bool open_now_playing_default_actions(
@@ -802,184 +234,17 @@ static bool open_now_playing_default_progress(
         CRAZYPOD_NOW_OVERLAY_PROGRESS;
 }
 
-static bool show_miniapp_exit_prompt(
+static bool open_now_playing_default_lyrics(
     const struct crazypod_simulator_snapshot_host *host)
 {
-    if(!crazypod_miniapps_feature_simulate_long_menu(
-           current_tick, HZ))
+    if(!open_now_playing_default_media(host))
         return false;
+    crazypod_now_playing_overlay_show_actions();
+    crazypod_now_playing_overlay_move(3);
+    crazypod_now_playing_overlay_activate();
+    crazypod_now_playing_overlay_dismiss(true);
     host->render(false);
-    return crazypod_miniapps_feature_exit_prompt_visible();
-}
-
-static struct crazypod_simulator_snapshot_host capability_action_host;
-
-static void service_capability_action(lv_timer_t *timer)
-{
-    struct cp_input_event event = {
-        .struct_size = sizeof(event),
-        .type = CP_INPUT_SELECT,
-        .steps = 1,
-    };
-
-    (void)crazypod_miniapps_event(&event);
-    capability_action_host.render(false);
-    lv_timer_delete(timer);
-}
-
-static bool open_capability_action(
-    const struct crazypod_simulator_snapshot_host *host,
-    int page)
-{
-    if(!open_miniapp_snapshot(host, "capability-lab", page))
-        return false;
-    capability_action_host = *host;
-    lv_timer_create(service_capability_action, 250, NULL);
-    return crazypod_miniapps_is_open();
-}
-
-static bool open_capability_directory(
-    const struct crazypod_simulator_snapshot_host *host,
-    int focused_entry)
-{
-    struct cp_input_event event = {
-        .struct_size = sizeof(event),
-        .type = CP_INPUT_WHEEL_CLOCKWISE,
-        .steps = (uint8_t)focused_entry,
-    };
-
-    if(!open_miniapp_snapshot(host, "capability-lab", -1))
-        return false;
-    if(focused_entry > 0)
-        (void)crazypod_miniapps_event(&event);
-    return crazypod_miniapps_is_open();
-}
-
-struct game2048_scene_event {
-    uint8_t type;
-    uint8_t steps;
-};
-
-static void schedule_game2048_scene(
-    const struct crazypod_simulator_snapshot_host *host,
-    const struct game2048_scene_event *events, uint8_t count,
-    bool show_pause);
-
-static bool send_miniapp_event(
-    const struct crazypod_simulator_snapshot_host *host,
-    uint8_t type, int steps)
-{
-    struct cp_input_event event = {
-        .struct_size = sizeof(event),
-        .type = type,
-        .steps = (uint8_t)(steps > 0 ? steps : 1),
-    };
-
-    bool handled = crazypod_miniapps_event(&event);
-
-    host->render(false);
-    lv_refr_now(NULL);
-    crazypod_present_now();
-    return handled;
-}
-
-static struct {
-    struct crazypod_simulator_snapshot_host host;
-    struct game2048_scene_event events[4];
-    uint8_t count;
-    uint8_t index;
-    bool show_pause;
-} game2048_scene_plan;
-
-static void service_game2048_scene(lv_timer_t *timer)
-{
-    while(game2048_scene_plan.index < game2048_scene_plan.count &&
-          crazypod_miniapps_is_open()) {
-        const struct game2048_scene_event *event =
-            &game2048_scene_plan.events[game2048_scene_plan.index++];
-
-        (void)send_miniapp_event(
-            &game2048_scene_plan.host,
-            event->type, event->steps);
-    }
-    if(game2048_scene_plan.show_pause &&
-       crazypod_miniapps_is_open()) {
-        (void)crazypod_miniapps_ui_event(
-            3, CP_UI_EVENT_SELECT, 0, 0);
-        game2048_scene_plan.host.render(false);
-    }
-    lv_timer_delete(timer);
-}
-
-static void schedule_game2048_scene(
-    const struct crazypod_simulator_snapshot_host *host,
-    const struct game2048_scene_event *events, uint8_t count,
-    bool show_pause)
-{
-    game2048_scene_plan.host = *host;
-    memcpy(
-        game2048_scene_plan.events,
-        events,
-        count * sizeof(*events));
-    game2048_scene_plan.count = count;
-    game2048_scene_plan.index = 0;
-    game2048_scene_plan.show_pause = show_pause;
-    lv_timer_create(service_game2048_scene, 150, NULL);
-}
-
-static bool open_game2048_scene(
-    const struct crazypod_simulator_snapshot_host *host,
-    const char *scene)
-{
-    struct game2048_scene_event events[3];
-    uint8_t count = 0;
-
-    if(!open_miniapp_snapshot(host, "game2048", -1))
-        return false;
-    if(strcmp(scene, "game2048") == 0)
-        return true;
-    if(strcmp(scene, "game2048-exit-prompt") == 0)
-        return show_miniapp_exit_prompt(host);
-    if(strcmp(scene, "game2048-game") == 0 ||
-       strcmp(scene, "game2048-moved") == 0 ||
-       strcmp(scene, "game2048-pause") == 0)
-        events[count++] = (struct game2048_scene_event) {
-            CP_INPUT_SELECT, 1
-        };
-    else
-        return false;
-    if(strcmp(scene, "game2048-moved") == 0) {
-        events[count++] = (struct game2048_scene_event) {
-            CP_INPUT_LEFT, 1
-        };
-        events[count++] = (struct game2048_scene_event) {
-            CP_INPUT_RIGHT, 1
-        };
-    }
-    schedule_game2048_scene(
-        host, events, count,
-        strcmp(scene, "game2048-pause") == 0);
-    return true;
-}
-
-static bool open_game2048_exit_scene(
-    const struct crazypod_simulator_snapshot_host *host,
-    bool open_notes)
-{
-    if(host->pop_route == NULL ||
-       !open_miniapp_snapshot(host, "game2048", -1))
-        return false;
-    host->pop_route();
-    if(current_route() == NULL ||
-       current_route()->route != UTILITIES_ROUTE_MENU ||
-       crazypod_miniapps_is_open())
-        return false;
-    if(!open_notes)
-        return true;
-    host->pop_route();
-    host->open_app(CRAZYPOD_APP_NOTES);
-    return current_route() != NULL &&
-        current_route()->route == NOTES_ROUTE_MENU;
+    return crazypod_now_playing_lyrics_mode();
 }
 
 bool crazypod_simulator_snapshot_prepare(
@@ -1005,22 +270,19 @@ bool crazypod_simulator_snapshot_prepare(
             }
         }
     }
-    if(screen != NULL &&
-       strcmp(screen, "notification-success") == 0) {
+    if(screen == NULL || strcmp(screen, "home") == 0)
+        return true;
+    if(strcmp(screen, "notification-success") == 0) {
         crazypod_notification_show_for(
-            CRAZYPOD_NOTIFICATION_SUCCESS,
-            CP_TR("Saved to Photos"), 5000);
+            CRAZYPOD_NOTIFICATION_SUCCESS, CP_TR("Saved"), 5000);
         return true;
     }
-    if(screen != NULL &&
-       strcmp(screen, "notification-error") == 0) {
+    if(strcmp(screen, "notification-error") == 0) {
         crazypod_notification_show_for(
             CRAZYPOD_NOTIFICATION_ERROR,
             CP_TR("Screenshot failed"), 5000);
         return true;
     }
-    if(screen == NULL || strcmp(screen, "home") == 0)
-        return true;
     if(strcmp(screen, "hold-feedback") == 0) {
         crazypod_desktop_hold_feedback_begin(
             LV_SYMBOL_AUDIO, 900);
@@ -1038,163 +300,94 @@ bool crazypod_simulator_snapshot_prepare(
         crazypod_headphone_popup_simulator_show();
         return true;
     }
-    if(strcmp(screen, "lock") == 0) {
+    if(strcmp(screen, "lock") == 0 ||
+       strcmp(screen, "lock-progress") == 0) {
         audio_stop();
         host->show_lock(false);
+        if(strcmp(screen, "lock-progress") == 0)
+            crazypod_lock_screen_simulator_set_progress(58);
+        return true;
     }
-    else if(strcmp(screen, "lock-progress") == 0) {
-        audio_stop();
-        host->show_lock(false);
-        crazypod_lock_screen_simulator_set_progress(58);
-    }
-    else if(strcmp(screen, "lock-playing-progress") == 0) {
-        if(!open_lock_playback_snapshot(host, false))
+    if(strcmp(screen, "lock-playing") == 0 ||
+       strcmp(screen, "lock-paused") == 0 ||
+       strcmp(screen, "lock-playing-progress") == 0) {
+        if(!open_lock_playback_snapshot(
+               host, strcmp(screen, "lock-paused") == 0))
             return false;
-        crazypod_lock_screen_simulator_set_progress(58);
+        if(strcmp(screen, "lock-playing-progress") == 0)
+            crazypod_lock_screen_simulator_set_progress(58);
+        return true;
     }
-    else if(strcmp(screen, "lock-playing") == 0)
-        return open_lock_playback_snapshot(host, false);
-    else if(strcmp(screen, "lock-playing-cjk") == 0)
+    if(strcmp(screen, "lock-playing-cjk") == 0)
         return open_lock_cjk_snapshot(host);
-    else if(strcmp(screen, "lock-paused") == 0)
-        return open_lock_playback_snapshot(host, true);
-    else if(strcmp(screen, "runtime-font-catalog") == 0)
+    if(strcmp(screen, "runtime-font-catalog") == 0)
         return open_runtime_font_catalog();
-    else if(strcmp(screen, "power") == 0)
+    if(strcmp(screen, "power") == 0) {
         host->show_power_prompt();
-    else if(strcmp(screen, "coverflow") == 0)
-        host->open_root_route(MUSIC_ROUTE_ALBUM_FLOW);
-    else if(strcmp(screen, "coverflow-power") == 0) {
-        host->open_root_route(MUSIC_ROUTE_ALBUM_FLOW);
-        host->show_power_prompt();
+        return true;
     }
-    else if(sscanf(screen, "music-%d", &preview_index) == 1) {
+    if(strcmp(screen, "coverflow") == 0 ||
+       strcmp(screen, "coverflow-power") == 0) {
+        host->open_root_route(MUSIC_ROUTE_ALBUM_FLOW);
+        if(strcmp(screen, "coverflow-power") == 0)
+            host->show_power_prompt();
+        return true;
+    }
+    if(sscanf(screen, "music-%d", &preview_index) == 1) {
         host->open_app(CRAZYPOD_APP_MUSIC);
         if(current_route() != NULL &&
            current_route()->route == MUSIC_ROUTE_MENU)
             select_bounded(host, preview_index);
+        return true;
     }
-    else if(sscanf(screen, "play-video-%d", &preview_index) == 1) {
-        const char *requested_path =
-            getenv("CRAZYPOD_SIM_VIDEO_PATH");
-        enum crazypod_video_result result =
-            CRAZYPOD_VIDEO_INVALID_FILE;
-        int count;
-        int index;
-
-        open_photos_route(host, PHOTOS_ROUTE_VIDEOS);
-        /* Snapshot playback must observe the fixture files from this run,
-         * never a copied or stale catalog. */
-        crazypod_videos_resume();
-        crazypod_videos_set_lock_suspended(false);
-        crazypod_videos_set_route_suspended(false);
-        crazypod_videos_refresh();
-        count = item_count();
-        if(requested_path != NULL) {
-            preview_index = -1;
-            for(index = 0; index < count; ++index) {
-                const char *path = crazypod_video_path(index);
-
-                if(path != NULL && strcmp(path, requested_path) == 0) {
-                    preview_index = index;
-                    break;
-                }
-            }
-        }
-        select_bounded(host, preview_index);
-        lv_refr_now(NULL);
-        crazypod_present_now();
-        if(count > 0 && preview_index >= 0) {
-            result = crazypod_video_play(current_route()->selected);
-        }
-        fprintf(stderr, "CrazyPod video smoke: path=%s result=%d (%s)\n",
-                requested_path != NULL ? requested_path : "<catalog-index>",
-                result, crazypod_video_result_message(result));
-        host->render(false);
-        if(getenv("CRAZYPOD_SIM_EXIT_AFTER_DUMP") != NULL)
-            exit(result == CRAZYPOD_VIDEO_OK ? 0 : 2);
-        return false;
+    if(strcmp(screen, "music") == 0) {
+        host->open_app(CRAZYPOD_APP_MUSIC);
+        return true;
     }
-    else if(sscanf(screen, "videos-%d", &preview_index) == 1) {
-        open_photos_route(host, PHOTOS_ROUTE_VIDEOS);
-        select_bounded(host, preview_index);
+    if(strcmp(screen, "podcasts") == 0) {
+        host->open_app(CRAZYPOD_APP_PODCASTS);
+        return true;
     }
-    else if(sscanf(screen, "media-%d", &preview_index) == 1 ||
-            sscanf(screen, "photos-%d", &preview_index) == 1) {
-        host->open_app(CRAZYPOD_APP_PHOTOS);
-        if(preview_index < 0)
-            preview_index = 0;
-        if(preview_index > 3)
-            preview_index = 3;
-        current_route()->selected = preview_index;
-        host->render(false);
+    if(strcmp(screen, "settings") == 0) {
+        host->open_app(CRAZYPOD_APP_SETTINGS);
+        return true;
     }
-    else if(sscanf(screen, "delete-photos-%d", &preview_index) == 1) {
-        open_photos_route(host, PHOTOS_ROUTE_DELETE_PHOTOS);
-        select_bounded(host, preview_index);
-    }
-    else if(sscanf(
-                screen, "delete-photo-confirm-%d",
-                &preview_index) == 1) {
-        open_photos_route(host, PHOTOS_ROUTE_DELETE_PHOTOS);
-        select_bounded(host, preview_index);
-        if(item_count() > 0)
-            host->activate_selected();
-    }
-    else if(sscanf(screen, "books-%d", &preview_index) == 1) {
-        host->open_app(CRAZYPOD_APP_BOOKS);
-        select_bounded(host, preview_index);
-    }
-    else if(strcmp(screen, "notes-new") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        select_bounded(host, 0);
-    }
-    else if(strcmp(screen, "notes-draft") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        select_bounded(
-            host, crazypod_notes_feature_draft_available() ? 1 : 0);
-    }
-    else if(strcmp(screen, "notes-item") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        select_bounded(
-            host, crazypod_notes_count(false) > 0
-                ? notes_home_note_start() : 0);
-    }
-    else if(strcmp(screen, "notes-search") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        select_bounded(host, notes_home_deleted_index() - 1);
-    }
-    else if(strcmp(screen, "notes-deleted") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        select_bounded(host, notes_home_deleted_index());
-    }
-    else if(strcmp(screen, "more") == 0)
-        host->open_app(CRAZYPOD_APP_EXTRAS);
-    else if(strcmp(screen, "more-second") == 0) {
-        host->open_app(CRAZYPOD_APP_EXTRAS);
-        select_bounded(host, 1);
-    }
-    else if(sscanf(
-                screen, "settings-main-menu-reorder-%d",
-                &preview_index) == 1) {
-        host->open_root_route(SETTINGS_ROUTE_MAIN_MENU);
-        select_bounded(host, preview_index);
-        host->activate_selected();
-        host->move_selection(1);
-        host->activate_selected();
-        host->move_selection(1);
-    }
-    else if(sscanf(
-                screen, "settings-main-menu-actions-%d",
-                &preview_index) == 1) {
-        host->open_root_route(SETTINGS_ROUTE_MAIN_MENU);
-        select_bounded(host, preview_index);
-        host->activate_selected();
-    }
-    else if(strcmp(screen, "settings-main-menu") == 0)
+    if(strcmp(screen, "settings-main-menu") == 0)
         host->open_root_route(SETTINGS_ROUTE_MAIN_MENU);
     else if(strcmp(screen, "settings-power") == 0)
         host->open_root_route(SETTINGS_ROUTE_POWER);
+    else if(strcmp(screen, "settings-display") == 0)
+        host->open_root_route(SETTINGS_ROUTE_DISPLAY);
+    else if(strcmp(screen, "settings-sound") == 0)
+        host->open_root_route(SETTINGS_ROUTE_SOUND);
+    else if(strcmp(screen, "settings-playback") == 0)
+        host->open_root_route(SETTINGS_ROUTE_PLAYBACK);
+    else if(strcmp(screen, "settings-eq") == 0)
+        host->open_root_route(SETTINGS_ROUTE_EQ_STUDIO);
+    else if(strcmp(screen, "settings-controls") == 0)
+        host->open_root_route(SETTINGS_ROUTE_CONTROLS);
+    else if(strcmp(screen, "settings-main-menu-reorder") == 0) {
+        host->open_root_route(SETTINGS_ROUTE_MAIN_MENU);
+        host->activate_selected();
+        host->move_selection(1);
+    }
+    else if(sscanf(screen,
+                "settings-main-menu-reorder-%d",
+                &preview_index) == 1) {
+        host->open_root_route(SETTINGS_ROUTE_MAIN_MENU);
+        select_bounded(host, preview_index);
+        host->activate_selected();
+        host->move_selection(1);
+        host->activate_selected();
+        host->move_selection(1);
+    }
+    else if(sscanf(screen,
+                "settings-main-menu-actions-%d",
+                &preview_index) == 1) {
+        host->open_root_route(SETTINGS_ROUTE_MAIN_MENU);
+        select_bounded(host, preview_index);
+        host->activate_selected();
+    }
     else if(strcmp(screen, "settings-language") == 0 ||
             strcmp(screen, "settings-language-receipt") == 0) {
         host->open_root_route(SETTINGS_ROUTE_MENU);
@@ -1207,73 +400,15 @@ bool crazypod_simulator_snapshot_prepare(
         host->open_root_route(SETTINGS_ROUTE_DISPLAY);
         select_bounded(host, item_count() - 1);
     }
-    else if(strcmp(screen, "notes") == 0)
-        host->open_app(CRAZYPOD_APP_NOTES);
-    else if(strcmp(screen, "miniapps-list") == 0)
-        host->open_app(CRAZYPOD_APP_MINI_APPS);
-    else if(strcmp(screen, "customize") == 0)
-        host->open_app(CRAZYPOD_APP_CUSTOMIZE);
-    else if(strcmp(screen, "customize-headphones") == 0) {
-        crazypod_state_set_headphone_popup_style(
-            CRAZYPOD_HEADPHONE_POPUP_WIRED_EARBUDS);
-        host->open_app(CRAZYPOD_APP_CUSTOMIZE);
-        select_bounded(host, 5);
-        host->activate_selected();
+    else if(strcmp(screen, "home-actions") == 0)
+        host->open_root_route(HOME_ROUTE_ACTIONS);
+    else if(strcmp(screen, "home-brightness") == 0)
+        host->open_root_route(HOME_ROUTE_BRIGHTNESS);
+    else if(strcmp(screen, "home-volume") == 0)
+        host->open_root_route(HOME_ROUTE_VOLUME);
+    else if(strcmp(screen, "now-playing-default") == 0) {
+        host->open_root_route(MUSIC_ROUTE_NOW_PLAYING);
     }
-    else if(strcmp(screen, "now-playing-theme") == 0)
-        return open_now_playing_theme_snapshot(
-            host, "now-playing-neon");
-    else if(strcmp(screen, "now-playing-theme-cycle-all") == 0)
-        return cycle_all_now_playing_themes(host);
-    else if(strcmp(screen, "now-playing-theme-home-hold") == 0)
-        return open_now_playing_theme_from_home_hold();
-    else if(strcmp(screen, "now-playing-theme-rerender") == 0) {
-        if(!open_now_playing_theme_snapshot(
-               host, "now-playing-neon"))
-            return false;
-        host->render(false);
-        return crazypod_now_playing_theme_open() &&
-            crazypod_miniapps_feature_surface_attached(
-                crazypod_shell_product_content());
-    }
-    else if(strcmp(screen, "now-playing-theme-controls") == 0)
-        return exercise_now_playing_theme_controls(host);
-    else if(strcmp(screen, "now-playing-signal-controls") == 0)
-        return exercise_signal_theme_controls(host);
-    else if(strcmp(screen, "now-playing-signal-all-panels") == 0)
-        return exercise_signal_theme_panels(host);
-    else if(strcmp(screen, "now-playing-signal-panel") == 0)
-        return open_signal_theme_panel(host, -1);
-    else if(strcmp(screen, "now-playing-signal-queue") == 0)
-        return open_signal_theme_panel(host, 0);
-    else if(strcmp(screen, "now-playing-signal-mode") == 0)
-        return open_signal_theme_panel(host, 2);
-    else if(strcmp(screen, "now-playing-signal-lyrics") == 0)
-        return open_signal_theme_panel(host, 3);
-    else if(strcmp(screen, "now-playing-signal-seek") == 0)
-        return open_signal_theme_panel(host, 4);
-    else if(strcmp(screen, "now-playing-theme-panel") == 0)
-        return open_now_playing_theme_panel(host, false);
-    else if(strcmp(screen, "now-playing-theme-panel-repeat") == 0)
-        return scroll_now_playing_theme_panel_repeated(host);
-    else if(strcmp(screen, "now-playing-transform-layers") == 0)
-        return exercise_now_playing_transform_layers(host, false);
-    else if(strcmp(screen, "now-playing-transform-mode-layers") == 0)
-        return exercise_now_playing_transform_layers(host, true);
-    else if(strcmp(screen, "now-playing-theme-seek-menu-back") == 0)
-        return return_from_saved_seek_with_menu(host);
-    else if(strcmp(screen, "now-playing-theme-queue") == 0)
-        return open_now_playing_theme_panel(host, true);
-    else if(strcmp(screen, "now-playing-theme-menu-exit") == 0)
-        return exit_now_playing_theme_with_menu(host);
-    else if(strcmp(screen, "now-playing-theme-media-controls") == 0)
-        return exercise_now_playing_theme_media_controls(host);
-    else if(strcmp(screen, "now-playing-theme-media") == 0)
-        return open_now_playing_theme_media(host, 0);
-    else if(strcmp(screen, "now-playing-theme-media-next") == 0)
-        return open_now_playing_theme_media_next(host);
-    else if(strcmp(screen, "now-playing-theme-media-catalog") == 0)
-        return build_now_playing_theme_media_catalog(host);
     else if(strcmp(screen, "now-playing-default-media") == 0)
         return open_now_playing_default_media(host);
     else if(strcmp(screen, "now-playing-default-actions") == 0)
@@ -1284,137 +419,12 @@ bool crazypod_simulator_snapshot_prepare(
         return open_now_playing_default_progress(host);
     else if(strcmp(screen, "now-playing-default-lyrics") == 0)
         return open_now_playing_default_lyrics(host);
-    else if(strcmp(screen, "now-playing-default") == 0)
-        return open_now_playing_theme_snapshot(host, NULL);
-    else if(strcmp(screen, "note-compose") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        host->begin_note_composer(0, false);
+    else {
+        fprintf(stderr,
+                "CrazyPod unsupported music-only snapshot: %s\n",
+                screen);
+        return false;
     }
-    else if(strcmp(screen, "note-exit-actions") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        host->begin_note_composer(0, false);
-        host->push_route(NOTES_ROUTE_EXIT_ACTIONS, -1);
-    }
-    else if(strcmp(screen, "note-exit-failure") == 0) {
-        host->open_app(CRAZYPOD_APP_NOTES);
-        host->begin_note_composer(0, false);
-        host->push_route(NOTES_ROUTE_EXIT_ACTIONS, -1);
-        host->activate_selected();
-    }
-    else if(strcmp(screen, "books") == 0)
-        host->open_app(CRAZYPOD_APP_BOOKS);
-    else if(strcmp(screen, "books-reading") == 0) {
-        host->open_app(CRAZYPOD_APP_BOOKS);
-        select_bounded(host, (books_has_continue() ? 1 : 0) + 4);
-    }
-    else if(strcmp(screen, "book-reader") == 0) {
-        host->open_app(CRAZYPOD_APP_BOOKS);
-        if(crazypod_books_count() > 0)
-            crazypod_books_feature_begin_reader(0, 0);
-    }
-    else if(strcmp(screen, "book-reader-actions") == 0) {
-        host->open_app(CRAZYPOD_APP_BOOKS);
-        if(crazypod_books_count() > 0)
-            crazypod_books_feature_begin_reader(0, 0);
-        crazypod_choice_coordinator_show_book_reader_actions();
-    }
-    else if(strcmp(screen, "book-reader-next") == 0) {
-        host->open_app(CRAZYPOD_APP_BOOKS);
-        if(crazypod_books_count() > 0) {
-            crazypod_books_feature_begin_reader(0, 0);
-            crazypod_books_feature_turn_page(1);
-        }
-    }
-    else if(strcmp(screen, "clock") == 0)
-        host->open_root_route(CLOCK_ROUTE_VIEW);
-    else if(strcmp(screen, "stopwatch") == 0)
-        host->open_root_route(STOPWATCH_ROUTE_VIEW);
-    else if(strcmp(screen, "workouts") == 0)
-        host->open_root_route(WORKOUT_ROUTE_MENU);
-    else if(strcmp(screen, "workout-ready") == 0) {
-        crazypod_organizer_feature_simulator_workout(
-            0, 0, current_tick, false);
-        host->open_root_route(WORKOUT_ROUTE_READY);
-    }
-    else if(strcmp(screen, "workout-active") == 0) {
-        crazypod_organizer_feature_simulator_workout(
-            0, 62 * HZ, current_tick, true);
-        host->open_root_route(WORKOUT_ROUTE_ACTIVE);
-    }
-    else if(strcmp(screen, "workout-finish-confirm") == 0) {
-        crazypod_organizer_feature_simulator_workout(
-            0, 62 * HZ, current_tick, true);
-        host->open_root_route(WORKOUT_ROUTE_ACTIVE);
-        host->push_route(WORKOUT_ROUTE_FINISH_CONFIRM, -1);
-    }
-    else if(strcmp(screen, "workout-detail") == 0) {
-        host->open_root_route(WORKOUT_ROUTE_HISTORY);
-        if(crazypod_workouts_count() > 0)
-            host->push_route(WORKOUT_ROUTE_DETAIL, 0);
-    }
-    else if(strcmp(screen, "calendar") == 0) {
-        host->open_app(CRAZYPOD_APP_CALENDAR);
-        host->push_route(CALENDAR_ROUTE_MONTH, -1);
-    }
-    else if(strcmp(screen, "calendar-day") == 0) {
-        host->open_app(CRAZYPOD_APP_CALENDAR);
-        host->show_calendar_day(
-            crazypod_organizer_feature_focus_date());
-        host->render(true);
-    }
-    else if(strcmp(screen, "contacts") == 0)
-        host->open_app(CRAZYPOD_APP_CONTACTS);
-    else if(strcmp(screen, "contact-detail") == 0) {
-        host->open_app(CRAZYPOD_APP_CONTACTS);
-        if(crazypod_contacts_count() > 0)
-            host->push_route(CONTACTS_ROUTE_DETAIL, 0);
-    }
-    else if(strcmp(screen, "game2048-exit-list") == 0)
-        return open_game2048_exit_scene(host, false);
-    else if(strcmp(screen, "game2048-exit-notes") == 0)
-        return open_game2048_exit_scene(host, true);
-    else if(strncmp(screen, "game2048", 8) == 0)
-        return open_game2048_scene(host, screen);
-    else if(strcmp(screen, "capability-lab") == 0)
-        return open_capability_directory(host, 0);
-    else if(strcmp(screen, "capability-lab-controls") == 0)
-        return open_miniapp_snapshot(
-            host, "capability-lab", 0);
-    else if(strcmp(screen, "capability-lab-assets") == 0)
-        return open_miniapp_snapshot(
-            host, "capability-lab", 1);
-    else if(strcmp(screen, "capability-lab-lifecycle") == 0)
-        return open_miniapp_snapshot(
-            host, "capability-lab", 2);
-    else if(strcmp(screen, "capability-lab-modal") == 0)
-        return open_capability_action(host, 2);
-    else if(strcmp(screen, "native-reference-clicked") == 0) {
-        if(!open_miniapp_snapshot(host, "native-reference", -1))
-            return false;
-        (void)crazypod_miniapps_ui_event(
-            1, CP_UI_EVENT_SELECT, 0, 0);
-        (void)crazypod_miniapps_ui_event(
-            1, CP_UI_EVENT_SELECT, 0, 0);
-        host->render(false);
-        return crazypod_miniapps_is_open();
-    }
-    else if(strncmp(
-                screen, "now-playing-theme-media-step-", 29) == 0) {
-        char *end = NULL;
-        long step = strtol(screen + 29, &end, 10);
-
-        if(end == screen + 29 || *end != '\0' ||
-           step < 0 || step >= crazypod_music_track_count())
-            return false;
-        return open_now_playing_theme_media(host, (unsigned)step);
-    }
-    else if(crazypod_now_playing_theme_choice_count() > 1 &&
-            crazypod_now_playing_themes_find(screen) >= 0)
-        return getenv("CRAZYPOD_SIM_REAL_LIBRARY") != NULL
-            ? open_now_playing_theme_real_library(host, screen)
-            : open_now_playing_theme_snapshot(host, screen);
-    else
-        return open_miniapp_snapshot(host, screen, -1);
     return true;
 }
 

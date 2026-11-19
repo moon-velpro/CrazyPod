@@ -2,7 +2,6 @@
 #define CRAZYPOD_SIMULATOR_SNAPSHOT_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
 #include "../../crazypod_apps.h"
 #include "../navigation/crazypod_ui_routes.h"
@@ -17,13 +16,10 @@ struct crazypod_simulator_snapshot_host {
     void (*render)(bool transition);
     void (*activate_selected)(void);
     void (*move_selection)(int direction);
-    void (*begin_note_composer)(uint32_t id, bool resume_draft);
-    void (*show_calendar_day)(int date);
 };
 
 bool crazypod_simulator_snapshot_prepare(
     const struct crazypod_simulator_snapshot_host *host);
 long crazypod_simulator_snapshot_settle_ticks(void);
-void crazypod_simulator_snapshot_write_profile(void);
 
 #endif

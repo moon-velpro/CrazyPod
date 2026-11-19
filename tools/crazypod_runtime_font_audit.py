@@ -91,7 +91,7 @@ def main():
         "--font-dir", type=Path, required=True,
         help="generated crazypod-aot font directory",
     )
-    parser.add_argument("packages", nargs="+", type=Path)
+    parser.add_argument("packages", nargs="*", type=Path)
     args = parser.parse_args()
 
     specs = load_specs(args.spec_file)

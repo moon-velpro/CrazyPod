@@ -11,15 +11,20 @@
 #include "crazypod_popup_layout.h"
 #include "crazypod_ui_widgets.h"
 
-#define CHOICE_ROWS 4
-#define COLOR_PANEL 0x1B1B22
+#define CHOICE_ROWS 6
+#define COLOR_PANEL 0xFFFFFF
+#define COLOR_PAGE 0xF6F9FC
+#define COLOR_TEXT 0x1E2938
+#define COLOR_MUTED 0x64748B
+#define COLOR_ACCENT 0x447AA9
+#define COLOR_SELECTED 0xDDEAF7
 #define COLOR_WHITE 0xFFFFFF
 #define COLOR_SUCCESS 0x34DB7A
 #define COLOR_FAILURE 0xFF4D59
 #define POPUP_MIN_WIDTH 156
 #define POPUP_MAX_WIDTH (LCD_WIDTH - 32)
 #define POPUP_ROW_LABEL_CHROME_WIDTH 72
-#define POPUP_ROW_HEIGHT 28
+#define POPUP_ROW_HEIGHT 26
 #define POPUP_ACTION_ROW_Y 38
 #define POPUP_CHOICE_ROW_Y 50
 #define POPUP_BOTTOM_PADDING 10
@@ -110,46 +115,18 @@ static void set_content_hidden(bool hidden)
     lv_obj_remove_flag(view.scroll_track, LV_OBJ_FLAG_HIDDEN);
 }
 
+/*
+ * Choices and actions are complete second-level menu pages, not centered
+ * modal popups. Keep the main status bar visible in the first 32 pixels.
+ */
 static struct crazypod_popup_geometry calculate_geometry(void)
 {
-    int content_width;
-    int title_width;
-    int longest_item = 0;
-    int visible_rows;
-    int index;
-    int width;
-    int height;
+    struct crazypod_popup_geometry geometry = {
+        0, 32, LCD_WIDTH, LCD_HEIGHT - 32
+    };
 
-    title_width = crazypod_popup_text_width(
-        view.callbacks.title(
-            view.kind, view.id, view.callbacks.context),
-        &lv_font_montserrat_10);
-    for(index = 0; index < view.count; ++index) {
-        int item_width = crazypod_popup_text_width(
-            view.callbacks.item_title(
-                view.kind, view.id, index,
-                view.callbacks.context),
-            view.metadata_font);
-
-        if(item_width > longest_item)
-            longest_item = item_width;
-    }
-    content_width = title_width + 28;
-    if(longest_item + POPUP_ROW_LABEL_CHROME_WIDTH > content_width)
-        content_width = longest_item + POPUP_ROW_LABEL_CHROME_WIDTH;
-    width = crazypod_popup_clamp_width(
-        content_width, 0,
-        POPUP_MIN_WIDTH, POPUP_MAX_WIDTH);
-    visible_rows = view.count < CHOICE_ROWS
-        ? view.count : CHOICE_ROWS;
-    if(visible_rows < 1)
-        visible_rows = 1;
-    view.row_y = view.action_layout
-        ? POPUP_ACTION_ROW_Y : POPUP_CHOICE_ROW_Y;
-    height = view.row_y +
-        visible_rows * POPUP_ROW_HEIGHT +
-        POPUP_BOTTOM_PADDING;
-    return crazypod_popup_centered_geometry(width, height);
+    view.row_y = 46;
+    return geometry;
 }
 
 static void refresh(void)
@@ -220,24 +197,17 @@ static void refresh(void)
                 view.callbacks.context));
         CP_LV_LABEL_SET_TEXT(
             view.markers[row],
-            current ? LV_SYMBOL_OK :
-            selected ? LV_SYMBOL_PLAY : LV_SYMBOL_BULLET);
+            current ? LV_SYMBOL_OK : LV_SYMBOL_RIGHT);
         lv_obj_set_style_bg_color(
             view.rows[row],
-            lv_color_hex(selected ? COLOR_WHITE : COLOR_PANEL), 0);
-        lv_obj_set_style_bg_opa(
-            view.rows[row], selected ? 32 : LV_OPA_TRANSP, 0);
-        lv_obj_set_style_border_width(
-            view.rows[row], selected ? 1 : 0, 0);
-        lv_obj_set_style_border_color(
-            view.rows[row], lv_color_hex(COLOR_WHITE), 0);
-        lv_obj_set_style_border_opa(
-            view.rows[row], selected ? 72 : 0, 0);
+            lv_color_hex(selected ? COLOR_SELECTED : COLOR_PANEL), 0);
+        lv_obj_set_style_bg_opa(view.rows[row], LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(view.rows[row], 0, 0);
         lv_obj_set_style_text_opa(
-            view.labels[row], selected ? 255 : 180, 0);
+            view.labels[row], selected ? 255 : 225, 0);
         lv_obj_set_style_text_opa(
-            view.markers[row], current ? 235 :
-            selected ? 190 : 80, 0);
+            view.markers[row], current ? 245 :
+            selected ? 225 : 110, 0);
         lv_obj_set_width(view.hold_fills[row], 0);
 
         has_color = view.callbacks.item_color(
@@ -248,7 +218,7 @@ static void refresh(void)
             lv_color_hex(has_color ? swatch_color : COLOR_WHITE), 0);
         lv_obj_set_style_bg_opa(
             view.swatches[row],
-            has_color ? LV_OPA_COVER : selected ? 72 : 28, 0);
+            has_color ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
     }
 
     if(view.count > CHOICE_ROWS) {
@@ -320,7 +290,7 @@ void crazypod_choice_overlay_show(
     view.metadata_font = metadata_font;
     view.count = callbacks->count(kind, id, callbacks->context);
     view.geometry = calculate_geometry();
-    view.row_width = view.geometry.width - 24;
+    view.row_width = view.geometry.width - 20;
     view.selected = selected < 0
         ? callbacks->current_index(kind, id, callbacks->context)
         : selected;
@@ -328,35 +298,33 @@ void crazypod_choice_overlay_show(
         parent, 0, 0, LCD_WIDTH, LCD_HEIGHT,
         0, 0x000000, LV_OPA_TRANSP);
     lv_obj_remove_flag(view.root, LV_OBJ_FLAG_CLICKABLE);
-    if(callbacks->create_underlay != NULL)
-        (void)callbacks->create_underlay(
-            view.root, callbacks->context);
-    view.panel = callbacks->create_panel(
+    /* No dimming layer, blur snapshot, modal frame or popup animation. */
+    view.panel = crazypod_ui_widget_box(
         view.root, view.geometry.x, view.geometry.y,
         view.geometry.width, view.geometry.height,
-        callbacks->context);
+        0, COLOR_PAGE, LV_OPA_COVER);
     if(view.panel == NULL) {
         crazypod_choice_overlay_dismiss();
         return;
     }
 
     view.title = crazypod_ui_widget_label(
-        view.panel, "", &lv_font_montserrat_10,
-        COLOR_WHITE, 100);
-    lv_obj_set_width(view.title, view.geometry.width - 24);
+        view.panel, "", metadata_font,
+        COLOR_TEXT, LV_OPA_COVER);
+    lv_obj_set_width(view.title, view.geometry.width - 28);
     lv_obj_set_style_text_align(
-        view.title, LV_TEXT_ALIGN_CENTER, 0);
+        view.title, LV_TEXT_ALIGN_LEFT, 0);
     lv_label_set_long_mode(view.title, LV_LABEL_LONG_MODE_DOTS);
-    lv_obj_set_pos(view.title, 12, 12);
+    lv_obj_set_pos(view.title, 14, 8);
 
     view.value = crazypod_ui_widget_label(
         view.panel, "", &lv_font_montserrat_8,
-        COLOR_WHITE, 170);
-    lv_obj_set_width(view.value, view.geometry.width - 24);
+        COLOR_MUTED, 210);
+    lv_obj_set_width(view.value, view.geometry.width - 28);
     lv_obj_set_style_text_align(
-        view.value, LV_TEXT_ALIGN_CENTER, 0);
+        view.value, LV_TEXT_ALIGN_LEFT, 0);
     lv_label_set_long_mode(view.value, LV_LABEL_LONG_MODE_DOTS);
-    lv_obj_set_pos(view.value, 12, 29);
+    lv_obj_set_pos(view.value, 14, 29);
     if(view.action_layout)
         lv_obj_add_flag(view.value, LV_OBJ_FLAG_HIDDEN);
 
@@ -364,9 +332,9 @@ void crazypod_choice_overlay_show(
         int y = view.row_y + row * POPUP_ROW_HEIGHT;
 
         view.rows[row] = crazypod_ui_widget_box(
-            view.panel, 12, y,
-            view.row_width, POPUP_ROW_HEIGHT, 8,
-            COLOR_WHITE, LV_OPA_TRANSP);
+            view.panel, 10, y,
+            view.row_width, POPUP_ROW_HEIGHT, 7,
+            COLOR_WHITE, LV_OPA_COVER);
         view.hold_fills[row] = crazypod_ui_widget_box(
             view.rows[row], 0, 0, 0,
             POPUP_ROW_HEIGHT, 8,
@@ -376,7 +344,7 @@ void crazypod_choice_overlay_show(
             LV_RADIUS_CIRCLE, COLOR_WHITE, 35);
         view.labels[row] = crazypod_ui_widget_label(
             view.rows[row], "", metadata_font,
-            COLOR_WHITE, 180);
+            COLOR_TEXT, 230);
         lv_obj_set_width(
             view.labels[row], view.row_width - 48);
         lv_obj_set_style_text_align(
@@ -387,7 +355,7 @@ void crazypod_choice_overlay_show(
             view.labels[row], LV_LABEL_LONG_MODE_DOTS);
         view.markers[row] = crazypod_ui_widget_label(
             view.rows[row], LV_SYMBOL_BULLET,
-            &lv_font_montserrat_8, COLOR_WHITE, 80);
+            &lv_font_montserrat_8, COLOR_ACCENT, 140);
         lv_obj_set_width(view.markers[row], 24);
         lv_obj_set_style_text_align(
             view.markers[row], LV_TEXT_ALIGN_CENTER, 0);
@@ -400,18 +368,15 @@ void crazypod_choice_overlay_show(
         view.panel, view.geometry.width - 8,
         view.row_y + 3, 2,
         CHOICE_ROWS * POPUP_ROW_HEIGHT - 6, 1,
-        COLOR_WHITE, 24);
+        COLOR_MUTED, 30);
     view.scroll_track = track;
     view.scroll_thumb = crazypod_ui_widget_box(
         view.panel, view.geometry.width - 8,
         view.row_y + 3, 2, 20, 1,
-        COLOR_WHITE, 150);
+        COLOR_ACCENT, 185);
 
     refresh();
-    if(callbacks->animate_panel != NULL)
-        callbacks->animate_panel(
-            view.panel, view.geometry.y,
-            callbacks->context);
+    /* Navigation pages open in place; they never fly in as a popup. */
 }
 
 void crazypod_choice_overlay_move(int direction)
@@ -464,40 +429,32 @@ void crazypod_choice_overlay_show_receipt(
     uint32_t color = success ? COLOR_SUCCESS : COLOR_FAILURE;
     const char *symbol = success ? LV_SYMBOL_OK : LV_SYMBOL_CLOSE;
     const char *resolved_label = label != NULL ? label : "";
-    struct crazypod_popup_geometry geometry;
+    struct crazypod_popup_geometry geometry = {
+        0, 32, LCD_WIDTH, LCD_HEIGHT - 32
+    };
     lv_obj_t *old_panel;
     lv_obj_t *new_panel;
-    int label_width;
     int label_height;
-    int receipt_y = 10;
+    int receipt_y = 55;
     int receipt_size = 48;
-    int receipt_gap = 10;
+    int receipt_gap = 12;
     lv_anim_t animation;
 
     if(!crazypod_choice_overlay_visible() ||
        view.panel == NULL || view.receipt_visible)
         return;
     stop_hold_feedback(false);
-    label_width = crazypod_popup_text_width(
-        resolved_label, view.metadata_font);
-    geometry = crazypod_popup_centered_geometry(
-        crazypod_popup_clamp_width(
-            label_width, 22, 132, 208),
-        1);
     label_height = crazypod_popup_wrapped_text_height(
         resolved_label, view.metadata_font,
-        geometry.width - 20, 1);
-    geometry = crazypod_popup_centered_geometry(
-        geometry.width,
-        receipt_y + receipt_size + receipt_gap +
-            label_height + 10);
+        geometry.width - 28, 1);
     old_panel = view.panel;
     set_content_hidden(true);
     lv_refr_now(NULL);
-    new_panel = view.callbacks.create_panel(
+    /* Result feedback uses the same full page, never a center popup. */
+    new_panel = crazypod_ui_widget_box(
         view.root, geometry.x, geometry.y,
         geometry.width, geometry.height,
-        view.callbacks.context);
+        0, COLOR_PAGE, LV_OPA_COVER);
     if(new_panel == NULL) {
         set_content_hidden(false);
         return;
@@ -528,9 +485,9 @@ void crazypod_choice_overlay_show_receipt(
     lv_obj_center(view.receipt_symbol);
     view.receipt_label = crazypod_ui_widget_label(
         view.panel, resolved_label, view.metadata_font,
-        COLOR_WHITE, LV_OPA_COVER);
+        COLOR_TEXT, LV_OPA_COVER);
     lv_obj_set_width(
-        view.receipt_label, geometry.width - 20);
+        view.receipt_label, geometry.width - 28);
     lv_obj_set_height(view.receipt_label, label_height);
     lv_obj_set_style_text_align(
         view.receipt_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -539,7 +496,7 @@ void crazypod_choice_overlay_show_receipt(
     lv_obj_set_style_text_line_space(
         view.receipt_label, 1, 0);
     lv_obj_set_pos(
-        view.receipt_label, 10,
+        view.receipt_label, 14,
         receipt_y + receipt_size + receipt_gap);
     view.receipt_visible = true;
 

@@ -6,7 +6,6 @@
 struct crazypod_feature_input_host {
     long (*now)(void);
     void (*render)(bool transition);
-    void (*boost)(int ticks);
 };
 
 void crazypod_feature_input_configure(

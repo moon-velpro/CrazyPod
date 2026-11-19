@@ -7,6 +7,7 @@ struct crazypod_system_prompts_host {
     long (*now)(void);
     void (*close_product)(void);
     void (*present)(void);
+    void (*cancel_pending_input)(void);
 };
 
 void crazypod_system_prompts_configure(

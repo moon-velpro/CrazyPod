@@ -260,7 +260,7 @@ static void seed_builtins(void)
         .menu_background = 0,
     };
     static const struct crazypod_appearance black_red = {
-        .icon_theme = 12,
+        .icon_theme = 0,
         .icon_scale = 4,
         .sound_wave_style = CRAZYPOD_SOUND_WAVE_RADIAL_SPECTRUM,
         .glow = 2,

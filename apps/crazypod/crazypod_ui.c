@@ -22,7 +22,6 @@
 #include "settings.h"
 #include "sound.h"
 #include "system.h"
-#include "timefuncs.h"
 #include "usb.h"
 #ifdef SIMULATOR
 #include <stdlib.h>
@@ -38,7 +37,6 @@
 #include "crazypod_artwork.h"
 #include "crazypod_appearance.h"
 #include "crazypod_book_cover.h"
-#include "crazypod_books.h"
 #include "crazypod_coverflow.h"
 #include "crazypod_frameclock.h"
 #include "crazypod_image.h"
@@ -49,17 +47,10 @@
 #include "crazypod_screen_recording.h"
 #include "crazypod_lcd.h"
 #include "crazypod_music.h"
-#include "crazypod_miniapp_input.h"
-#include "crazypod_miniapp_font.h"
-#include "crazypod_notes.h"
-#include "crazypod_organizer.h"
 #include "crazypod_playlist.h"
-#include "crazypod_photos.h"
-#include "crazypod_presets.h"
 #include "crazypod_state.h"
 #include "crazypod_ui.h"
 #include "platform/crazypod_platform_display.h"
-#include "ui/app/crazypod_miniapp_repro.h"
 #include "ui/app/crazypod_simulator_snapshot.h"
 #include "ui/app/crazypod_choice_coordinator.h"
 #include "ui/app/crazypod_menu_preview.h"
@@ -74,23 +65,17 @@
 #include "ui/app/crazypod_feature_input.h"
 #include "ui/app/crazypod_playback.h"
 #include "ui/app/crazypod_composition.h"
-#include "ui/features/organizer/crazypod_organizer_feature.h"
 #include "ui/navigation/crazypod_ui_routes.h"
 #include "ui/features/settings/crazypod_settings_feature.h"
 #include "ui/presentation/crazypod_ui_text.h"
 #include "ui/presentation/crazypod_ui_widgets.h"
 #include "ui/presentation/crazypod_artwork_widget.h"
 #include "ui/presentation/crazypod_alpha_jump_hud.h"
-#include "ui/features/books/crazypod_books_feature.h"
-#include "ui/features/notes/crazypod_notes_feature.h"
-#include "ui/features/photos/crazypod_photos_feature.h"
 #include "ui/shell/crazypod_app_catalog.h"
 #include "ui/shell/crazypod_desktop.h"
 #include "ui/shell/crazypod_desktop_native.h"
 #include "ui/shell/crazypod_home_input.h"
-#include "ui/shell/crazypod_home_actions.h"
 #include "ui/presentation/crazypod_menu_list.h"
-#include "ui/features/miniapps/crazypod_miniapps_feature.h"
 #include "ui/features/music/crazypod_music_feature.h"
 #include "ui/navigation/crazypod_feature_dispatcher.h"
 #include "ui/navigation/crazypod_input_event.h"
@@ -106,7 +91,6 @@
 #include "ui/presentation/crazypod_screen_corners.h"
 #include "ui/presentation/crazypod_glass_panel.h"
 #include "ui/presentation/crazypod_glass_sampler.h"
-#include "ui/features/customize/crazypod_customize_feature.h"
 #include "ui/shell/crazypod_lock_screen.h"
 #include "ui/shell/crazypod_now_capsule.h"
 #include "ui/shell/crazypod_power_prompt.h"
@@ -116,7 +100,6 @@
 #include "ui/shell/crazypod_system_event.h"
 #include "ui/shell/crazypod_system_prompts.h"
 #include "ui/shell/crazypod_usb_prompt.h"
-#include "crazypod_videos.h"
 #include "crazypod_wallpaper.h"
 #include "crazypod_workouts.h"
 
@@ -132,7 +115,6 @@ static struct crazypod_frameclock lvgl_clock;
 static int rendered_route_depth;
 static enum crazypod_route rendered_route;
 static bool rendered_route_valid;
-static int appearance_tile_size(void);
 static struct route_state *current_route(void);
 static const char *route_item_title(
     const struct route_state *state, int index);
@@ -159,7 +141,6 @@ static bool modal_prompt_visible(void)
         crazypod_system_prompts_power_visible() ||
         crazypod_system_prompts_power_hold_feedback_visible() ||
         crazypod_system_prompts_headphone_visible() ||
-        crazypod_home_actions_visible() ||
         crazypod_now_playing_overlay_visible();
 }
 static bool coverflow_overlay_visible(bool locked)
@@ -221,12 +202,6 @@ static void update_status_bars(lv_timer_t *timer)
         refresh_lock_clock();
 }
 
-static int appearance_tile_size(void)
-{
-    static const int sizes[] = { 88, 96, 104, 112, 120 };
-    return sizes[crazypod_appearance_get()->icon_scale];
-}
-
 static long ui_now(void)
 {
     return current_tick;
@@ -252,7 +227,6 @@ static void configure_composition(void)
 
     crazypod_composition_configure(&host);
     crazypod_coverflow_configure(keep_cpu_boosted);
-    crazypod_runtime_services_configure(render_current_route);
 }
 
 static lv_obj_t *create_boot_screen(void)
@@ -298,9 +272,6 @@ static void lock_screen_unlocked(bool transition_started)
     if(!transition_started)
         return;
     lv_refr_now(NULL);
-    if(!product_active)
-        crazypod_desktop_render_icon_snapshot(
-            appearance_tile_size());
     (void)crazypod_scene_transition_commit(
         crazypod_desktop_screen());
 }
@@ -331,14 +302,6 @@ static struct route_state *current_route(void)
     return crazypod_ui_routes_current();
 }
 
-static int calendar_today_date(void)
-{
-    struct tm *now = get_time();
-
-    return (now->tm_year + 1900) * 10000 +
-           (now->tm_mon + 1) * 100 + now->tm_mday;
-}
-
 static int route_item_count(const struct route_state *state)
 {
     return crazypod_route_query_item_count(
@@ -348,9 +311,7 @@ static int route_item_count(const struct route_state *state)
 static const char *route_item_title(const struct route_state *state, int index)
 {
     return crazypod_route_query_item_title(
-        state, index, crazypod_music_search_query(),
-        crazypod_organizer_feature_stopwatch_running(),
-        crazypod_organizer_feature_workout_running());
+        state, index, crazypod_music_search_query());
 }
 
 static bool route_item_is_current(const struct route_state *state, int index)
@@ -396,13 +357,6 @@ static void render_current_route(bool transition)
     crazypod_music_library_begin(current_tick);
 }
 
-#ifdef SIMULATOR
-static void begin_note_composer(uint32_t id, bool resume_draft)
-{
-    crazypod_route_actions_begin_note(id, resume_draft);
-}
-#endif
-
 static void close_product(void)
 {
     bool captured;
@@ -418,10 +372,6 @@ static void close_product(void)
     crazypod_app_launcher_cancel_pending();
     crazypod_music_library_leave(current_tick);
     crazypod_artwork_cancel_product_requests();
-    if(crazypod_miniapps_feature_is_open()) {
-        crazypod_miniapps_feature_reset_input();
-        crazypod_miniapps_feature_close();
-    }
     crazypod_route_actions_commit_pending_main_menu_reorder();
     crazypod_choice_coordinator_dismiss(false);
     crazypod_now_playing_overlay_dismiss(false);
@@ -435,8 +385,6 @@ static void close_product(void)
         crazypod_desktop_selected(), false);
     if(captured) {
         lv_refr_now(NULL);
-        crazypod_desktop_render_icon_snapshot(
-            appearance_tile_size());
         (void)crazypod_scene_transition_commit(
             crazypod_desktop_screen());
     }
@@ -506,141 +454,11 @@ static void play_wheel_feedback(long button)
         system_sound_play(SOUND_KEYCLICK);
 }
 
-static bool handle_confirmation(const struct route_state *state)
-{
-    bool overlay =
-        crazypod_choice_coordinator_owns_route_state(state);
-    struct crazypod_notes_confirmation_result notes =
-        crazypod_notes_feature_confirm(
-            state, crazypod_ui_routes_depth() +
-                (overlay ? 2 : 0));
-    struct crazypod_books_confirmation_result books;
-    struct crazypod_organizer_confirmation_result organizer;
-
-    if(crazypod_route_actions_confirm_photos(
-           state, current_tick))
-        return true;
-    if(notes.handled) {
-        if(!notes.succeeded) {
-            if(overlay)
-                crazypod_choice_coordinator_show_receipt(
-                    CP_TR("Failed"), false,
-                    current_tick, false);
-            else
-                render_current_route(false);
-            if(!overlay)
-                crazypod_choice_coordinator_show_receipt(
-                    CP_TR("Failed"), false,
-                    current_tick, false);
-            return true;
-        }
-        if(notes.navigation ==
-           CRAZYPOD_NOTES_CONFIRMATION_RESET_MENU) {
-            crazypod_ui_routes_reset(NOTES_ROUTE_MENU, -1, 0);
-        }
-        else if(notes.navigation ==
-                CRAZYPOD_NOTES_CONFIRMATION_RESET_MENU_SHOW_DELETED) {
-            crazypod_ui_routes_reset(NOTES_ROUTE_MENU, -1, 0);
-            crazypod_ui_routes_push(NOTES_ROUTE_DELETED, -1, 0);
-        }
-        else if(notes.navigation ==
-                CRAZYPOD_NOTES_CONFIRMATION_TRUNCATE)
-            crazypod_ui_routes_truncate(notes.depth);
-        if(overlay) {
-            bool deleted =
-                state->route != NOTES_ROUTE_DISCARD_CONFIRM;
-
-            crazypod_choice_coordinator_show_receipt(
-                deleted ? CP_TR("Deleted") : CP_TR("Done"),
-                true, current_tick, true);
-        }
-        else {
-            render_current_route(true);
-            crazypod_choice_coordinator_show_receipt(
-                state->route != NOTES_ROUTE_DISCARD_CONFIRM
-                    ? CP_TR("Deleted") : CP_TR("Done"),
-                true, current_tick, false);
-        }
-        return true;
-    }
-
-    books = crazypod_books_feature_confirm(state);
-    if(books.handled) {
-        if(books.deleted) {
-            crazypod_books_feature_invalidate_metadata();
-            if(overlay)
-                crazypod_ui_routes_reset(
-                    BOOKS_ROUTE_MENU, -1, 0);
-            else
-                crazypod_app_launcher_open_books();
-        }
-        else if(!overlay)
-            render_current_route(false);
-        if(overlay)
-            crazypod_choice_coordinator_show_receipt(
-                books.deleted
-                    ? CP_TR("Deleted") : CP_TR("Delete Failed"),
-                books.deleted, current_tick, books.deleted);
-        else
-            crazypod_choice_coordinator_show_receipt(
-                books.deleted
-                    ? CP_TR("Deleted") : CP_TR("Delete Failed"),
-                books.deleted, current_tick, false);
-        return true;
-    }
-
-    organizer = crazypod_organizer_feature_confirm(
-        state, current_tick, HZ, calendar_today_date());
-    if(!organizer.handled)
-        return false;
-    if(!organizer.succeeded) {
-        if(overlay)
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Failed"), false, current_tick, false);
-        else
-            render_current_route(false);
-        if(!overlay)
-            crazypod_choice_coordinator_show_receipt(
-                CP_TR("Failed"), false,
-                current_tick, false);
-        return true;
-    }
-    if(organizer.navigation ==
-       CRAZYPOD_ORGANIZER_CONFIRMATION_SHOW_CALENDAR_DAY) {
-        crazypod_route_actions_show_calendar_day(
-            organizer.date);
-    }
-    else {
-        crazypod_ui_routes_reset(WORKOUT_ROUTE_MENU, -1, 1);
-        if(organizer.navigation ==
-           CRAZYPOD_ORGANIZER_CONFIRMATION_SHOW_WORKOUT_HISTORY)
-            crazypod_ui_routes_push(
-                WORKOUT_ROUTE_HISTORY, -1, 0);
-    }
-    if(overlay) {
-        bool deleted =
-            state->route != WORKOUT_ROUTE_FINISH_CONFIRM;
-
-        crazypod_choice_coordinator_show_receipt(
-            deleted ? CP_TR("Deleted") : CP_TR("Saved"),
-            true, current_tick, true);
-    }
-    else {
-        render_current_route(true);
-        crazypod_choice_coordinator_show_receipt(
-            state->route != WORKOUT_ROUTE_FINISH_CONFIRM
-                ? CP_TR("Deleted") : CP_TR("Saved"),
-            true, current_tick, false);
-    }
-    return true;
-}
-
- static void configure_feature_input(void)
+static void configure_feature_input(void)
 {
     const struct crazypod_feature_input_host host = {
         .now = ui_now,
         .render = render_current_route,
-        .boost = keep_cpu_boosted,
     };
 
     crazypod_feature_input_configure(&host);
@@ -693,7 +511,6 @@ static void configure_app_input(void)
             crazypod_lock_screen_media_controls_ready,
         .close_product = close_product,
         .render = render_current_route,
-        .handle_confirmation = handle_confirmation,
         .previous_track = crazypod_playback_previous_or_restart,
         .toggle_playback = crazypod_playback_toggle,
         .previous_track_async =
@@ -757,9 +574,6 @@ static bool simulator_prepare_snapshot(void)
         .render = render_current_route,
         .activate_selected = activate_selected,
         .move_selection = move_selected,
-        .begin_note_composer = begin_note_composer,
-        .show_calendar_day =
-            crazypod_route_actions_show_calendar_day,
     };
 
     return crazypod_simulator_snapshot_prepare(&host);
@@ -793,13 +607,9 @@ void crazypod_ui_run(void)
     crazypod_now_capsule_reset_motion(current_tick);
     crazypod_image_init();
     crazypod_artwork_init();
-    crazypod_icons_init();
-    crazypod_photos_init();
-    crazypod_videos_init();
     crazypod_screen_recording_init();
     crazypod_wallpaper_init();
-    crazypod_miniapps_feature_initialize_runtime();
-    crazypod_miniapps_feature_initialize();
+    crazypod_icons_init();
 
     {
         const struct crazypod_platform_display_host display_host = {
@@ -852,8 +662,6 @@ void crazypod_ui_run(void)
     crazypod_playback_initialize();
     crazypod_now_playing_navigation_initialize();
     crazypod_now_capsule_initialize_artwork();
-    crazypod_photos_feature_initialize_media();
-    crazypod_customize_feature_initialize_media();
 #ifdef SIMULATOR
     crazypod_scene_transition_demo_init();
     simulator_snapshot_pending =
@@ -880,11 +688,6 @@ void crazypod_ui_run(void)
 #endif
     crazypod_music_library_initialize(current_tick);
     crazypod_lock_screen_initialize_backlight_state();
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-    (void)crazypod_miniapp_repro_start(
-        current_tick);
-#endif
     while(true) {
         long button;
         bool locked;
@@ -941,15 +744,6 @@ void crazypod_ui_run(void)
                     wait_ticks = (int)snapshot_wait;
             }
 #endif
-#if defined(SIMULATOR) || \
-    defined(CRAZYPOD_REPRO_DIAGNOSTICS)
-            {
-                int repro_wait = crazypod_miniapp_repro_wait_ticks();
-
-                if(repro_wait < wait_ticks)
-                    wait_ticks = repro_wait;
-            }
-#endif
         }
         button = button_get_w_tmo(wait_ticks);
         process_lock_state();
@@ -986,7 +780,6 @@ void crazypod_ui_run(void)
             crazypod_playback_warm_album_flow(
                 current_tick, false);
             crazypod_playback_process_artwork();
-            crazypod_playback_process_media();
         }
         {
             bool home_active =
@@ -995,8 +788,10 @@ void crazypod_ui_run(void)
             bool wheel_touch_active =
                 crazypod_desktop_wheel_touch_active();
 
-            crazypod_present_set_home_interaction(
-                home_active && wheel_touch_active);
+            /* The Classic Home list is rendered entirely by LVGL.
+             * Native Cover Flow still owns TE-synchronized music frames,
+             * but wheel touch must never freeze Home row updates. */
+            crazypod_present_set_home_interaction(false);
             crazypod_now_capsule_tick(
                 current_tick, home_active, wheel_touch_active);
         }
@@ -1012,11 +807,6 @@ void crazypod_ui_run(void)
 
             if(crazypod_desktop_motion_active())
                 keep_cpu_boosted(HZ / 10 > 0 ? HZ / 10 : 1);
-            crazypod_desktop_render_icon(
-                appearance_tile_size(),
-                crazypod_shell_product_active() ||
-                modal_prompt_visible() ||
-                crazypod_scene_transition_owns_framebuffer());
             crazypod_coverflow_tick();
             coverflow_feedback =
                 crazypod_coverflow_take_wheel_feedback();
@@ -1049,16 +839,7 @@ void crazypod_ui_run(void)
         if(!locked)
             crazypod_playback_service_after_unlock(
                 crazypod_present_sequence());
-#if defined(CRAZYPOD_REPRO_DIAGNOSTICS) && \
-    !defined(SIMULATOR)
-        crazypod_miniapp_repro_service(
-            current_tick);
-        if(crazypod_miniapp_repro_cpu_boost_requested())
-            keep_cpu_boosted(HZ / 10);
-#endif
 #ifdef SIMULATOR
-        crazypod_miniapp_repro_service(
-            current_tick);
         if(simulator_recording_pending &&
            !TIME_BEFORE(current_tick, simulator_recording_due)) {
             (void)crazypod_screen_recording_stop(current_tick);
@@ -1078,7 +859,6 @@ void crazypod_ui_run(void)
             else {
                 lv_refr_now(display);
                 crazypod_present_tick();
-                crazypod_simulator_snapshot_write_profile();
                 screen_dump();
                 simulator_snapshot_pending = false;
                 if(getenv(
@@ -1089,8 +869,7 @@ void crazypod_ui_run(void)
 #endif
         if(lv_anim_count_running())
             keep_cpu_boosted(HZ / 10 > 0 ? HZ / 10 : 1);
-        if(crazypod_artwork_busy() || crazypod_photos_busy() ||
-           crazypod_videos_busy())
+        if(crazypod_artwork_busy())
             keep_cpu_boosted(HZ / 10);
         if(crazypod_music_is_scanning() && !locked)
             keep_cpu_boosted(HZ / 10);
@@ -1101,8 +880,6 @@ void crazypod_ui_run(void)
                 crazypod_coverflow_motion_active())) &&
            (!crazypod_music_is_scanning() || locked) &&
            !crazypod_artwork_busy() &&
-           !crazypod_photos_busy() &&
-           !crazypod_videos_busy() &&
            !TIME_BEFORE(current_tick, boost_until))
             set_cpu_boost(false);
     }

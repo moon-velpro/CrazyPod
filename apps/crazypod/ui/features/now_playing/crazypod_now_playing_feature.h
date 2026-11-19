@@ -99,20 +99,4 @@ const char *crazypod_now_playing_feature_rendered_track_path(void);
 void crazypod_now_playing_feature_update_playback(
     uint32_t elapsed_ms, uint32_t length_ms);
 
-void crazypod_now_playing_theme_prepare(void);
-int crazypod_now_playing_theme_choice_count(void);
-const char *crazypod_now_playing_theme_choice_title(int index);
-bool crazypod_now_playing_theme_choice_current(int index);
-bool crazypod_now_playing_theme_select(int index);
-bool crazypod_now_playing_theme_enabled(void);
-bool crazypod_now_playing_theme_open(void);
-bool crazypod_now_playing_theme_modal_visible(void);
-bool crazypod_now_playing_theme_owns_status_bar(void);
-int crazypod_now_playing_theme_last_error(void);
-bool crazypod_now_playing_theme_render(
-    lv_obj_t *parent, uint32_t accent);
-bool crazypod_now_playing_theme_handle_input(
-    const struct crazypod_input_event *event);
-void crazypod_now_playing_theme_close(void);
-
 #endif

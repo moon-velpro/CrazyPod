@@ -82,8 +82,9 @@ static const int controls_items[] = {
 
 bool crazypod_settings_catalog_handles(enum crazypod_route route)
 {
-    return route >= SETTINGS_ROUTE_MENU &&
-        route <= SETTINGS_ROUTE_MAIN_MENU_ACTIONS;
+    return (route >= SETTINGS_ROUTE_MENU &&
+            route <= SETTINGS_ROUTE_MAIN_MENU_ACTIONS) ||
+        route == SETTINGS_ROUTE_VALUE_CHOICES;
 }
 
 int crazypod_settings_catalog_count(enum crazypod_route route)

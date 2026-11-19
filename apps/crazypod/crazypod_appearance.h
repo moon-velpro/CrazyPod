@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define CRAZYPOD_ICON_THEME_COUNT 16
+#define CRAZYPOD_LEGACY_ICON_THEME_COUNT 16
 #define CRAZYPOD_APPEARANCE_COLOR_COUNT 8
 #define CRAZYPOD_WALLPAPER_PATH_SIZE 260
 
@@ -24,6 +24,8 @@ enum crazypod_appearance_field {
 };
 
 struct crazypod_appearance {
+    /* Retired on-screen options. Preserve both words for v1-v4
+     * appearance files and imported presets: do not change disk layout. */
     int icon_theme;
     int icon_scale;
     /*
@@ -52,12 +54,10 @@ bool crazypod_appearance_valid(const struct crazypod_appearance *value);
 bool crazypod_appearance_set(const struct crazypod_appearance *value);
 bool crazypod_appearance_set_value(enum crazypod_appearance_field field,
                                    int value);
-void crazypod_appearance_set_icon_theme(int theme);
 bool crazypod_appearance_set_wallpaper(
     enum crazypod_appearance_field field, const char *path);
 bool crazypod_appearance_take_lock_inheritance_migration(void);
 
-const char *crazypod_icon_theme_name(int theme);
 const char *crazypod_appearance_color_name(int color);
 uint32_t crazypod_appearance_color(int color);
 uint32_t crazypod_appearance_home_color(void);
