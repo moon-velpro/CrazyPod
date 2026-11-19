@@ -26,8 +26,6 @@ struct crazypod_app_input_host {
     bool (*lock_media_controls_ready)(void);
     void (*close_product)(void);
     void (*render)(bool transition);
-    bool (*handle_confirmation)(
-        const struct route_state *state);
     void (*previous_track)(void);
     void (*toggle_playback)(void);
     void (*previous_track_async)(void);
