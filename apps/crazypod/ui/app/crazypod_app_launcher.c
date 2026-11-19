@@ -83,25 +83,11 @@ void crazypod_app_launcher_configure(
         host = *new_host;
 }
 
-/* Do not reopen retired application routes through legacy callbacks or
- * stale navigation state. Music, podcasts, system settings and Home controls
- * are the only supported public entry points in the music-only product. */
-static bool music_only_root_route(enum crazypod_route route)
-{
-    return (route >= MUSIC_ROUTE_MENU &&
-            route <= MUSIC_ROUTE_NOW_PLAYING) ||
-           route == PODCASTS_ROUTE_MENU ||
-           (route >= SETTINGS_ROUTE_MENU &&
-            route <= SETTINGS_ROUTE_MAIN_MENU_ACTIONS) ||
-           route == SETTINGS_ROUTE_VALUE_CHOICES ||
-           route == HOME_ROUTE_ACTIONS ||
-           route == HOME_ROUTE_BRIGHTNESS ||
-           route == HOME_ROUTE_VOLUME;
-}
-
+/* A single route policy in navigation/crazypod_ui_routes.h owns the
+ * product allowlist. Do not duplicate the enum range here. */
 void crazypod_app_launcher_open_root(enum crazypod_route route)
 {
-    if(music_only_root_route(route) &&
+    if(crazypod_ui_route_supported(route) &&
        crazypod_route_registry_get(route) != NULL)
         open_route(route);
 }
