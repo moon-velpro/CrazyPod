@@ -38,15 +38,12 @@ int crazypod_route_query_item_count(
 
 const char *crazypod_route_query_item_title(
     const struct route_state *state, int index,
-    const char *music_search_query,
-    bool stopwatch_running, bool workout_running)
+    const char *music_search_query)
 {
     const struct crazypod_feature *feature;
     const char *title = "";
     bool handled = false;
 
-    (void)stopwatch_running;
-    (void)workout_running;
     if(state == NULL)
         return "";
     if(crazypod_home_actions_is_route(state->route))
