@@ -171,7 +171,7 @@ def check() -> None:
     # still calls an unlinked legacy domain.
     legacy_reference = re.compile(
         r"crazypod_(?:notes|books|epub|photos|videos|organizer|"
-        r"workouts|miniapps|miniapp|presets)(?:_|\\()|"
+        r"workouts|miniapps|miniapp|presets)(?:_|\()|"
         r"/features/(?:notes|books|photos|organizer|customize|miniapps)/"
     )
     product_sources = sorted(
