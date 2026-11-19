@@ -52,7 +52,7 @@ def main():
         "void crazypod_route_actions_activate_overlay_state(",
         "void crazypod_route_actions_move(int direction, long now)",
     ):
-        body = actions.split(entry, 1)[1].split("\\n}", 1)[0]
+        body = actions.split(entry, 1)[1].split("\n}", 1)[0]
         assert "crazypod_ui_route_supported(" in body, entry
     for retired in (
         "APP_MINI_APPS", "APP_PHOTOS", "APP_BOOKS", "APP_NOTES",
