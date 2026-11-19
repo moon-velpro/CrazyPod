@@ -353,9 +353,7 @@ static bool now_playing_select_multitap_active(void)
         return false;
     state = crazypod_ui_routes_current();
     return state != NULL &&
-        state->route == MUSIC_ROUTE_NOW_PLAYING &&
-        (!crazypod_now_playing_theme_open() ||
-         !crazypod_now_playing_theme_modal_visible());
+        state->route == MUSIC_ROUTE_NOW_PLAYING;
 }
 
 static void execute_now_select_multitap(
@@ -544,10 +542,7 @@ static bool handle_now_playing_direction_button(long button)
         crazypod_shell_product_active() &&
         crazypod_ui_routes_depth() > 0 &&
         crazypod_ui_routes_current()->route ==
-            MUSIC_ROUTE_NOW_PLAYING &&
-        (!crazypod_now_playing_theme_open() ||
-         !crazypod_now_playing_theme_modal_visible() ||
-         crazypod_now_playing_overlay_visible());
+            MUSIC_ROUTE_NOW_PLAYING;
 
     if(!owns_buttons ||
        (base != BUTTON_LEFT && base != BUTTON_RIGHT)) {
