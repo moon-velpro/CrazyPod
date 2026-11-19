@@ -189,16 +189,6 @@ static bool open_lock_cjk_snapshot(
     return true;
 }
 
-static bool open_now_playing_default_actions(
-    const struct crazypod_simulator_snapshot_host *host)
-{
-    if(!open_now_playing_default_media(host))
-        return false;
-    crazypod_app_input_handle(BUTTON_SELECT, 0, current_tick);
-    return crazypod_now_playing_overlay_kind() ==
-        CRAZYPOD_NOW_OVERLAY_ACTIONS;
-}
-
 static bool open_now_playing_default_media(
     const struct crazypod_simulator_snapshot_host *host)
 {
@@ -207,6 +197,16 @@ static bool open_now_playing_default_media(
         return false;
     host->open_root_route(MUSIC_ROUTE_NOW_PLAYING);
     return true;
+}
+
+static bool open_now_playing_default_actions(
+    const struct crazypod_simulator_snapshot_host *host)
+{
+    if(!open_now_playing_default_media(host))
+        return false;
+    crazypod_app_input_handle(BUTTON_SELECT, 0, current_tick);
+    return crazypod_now_playing_overlay_kind() ==
+        CRAZYPOD_NOW_OVERLAY_ACTIONS;
 }
 
 static bool open_now_playing_default_mode(
