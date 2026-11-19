@@ -32,7 +32,8 @@ def main():
     for icon in ("music", "podcasts", "shuffle", "screen_lock", "settings"):
         assert f'"{icon}"' in icon_paths
     assert icon_paths.count('"') == 10
-    assert "music_only_root_route(route)" in launcher
+    assert "crazypod_ui_route_supported(route)" in launcher
+    assert "music_only_root_route" not in launcher
     routes = read("apps/crazypod/ui/navigation/crazypod_ui_routes.h")
     stack = read("apps/crazypod/ui/navigation/crazypod_ui_routes.c")
     registry = read("apps/crazypod/ui/navigation/crazypod_route_registry.c")
