@@ -34,14 +34,6 @@
 
 static bool screen_off_idle;
 
-void crazypod_runtime_services_configure(
-    void (*render)(bool transition))
-{
-    /* The music-only service loop no longer renders third-party app frames.
-     * Keep this ABI entry point until the caller is removed. */
-    (void)render;
-}
-
 void crazypod_runtime_services_start(void)
 {
     screen_off_idle = false;
