@@ -313,8 +313,7 @@ static int route_item_count(const struct route_state *state)
 static const char *route_item_title(const struct route_state *state, int index)
 {
     return crazypod_route_query_item_title(
-        state, index, crazypod_music_search_query(),
-        false, false);
+        state, index, crazypod_music_search_query());
 }
 
 static bool route_item_is_current(const struct route_state *state, int index)
