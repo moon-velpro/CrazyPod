@@ -45,30 +45,40 @@ Contacts、Customize（独立应用）、Mini Apps、外部播放页主题和 GB
 6. `tests/check-crazypod-navigation-modules.py` 是持续生效的架构门禁；
    `tests/crazypod_ui_pure_host_test.c` 检查保留/退役 feature 的注册状态。
 
-这些完成的是**导航模块的解绑**，并不代表整个固件已解除旧应用链接。
+## 已实施的模块迁移
 
-## 后续按模块迁移，不做补丁式隐藏
+### 02 · 应用编排与渲染
 
-### 02 · 应用编排与渲染归并
+`route_actions`、`choice_coordinator`、`composition`、
+`route_renderer`、`feature_input`、`app_input`、
+`menu_preview` 和 UI composition root 已集中收敛为音乐、播放、
+设置和 Shell 路径；废弃了图书、笔记、照片、联系人、运动等旧应用
+的导航激活、选择确认、预览和输入代码，而非仅在首页隐藏按钮。
 
-整体改造 `crazypod_route_actions.c`、
-`crazypod_choice_coordinator.c` 以及 `crazypod_ui.c` 的旧应用
-分支，并检查 `crazypod_route_renderer.c`、`crazypod_app_input.c`
-的新模块合同。保留的 Home 动作、音量、亮度、
-播放页选项和设置必须可以经由统一接口工作；不要新建空的旧接口来消除链接错误。
+系统提示和 USB 存储生命周期已不再处理失效的照片/视频/CPK 目录，
+并保留音频目录重新扫描、封面失效、字形文件句柄释放及 USB 确认。
+原生播放页不再经由外部 CPK 主题/空函数兼容层；
+原生专辑封面源尺寸直接由音乐服务初始化。
 
-### 03 · 服务和构建闭包
+### 03 · 固件编译闭包
 
-根据真实引用图，删除旧 CPK/Mini Apps 内核、图书/照片/笔记/日历等
-独立服务及独立渲染的调用，再从 `apps/SOURCES` 移除**确认无依赖**
-的源文件和 MPEG 视频专用依赖。清理不必要的资源、头文件、构建脚本、
-模拟器夹带文件和过时文档；旧用户资料与歌曲原文件不自动删除。
+`apps/SOURCES` 当前有 **117 条 CrazyPod 产品源码记录**，原先约
+242 条。Mini Apps/CPK、Photos/Video/MPEG2、Books/EPUB、
+Notes、Organizer、Customize 独立应用及外置 Now Playing 主题实现
+均已从生产编译清单移除。历史 route/feature ID 与菜单存档编号未重新
+编号。仍保留壁纸显示、截图、图片解码等音乐播放器设备 UI 所需服务。
+
+被解除链接的部分源码和历史功能单测**仍保存在仓库**，用于复核迁移和
+兼容性；不能将“从编译清单移除”误写成“全部旧源码文件已删除”。
+今后若做最终的源文件归档/删除，需要同步收敛测试夹具和文档，并核对
+链接符号及可复现构建，不得靠新增空桩过关。
 
 ### 04 · 构建/验收
 
 每个模块级变更应通过结构门禁、C99 host 单元测试、macOS 模拟器构建、
 iPod 6G 交叉编译，再做音频/中文元数据/转盘/锁屏/USB/首次扫描的实机
-冒烟和压力测试。只有全部门禁实证通过后，才能称为可刷机候选。
+冒烟和压力测试。已确认 `bf517681` 是上一轮双构建通过的基线，
+**本轮大范围源文件移除仍必须以最新 CI 完成记录为准**。只有全部门禁实证通过后，才能称为可刷机候选。
 所有未运行或失败的门禁必须明确报告，Draft PR 不得当作发布包。
 
 ## 禁止的实现方式
