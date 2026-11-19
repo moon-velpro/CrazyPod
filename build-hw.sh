@@ -18,7 +18,8 @@ detect_jobs() {
 require_tools() {
     missing=0
     for tool in make perl python3 zip gcc "${CROSS_COMPILE}gcc" \
-        "${CROSS_COMPILE}objcopy" "${CROSS_COMPILE}nm"; do
+        "${CROSS_COMPILE}objcopy" "${CROSS_COMPILE}nm" \
+        "${CROSS_COMPILE}size"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             echo "Error: missing required tool '$tool' on PATH." >&2
             missing=1
@@ -53,6 +54,14 @@ verify_stack_alignment() {
             exit 1
         fi
     done
+}
+
+report_memory_footprint() {
+    echo "CrazyPod: ELF section sizes"
+    "${CROSS_COMPILE}size" -A rockbox.elf
+    echo "CrazyPod: largest static RAM symbols (top 25)"
+    "${CROSS_COMPILE}nm" -a -S --size-sort --radix=d rockbox.elf |
+        awk '$3 ~ /^[bBdD]$/ { print }' | tail -n 25
 }
 
 verify_removed_runtime_absent() {
@@ -188,6 +197,7 @@ if [ ! -f rockbox.ipod ]; then
 fi
 verify_stack_alignment
 verify_removed_runtime_absent
+report_memory_footprint
 PACKAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "$PACKAGE_DIR"' EXIT HUP INT TERM
 if [ ! -d ../assets/crazypod-icons/basic ]; then
@@ -248,6 +258,43 @@ rm -f CrazyPod-6G.zip
         .rockbox Music Podcasts
 )
 mv "$PACKAGE_DIR/../CrazyPod-6G.zip" CrazyPod-6G.zip
+
+python3 - "$PACKAGE_DIR" "$(pwd)/CrazyPod-6G.zip" "$(pwd)/rockbox.ipod" <<'PY'
+from pathlib import Path
+import sys
+import zipfile
+
+package_dir = Path(sys.argv[1])
+archive_path = Path(sys.argv[2])
+firmware_path = Path(sys.argv[3])
+
+with zipfile.ZipFile(archive_path) as archive:
+    files = [item for item in archive.infolist() if not item.is_dir()]
+    fonts = [
+        item for item in files
+        if item.filename.startswith(".rockbox/fonts/crazypod-aot/")
+        and item.filename.endswith(".fnt")
+    ]
+    print(
+        f"CrazyPod: package entries={len(files)} "
+        f"expanded_bytes={sum(item.file_size for item in files)} "
+        f"compressed_bytes={sum(item.compress_size for item in files)}"
+    )
+    print(
+        f"CrazyPod: runtime_fonts={len(fonts)} "
+        f"expanded_bytes={sum(item.file_size for item in fonts)} "
+        f"compressed_bytes={sum(item.compress_size for item in fonts)}"
+    )
+    print("CrazyPod: largest runtime fonts")
+    for item in sorted(fonts, key=lambda value: value.file_size, reverse=True)[:10]:
+        print(
+            f"  {item.file_size} expanded / {item.compress_size} compressed "
+            f"{item.filename}"
+        )
+
+print(f"CrazyPod: firmware_bytes={firmware_path.stat().st_size}")
+print(f"CrazyPod: install_zip_bytes={archive_path.stat().st_size}")
+PY
 
 echo "CrazyPod: built $(pwd)/rockbox.ipod"
 echo "CrazyPod: packaged $(pwd)/CrazyPod-6G.zip"
