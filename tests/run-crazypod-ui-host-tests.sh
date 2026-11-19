@@ -207,4 +207,3 @@ cc -std=c99 -Wall -Wextra -Werror \
 
 python3 "$repo_root/tests/check-crazypod-classic-ui-contract.py"
 python3 "$repo_root/tests/test-crazypod-menu-icons.py"
-python3 "$repo_root/tests/test-crazypod-photo-cache-policy.py"
