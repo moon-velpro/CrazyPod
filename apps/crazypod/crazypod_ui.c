@@ -360,13 +360,6 @@ static void render_current_route(bool transition)
     crazypod_music_library_begin(current_tick);
 }
 
-#ifdef SIMULATOR
-static void begin_note_composer(uint32_t id, bool resume_draft)
-{
-    crazypod_route_actions_begin_note(id, resume_draft);
-}
-#endif
-
 static void close_product(void)
 {
     bool captured;
@@ -584,9 +577,6 @@ static bool simulator_prepare_snapshot(void)
         .render = render_current_route,
         .activate_selected = activate_selected,
         .move_selection = move_selected,
-        .begin_note_composer = begin_note_composer,
-        .show_calendar_day =
-            crazypod_route_actions_show_calendar_day,
     };
 
     return crazypod_simulator_snapshot_prepare(&host);
@@ -873,7 +863,6 @@ void crazypod_ui_run(void)
             else {
                 lv_refr_now(display);
                 crazypod_present_tick();
-                crazypod_simulator_snapshot_write_profile();
                 screen_dump();
                 simulator_snapshot_pending = false;
                 if(getenv(
