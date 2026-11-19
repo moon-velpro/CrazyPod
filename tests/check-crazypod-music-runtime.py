@@ -36,6 +36,6 @@ assert "CRAZYPOD_ARTWORK_CACHE_SIZE" in runtime
 assert "crazypod_miniapps_feature_" not in runtime
 assert "crazypod_miniapp_alarm_" not in runtime
 assert "service_miniapp(" not in runtime
-assert "crazypod_now_playing_theme_prepare();" in runtime
+assert "crazypod_now_playing_theme_prepare();" not in runtime
 
 print("Music-only service isolation checks passed")
