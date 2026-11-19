@@ -15,6 +15,7 @@
 #include "../../crazypod_music.h"
 #include "../../crazypod_runtime_font.h"
 #include "../../crazypod_state.h"
+#include "../features/music/crazypod_music_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../navigation/crazypod_route_query.h"
 #include "../shell/crazypod_desktop.h"
