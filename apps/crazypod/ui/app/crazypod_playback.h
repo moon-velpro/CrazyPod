@@ -32,7 +32,6 @@ void crazypod_playback_service_after_unlock(
     uint32_t present_sequence);
 void crazypod_playback_update_timer(lv_timer_t *timer);
 void crazypod_playback_process_artwork(void);
-void crazypod_playback_process_media(void);
 void crazypod_playback_tick_wave(long now);
 void crazypod_playback_sync_album_flow(void);
 void crazypod_playback_warm_album_flow(
