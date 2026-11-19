@@ -64,6 +64,20 @@ def check() -> None:
     assert "crazypod_ui_route_supported(route)" in launcher
     assert "music_only_root_route" not in launcher
     assert "crazypod_route_registry_get(state->route)" in renderer
+    actions = contents(UI / "app/crazypod_route_actions.c")
+    # An unhandled Settings / Home route must never fall through into a
+    # music-playback failure notification. Only song-bearing pages can do so.
+    selected_track = actions.split(
+        "static void play_selected_track(", 1
+    )[1].split("static void persist_main_menu(", 1)[0]
+    assert "default:\n        return;" in selected_track
+    for track_route in (
+        "MUSIC_ROUTE_ALL", "MUSIC_ROUTE_SONGS",
+        "MUSIC_ROUTE_PLAYLIST_SONGS", "MUSIC_ROUTE_ARTIST_SONGS",
+        "MUSIC_ROUTE_ALBUM_SONGS", "MUSIC_ROUTE_QUEUE",
+        "MUSIC_ROUTE_SEARCH_RESULTS",
+    ):
+        assert track_route in selected_track, track_route
     assert "crazypod_now_playing_theme_handle_input" not in inputs
     assert "handle_confirmation" not in app_input_host
     assert "host.handle_confirmation" not in app_input
