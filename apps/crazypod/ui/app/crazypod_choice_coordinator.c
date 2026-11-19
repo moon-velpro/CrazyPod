@@ -8,6 +8,7 @@
 
 #include "../../crazypod_coverflow.h"
 #include "../../crazypod_state.h"
+#include "../features/now_playing/crazypod_now_playing_feature.h"
 #include "../features/settings/crazypod_settings_feature.h"
 #include "../navigation/crazypod_route_query.h"
 #include "../presentation/crazypod_choice_overlay.h"
