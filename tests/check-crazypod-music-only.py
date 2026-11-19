@@ -39,6 +39,14 @@ def main():
     assert "crazypod_ui_route_supported" in routes
     assert "if(!crazypod_ui_route_supported(route))" in stack
     assert "if(!crazypod_ui_route_supported(route))" in registry
+    actions = read("apps/crazypod/ui/app/crazypod_route_actions.c")
+    push = actions.split("void crazypod_route_actions_push_selected(", 1)[1].split(
+        "void crazypod_route_actions_push(", 1
+    )[0]
+    # Legacy choice dispatch must not run before the retired-route gate.
+    assert push.index("if(!crazypod_ui_route_supported(route))") < push.index(
+        "if(route == DIY_ROUTE_NOW_PLAYING_THEMES)"
+    )
     for retired in (
         "APP_MINI_APPS", "APP_PHOTOS", "APP_BOOKS", "APP_NOTES",
         "APP_CONTACTS", "APP_CALENDAR", "APP_WORKOUTS", "APP_STOPWATCH",
