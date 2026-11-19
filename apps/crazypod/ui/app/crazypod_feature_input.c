@@ -2,9 +2,7 @@
 
 #ifdef IPOD_6G
 
-#include "backlight.h"
 #include "button.h"
-#include "kernel.h"
 
 #include "../features/music/crazypod_music_feature.h"
 #include "../features/now_playing/crazypod_now_playing_feature.h"
@@ -38,11 +36,7 @@ static bool handle_now_playing_raw(
         crazypod_route_actions_pop();
         return true;
     }
-    if(!crazypod_now_playing_theme_handle_input(event))
-        return false;
-    backlight_on();
-    host.boost(HZ / 10 > 0 ? HZ / 10 : 1);
-    return true;
+    return false;
 }
 
 static bool handle_music_pressed(
