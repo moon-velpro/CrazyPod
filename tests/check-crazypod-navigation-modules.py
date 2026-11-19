@@ -166,6 +166,25 @@ def check() -> None:
         ):
             assert retired not in text, (path, retired)
 
+    # Audit every compiled CrazyPod translation unit, not only UI entry
+    # points. A source-list refactor is incomplete if another live module
+    # still calls an unlinked legacy domain.
+    legacy_reference = re.compile(
+        r"crazypod_(?:notes|books|epub|photos|videos|organizer|"
+        r"workouts|miniapps|miniapp|presets)(?:_|\\()|"
+        r"/features/(?:notes|books|photos|organizer|customize|miniapps)/"
+    )
+    product_sources = sorted(
+        name for name in shipping
+        if name.startswith("crazypod/") and name.endswith(".c")
+    )
+    assert product_sources, "empty product source list"
+    for name in product_sources:
+        source_path = ROOT / "apps" / name
+        assert source_path.is_file(), f"missing compiled source: {name}"
+        match = legacy_reference.search(contents(source_path))
+        assert match is None, f"orphaned retired API in {name}: {match.group()}"
+
     for module in (
         "ui/navigation/crazypod_route_registry.c",
         "ui/navigation/crazypod_route_query.c",
