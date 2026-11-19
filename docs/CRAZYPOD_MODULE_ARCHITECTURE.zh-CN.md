@@ -40,7 +40,9 @@ Contacts、Customize（独立应用）、Mini Apps、外部播放页主题和 GB
 2. `route_query` 只查询 Music / Now Playing / Settings 和 Home 快捷页。
 3. `feature_input` 只绑定 Music / Now Playing / Settings 输入处理。
 4. `app_launcher` 复用导航合法性，不再复制一套单独白名单。
-5. `tests/check-crazypod-navigation-modules.py` 是持续生效的架构门禁；
+5. `route_renderer` 只绘制音乐、播放页、设置和 Home 页面，
+   `app_input` 不再依赖笔记编辑功能。
+6. `tests/check-crazypod-navigation-modules.py` 是持续生效的架构门禁；
    `tests/crazypod_ui_pure_host_test.c` 检查保留/退役 feature 的注册状态。
 
 这些完成的是**导航模块的解绑**，并不代表整个固件已解除旧应用链接。
@@ -49,9 +51,10 @@ Contacts、Customize（独立应用）、Mini Apps、外部播放页主题和 GB
 
 ### 02 · 应用编排与渲染归并
 
-整体改造 `crazypod_route_actions.c`、`crazypod_route_renderer.c`、
-`crazypod_app_input.c`、`crazypod_choice_coordinator.c` 以及
-`crazypod_ui.c` 的旧应用分支。保留的 Home 动作、音量、亮度、
+整体改造 `crazypod_route_actions.c`、
+`crazypod_choice_coordinator.c` 以及 `crazypod_ui.c` 的旧应用
+分支，并检查 `crazypod_route_renderer.c`、`crazypod_app_input.c`
+的新模块合同。保留的 Home 动作、音量、亮度、
 播放页选项和设置必须可以经由统一接口工作；不要新建空的旧接口来消除链接错误。
 
 ### 03 · 服务和构建闭包
