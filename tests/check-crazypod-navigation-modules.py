@@ -14,6 +14,8 @@ REGISTRY = UI / "navigation/crazypod_route_registry.c"
 QUERY = UI / "navigation/crazypod_route_query.c"
 INPUT = UI / "app/crazypod_feature_input.c"
 APP_INPUT = UI / "app/crazypod_app_input.c"
+APP_INPUT_HOST = UI / "app/crazypod_app_input.h"
+UI_ROOT = ROOT / "apps/crazypod/crazypod_ui.c"
 RENDERER = UI / "app/crazypod_route_renderer.c"
 LAUNCHER = UI / "app/crazypod_app_launcher.c"
 ROUTES = UI / "navigation/crazypod_ui_routes.h"
@@ -37,6 +39,8 @@ def check() -> None:
     query = contents(QUERY)
     inputs = contents(INPUT)
     app_input = contents(APP_INPUT)
+    app_input_host = contents(APP_INPUT_HOST)
+    ui_root = contents(UI_ROOT)
     renderer = contents(RENDERER)
     launcher = contents(LAUNCHER)
     routes = contents(ROUTES)
@@ -61,6 +65,18 @@ def check() -> None:
     assert "music_only_root_route" not in launcher
     assert "crazypod_route_registry_get(state->route)" in renderer
     assert "crazypod_now_playing_theme_handle_input" not in inputs
+    assert "handle_confirmation" not in app_input_host
+    assert "host.handle_confirmation" not in app_input
+    assert "static bool handle_confirmation(" not in ui_root
+    for retired_entry in (
+        "crazypod_photos_init(", "crazypod_videos_init(",
+        "crazypod_miniapps_feature_initialize(",
+        "crazypod_miniapps_feature_initialize_runtime(",
+        "crazypod_photos_feature_initialize_media(",
+        "crazypod_customize_feature_initialize_media(",
+        "crazypod_miniapp_repro_service(",
+    ):
+        assert retired_entry not in ui_root, retired_entry
 
     # All supported routes must be declared in the sparse product table.
     body = registry.split("routes[CRAZYPOD_ROUTE_COUNT] = {", 1)[1].split(
