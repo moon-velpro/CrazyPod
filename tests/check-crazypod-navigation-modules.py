@@ -103,6 +103,69 @@ def check() -> None:
         )
     }
 
+    # The shipping image must not link any retired independent app,
+    # installed CPK runtime, or software video decoder.
+    shipping = {
+        line.strip() for line in sources.splitlines()
+        if line.startswith("crazypod/") or
+        line.startswith("plugins/mpegplayer/")
+    }
+    retired_prefixes = (
+        "crazypod/miniapps/",
+        "crazypod/photos/",
+        "crazypod/video/",
+        "crazypod/epub/",
+        "crazypod/ui/features/miniapps/",
+        "crazypod/ui/features/photos/",
+        "crazypod/ui/features/books/",
+        "crazypod/ui/features/notes/",
+        "crazypod/ui/features/organizer/",
+        "crazypod/ui/features/customize/",
+        "plugins/mpegplayer/",
+    )
+    retired_modules = {
+        "crazypod/crazypod_miniapps.c",
+        "crazypod/crazypod_miniapp_input.c",
+        "crazypod/crazypod_miniapp_font.c",
+        "crazypod/crazypod_miniapp_asset_font.c",
+        "crazypod/crazypod_photos.c",
+        "crazypod/crazypod_videos.c",
+        "crazypod/crazypod_video_mpeg_misc.c",
+        "crazypod/crazypod_books.c",
+        "crazypod/crazypod_notes.c",
+        "crazypod/crazypod_organizer.c",
+        "crazypod/crazypod_workouts.c",
+        "crazypod/crazypod_epub.c",
+        "crazypod/crazypod_book_cover.c",
+        "crazypod/ui/app/crazypod_miniapp_repro.c",
+        "crazypod/ui/shell/crazypod_extras_preview.c",
+        "crazypod/wallpaper/crazypod_wallpaper_crop_engine.c",
+    }
+    for name in shipping:
+        assert not name.startswith(retired_prefixes), name
+        assert name not in retired_modules, name
+
+    for path in (
+        UI_ROOT,
+        UI / "app/crazypod_route_actions.c",
+        UI / "app/crazypod_choice_coordinator.c",
+        UI / "app/crazypod_composition.c",
+        UI / "app/crazypod_menu_preview.c",
+        UI / "app/crazypod_playback.c",
+        UI / "shell/crazypod_system_prompts.c",
+        UI / "app/crazypod_simulator_snapshot.c",
+    ):
+        text = contents(path)
+        for retired in (
+            "crazypod_miniapps_feature_",
+            "crazypod_photos_feature_",
+            "crazypod_books_feature_",
+            "crazypod_notes_feature_",
+            "crazypod_organizer_feature_",
+            "crazypod_customize_feature_",
+        ):
+            assert retired not in text, (path, retired)
+
     for module in (
         "ui/navigation/crazypod_route_registry.c",
         "ui/navigation/crazypod_route_query.c",
