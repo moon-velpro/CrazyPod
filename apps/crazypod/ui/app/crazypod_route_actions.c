@@ -104,6 +104,10 @@ static bool push_route_state(
 void crazypod_route_actions_push_selected(
     enum crazypod_route route, int group, int selected)
 {
+    /* Reject retired routes before any legacy choice/overlay callbacks
+     * can perform side effects outside the guarded route stack. */
+    if(!crazypod_ui_route_supported(route))
+        return;
     if(route == DIY_ROUTE_NOW_PLAYING_THEMES) {
         crazypod_choice_coordinator_show(
             CRAZYPOD_CHOICE_NOW_PLAYING_THEME,
