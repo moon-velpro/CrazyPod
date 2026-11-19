@@ -90,7 +90,7 @@ def check() -> None:
     for module in (
         "ui/navigation/crazypod_route_registry.c",
         "ui/navigation/crazypod_route_query.c",
-        "app/crazypod_feature_input.c",
+        "ui/app/crazypod_feature_input.c",
         "ui/app/crazypod_route_renderer.c",
         "ui/app/crazypod_app_input.c",
     ):
