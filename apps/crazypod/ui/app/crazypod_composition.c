@@ -19,6 +19,7 @@
 #include "../shell/crazypod_desktop_native.h"
 #include "../shell/crazypod_shell.h"
 #include "../shell/crazypod_system_prompts.h"
+#include "crazypod_app_input.h"
 #include "crazypod_app_launcher.h"
 #include "crazypod_choice_coordinator.h"
 #include "crazypod_composition.h"
@@ -215,6 +216,7 @@ void crazypod_composition_configure(
         .now = new_host->now,
         .close_product = new_host->close_product,
         .present = crazypod_present_now,
+        .cancel_pending_input = crazypod_app_input_cancel_pending,
     };
     const struct crazypod_choice_coordinator_host choices = {
         .parent = crazypod_shell_product_content(),
