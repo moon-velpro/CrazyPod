@@ -80,7 +80,6 @@ crazypod/ui/features/music/crazypod_music_feature.c
 crazypod/ui/features/music/crazypod_music_library.c
 crazypod/ui/features/music/crazypod_music_root_preview.c
 crazypod/ui/features/now_playing/crazypod_now_playing_feature.c
-crazypod/ui/features/now_playing/crazypod_now_playing_theme.c
 crazypod/ui/features/now_playing/crazypod_now_playing_render.c
 crazypod/ui/features/now_playing/crazypod_now_playing_overlay.c
 crazypod/ui/features/settings/crazypod_settings_feature.c
