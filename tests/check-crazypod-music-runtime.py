@@ -27,18 +27,12 @@ for required in (
     "crazypod_state_tick();",
 ):
     assert required in runtime, required
-theme = (root / "apps/crazypod/ui/features/now_playing/crazypod_now_playing_theme.c").read_text(
-    encoding="utf-8"
-)
-for forbidden in (
-    "crazypod_miniapps_prepare(", "crazypod_miniapps_event(",
-    "crazypod_now_playing_themes_open_id(", "crazypod_miniapps_feature_",
-    "crazypod_miniapps_is_open(", "THEME_CONFIG",
-):
-    assert forbidden not in theme, forbidden
-assert "CRAZYPOD_ARTWORK_CACHE_SIZE" in theme
-assert "return 1;" in theme  # only the native built-in playback screen
-
+sources = (root / "apps/SOURCES").read_text(encoding="utf-8")
+native_header = (root / "apps/crazypod/ui/features/now_playing/crazypod_now_playing_feature.h").read_text(encoding="utf-8")
+assert "crazypod_now_playing_theme.c" not in sources
+assert "crazypod_now_playing_theme_" not in native_header
+assert "crazypod_now_playing_artwork_set_source_size(" in runtime
+assert "CRAZYPOD_ARTWORK_CACHE_SIZE" in runtime
 assert "crazypod_miniapps_feature_" not in runtime
 assert "crazypod_miniapp_alarm_" not in runtime
 assert "service_miniapp(" not in runtime
