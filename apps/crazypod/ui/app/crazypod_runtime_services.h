@@ -3,8 +3,6 @@
 
 #include <stdbool.h>
 
-void crazypod_runtime_services_configure(
-    void (*render)(bool transition));
 void crazypod_runtime_services_start(void);
 int crazypod_runtime_services_prepare_wait(
     long now, bool *screen_off);
