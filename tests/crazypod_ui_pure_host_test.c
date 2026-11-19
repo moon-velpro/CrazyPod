@@ -162,6 +162,11 @@ static void test_route_registry(void)
     int route;
 
     assert(crazypod_route_registry_validate());
+    assert(crazypod_feature_get(CRAZYPOD_FEATURE_MUSIC) != NULL);
+    assert(crazypod_feature_get(CRAZYPOD_FEATURE_NOW_PLAYING) != NULL);
+    assert(crazypod_feature_get(CRAZYPOD_FEATURE_SETTINGS) != NULL);
+    assert(crazypod_feature_get(CRAZYPOD_FEATURE_BOOKS) == NULL);
+    assert(crazypod_feature_get(CRAZYPOD_FEATURE_MINIAPPS) == NULL);
     for(route = 0; route < CRAZYPOD_ROUTE_COUNT; ++route)
         assert((crazypod_route_registry_get(route) != NULL) ==
                crazypod_ui_route_supported(route));
