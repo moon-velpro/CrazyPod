@@ -147,7 +147,9 @@ static void play_selected_track(struct route_state *state)
             crazypod_music_search_query(), state->selected);
         break;
     default:
-        break;
+        /* Activation fallback belongs only to track-bearing pages.
+         * Other feature pages must not report a spurious playback error. */
+        return;
     }
     if(started) {
         crazypod_state_forget_resume();
