@@ -44,10 +44,9 @@ def main():
     push = actions.split("void crazypod_route_actions_push_selected(", 1)[1].split(
         "void crazypod_route_actions_push(", 1
     )[0]
-    # Legacy choice dispatch must not run before the retired-route gate.
-    assert push.index("if(!crazypod_ui_route_supported(route))") < push.index(
-        "if(route == DIY_ROUTE_NOW_PLAYING_THEMES)"
-    )
+    # Route actions depend on the registry, never a retired DIY overlay.
+    assert "if(!crazypod_ui_route_supported(route))" in push
+    assert "DIY_ROUTE_NOW_PLAYING_THEMES" not in push
     for entry in (
         "void crazypod_route_actions_activate(long now)",
         "void crazypod_route_actions_activate_overlay_state(",
