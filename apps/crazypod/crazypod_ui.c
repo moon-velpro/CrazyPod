@@ -469,7 +469,6 @@ static void configure_feature_input(void)
     const struct crazypod_feature_input_host host = {
         .now = ui_now,
         .render = render_current_route,
-        .boost = keep_cpu_boosted,
     };
 
     crazypod_feature_input_configure(&host);
