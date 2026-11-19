@@ -4,7 +4,6 @@
 
 #include "../../crazypod_appearance.h"
 #include "../features/music/crazypod_music_feature.h"
-#include "../features/organizer/crazypod_organizer_feature.h"
 #include "../navigation/crazypod_route_query.h"
 #include "../navigation/crazypod_ui_routes.h"
 #include "../presentation/crazypod_menu_list.h"
@@ -48,9 +47,7 @@ void crazypod_menu_rows_refresh(const struct route_state *state)
         crazypod_menu_list_refresh_row(
             row, visible,
             visible ? crazypod_route_query_item_title(
-                state, index, crazypod_music_search_query(),
-                crazypod_organizer_feature_stopwatch_running(),
-                crazypod_organizer_feature_workout_running()) : "",
+                state, index, crazypod_music_search_query()) : "",
             selected,
             selected ? 255 :
                 state->route == MUSIC_ROUTE_SEARCH ? 150 : 195,
