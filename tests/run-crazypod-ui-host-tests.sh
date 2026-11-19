@@ -7,6 +7,7 @@ trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 
 python3 "$repo_root/tests/check-crazypod-retired-emulator.py"
 python3 "$repo_root/tests/check-crazypod-music-only.py"
+python3 "$repo_root/tests/check-crazypod-navigation-modules.py"
 python3 "$repo_root/tests/check-crazypod-music-runtime.py"
 python3 "$repo_root/tests/check-crazypod-lock-font-stack.py"
 
